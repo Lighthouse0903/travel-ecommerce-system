@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'apps.customers',
     'apps.tours',
     'apps.bookings',
-    'apps.reviews'
+    'apps.reviews',
+    'apps.chat_messages'
 ]
 
 MIDDLEWARE = [

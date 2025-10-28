@@ -51,4 +51,13 @@ class ReviewListItemSerializer(serializers.ModelSerializer):
         model = Review
         fields = ["review_id", "rating", "comment", "customer_name", "created_at"]
         read_only_fields = fields
-
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_deleted:
+            data['comment'] = None
+        return data
+# API Sửa comment
+class ReviewUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ["comment"]

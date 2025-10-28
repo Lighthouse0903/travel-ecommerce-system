@@ -1,6 +1,6 @@
 from rest_framework import generics, permissions, status
 from .models import Review
-from .serializers import ReviewCreateSerializer, ReviewListItemSerializer
+from .serializers import ReviewCreateSerializer, ReviewListItemSerializer, ReviewUpdateSerializer
 from rest_framework.response import Response
 class CreateReviewView(generics.CreateAPIView):
     serializer_class = ReviewCreateSerializer
@@ -23,3 +23,25 @@ class TourReviewsListView(generics.ListAPIView):
         if not qs.exists():
             return Response({"message": "Tour này chưa có đánh giá."}, status=status.HTTP_200_OK)
         return super().list(request, *args, **kwargs)
+
+class MyReviewUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Review.objects.select_related("booking__customer__user")
+    serializer_class = ReviewUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'review_id'
+
+    def get_queryset(self):
+        return self.queryset.filter(booking__customer__user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_deleted:
+            return Response({"message": "Bình luận đã bị xoá, không thể sửa."}, status=status.HTTP_400_BAD_REQUEST)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.comment = None
+        instance.is_deleted = True
+        instance.save(update_fields=["comment", "is_deleted"])
+        return Response({"message": "Đã ẩn bình luận, vẫn giữ điểm đánh giá."}, status=status.HTTP_200_OK)
