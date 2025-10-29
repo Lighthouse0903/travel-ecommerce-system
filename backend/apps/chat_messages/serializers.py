@@ -6,6 +6,7 @@ from ..agencies.models import Agency
 
 User = get_user_model()
 
+# API gửi tin nhắn
 class MessageSendSerializer(serializers.ModelSerializer):
     receiver_id = serializers.UUIDField(write_only=True)
 
@@ -52,7 +53,7 @@ class MessageOutSerializer(serializers.ModelSerializer):
         model = Message
         fields = ["message_id", "sender_username", "receiver_username", "content", "created_at"]
         read_only_fields = fields
-
+# API hển thị tin nhắn
 class MessageListSerializer(serializers.ModelSerializer):
     sender_username   = serializers.CharField(source="sender.username", read_only=True)
     receiver_username = serializers.CharField(source="receiver.username", read_only=True)
@@ -60,3 +61,11 @@ class MessageListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ["message_id", "sender_username", "receiver_username", "content", "created_at"]
+
+# API lấy danh sách đoạn hội thoại gần đây
+class RecentThreadSerializer(serializers.Serializer):
+    partner_id = serializers.UUIDField()
+    partner_username = serializers.CharField()
+    last_message = serializers.CharField()
+    last_time = serializers.DateTimeField()
+    direction = serializers.CharField()
