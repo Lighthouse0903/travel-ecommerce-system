@@ -5,10 +5,12 @@ import uuid
 
 class Booking(models.Model):
     PENDING   = 'pending'
+    PAID_WAITING = 'paid_waiting'
     CONFIRMED = 'confirmed'
     CANCELLED = 'cancelled'
     STATUS_CHOICES = [
         (PENDING, 'Pending'),
+        (PAID_WAITING, 'Paid – Waiting for Approval'),
         (CONFIRMED, 'Confirmed'),
         (CANCELLED, 'Cancelled'),
     ]

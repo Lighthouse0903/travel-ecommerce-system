@@ -64,8 +64,6 @@ class LoginView(APIView):
         return resp
 
 # API Refresh token
-
-
 class RefreshTokenView(APIView):
     def post(self, request):
         refresh_token = request.COOKIES.get("refresh_token")
