@@ -1,16 +1,11 @@
-from django.db.models import Q
-from django.contrib.auth import get_user_model
-from rest_framework import generics, status, serializers
+from rest_framework import generics, status
 from rest_framework.views import APIView
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from .models import User
-from .serializers import UserRegisterSerializer, UserProfileSerializer, ChangePasswordSerializer
+from .serializers import UserRegisterSerializer, UserProfileSerializer, ChangePasswordSerializer, LoginSerializer
 
 # API Register
 class RegisterView(generics.CreateAPIView):
@@ -29,55 +24,85 @@ class RegisterView(generics.CreateAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED)
 
+
 # API Login
-User = get_user_model()
-
-def normalize_phone(s: str) -> str:
-    if not s:
-        return s
-    s = s.strip().replace(' ', '').replace('-', '')
-    if s.startswith('+84'):
-        s = '0' + s[3:]
-    return s
-
-class LoginSerializer(serializers.Serializer):
-    login = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
-
-    def validate(self, attrs):
-        login = attrs['login']
-        password = attrs['password']
-        phone = normalize_phone(login)
-
-        user = User.objects.filter(
-            Q(username__iexact=login) |
-            Q(email__iexact=login) |
-            Q(phone=phone)
-        ).first()
-
-        if not user or not user.check_password(password):
-            raise AuthenticationFailed('Invalid credentials.')
-
-        if not user.is_active:
-            raise AuthenticationFailed('Account is inactive.')
-
-        refresh = RefreshToken.for_user(user)
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "user_id": str(user.user_id),
-            "username": user.username,
-            "email": user.email,
-            "full_name": user.full_name,
-            "roles": user.roles,
-        }
-
 class LoginView(APIView):
     def post(self, request):
         ser = LoginSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        return Response(ser.validated_data, status=status.HTTP_200_OK)
+        user = ser.validated_data['user']
+        access_token = ser.validated_data['access']
+        refresh_token = ser.validated_data['refresh']
+        resp = Response(
+            {
+                "access": access_token,
+                "user_id": str(user.user_id),
+                "username": user.username,
+                "email": user.email,
+                "full_name": user.full_name,
+                "roles": user.roles,
+                "message": "Login successful"
+            },
+            status=status.HTTP_200_OK
+        )
+        resp.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,
+            samesite='Lax',
+            max_age=5*60,
+        )
+        resp.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="Lax",
+            max_age=7 * 24 * 60 * 60,
+        )
+        return resp
 
+# API Refresh token
+
+
+class RefreshTokenView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get("refresh_token")
+        if not refresh_token:
+            return Response(
+                {"detail": "Refresh token not found."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            new_access = str(refresh.access_token)
+
+            resp = Response(
+                {
+                    "access": new_access,
+                    "message": "Token refreshed successfully"
+                },
+                status=status.HTTP_200_OK
+            )
+
+            resp.set_cookie(
+                key="access_token",
+                value=new_access,
+                httponly=True,
+                secure=False,
+                samesite="Lax",
+                max_age=5 * 60
+            )
+
+            return resp
+
+        except TokenError:
+            return Response(
+                {"detail": "Invalid or expired refresh token."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 # API View/Change Profile
 class UserProfileView(generics.RetrieveUpdateAPIView):
     authentication_classes = [JWTAuthentication]
@@ -101,20 +126,31 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        refresh_token = request.data.get("refresh")
+        refresh_token = request.COOKIES.get("refresh_token")
 
         if not refresh_token:
             return Response(
-                {"detail": "Thiếu refresh token."},
+                {"detail": "Không tìm thấy refresh token trong cookie."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
+            # Đưa token vào blacklist
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({"detail": "Đã đăng xuất."}, status=status.HTTP_200_OK)
-        except Exception:
+        except TokenError:
             return Response(
-                {"detail": "Refresh token không hợp lệ."},
+                {"detail": "Refresh token không hợp lệ hoặc đã hết hạn."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Xoá cookie khi logout
+        response = Response(
+            {"detail": "Đăng xuất thành công."},
+            status=status.HTTP_200_OK
+        )
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+
+        return response
+

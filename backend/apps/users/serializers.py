@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from .models import User
 from django.contrib.auth.password_validation import validate_password
-
+from rest_framework.exceptions import AuthenticationFailed
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Q
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
@@ -25,6 +28,43 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+# API Login
+User = get_user_model()
+
+def normalize_phone(s: str) -> str:
+    if not s:
+        return s
+    s = s.strip().replace(' ', '').replace('-', '')
+    if s.startswith('+84'):
+        s = '0' + s[3:]
+    return s
+
+class LoginSerializer(serializers.Serializer):
+    login = serializers.CharField(required=True)
+    password = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        login = attrs['login']
+        password = attrs['password']
+        phone = normalize_phone(login)
+
+        user = User.objects.filter(
+            Q(username__iexact=login) |
+            Q(email__iexact=login) |
+            Q(phone=phone)
+        ).first()
+
+        if not user or not user.check_password(password):
+            raise AuthenticationFailed('Invalid credentials.')
+
+        if not user.is_active:
+            raise AuthenticationFailed('Account is inactive.')
+
+        refresh = RefreshToken.for_user(user)
+        attrs['user'] = user
+        attrs['refresh'] = str(refresh)
+        attrs['access'] = str(refresh.access_token)
+        return attrs
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
