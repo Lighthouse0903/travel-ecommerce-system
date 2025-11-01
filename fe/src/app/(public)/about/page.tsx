@@ -20,7 +20,7 @@ const AboutUs = () => {
       name: "Phạm Văn Anh",
       position: "Trưởng phòng phát triển sản phẩm",
       image:
-        "https://scontent.fhan14-3.fna.fbcdn.net/v/t39.30808-6/500700831_1239567937612560_7813946572927964053_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=SRBdmV-I9TsQ7kNvwF2svlh&_nc_oc=Adk98DnQCBLSf0_u9lA05CCyecV9zOeHiu7QdoHYITwch69KF0GHGRlCe6OMQPFJPWAoXQLN1v4s0XboAg0vLhfL&_nc_zt=23&_nc_ht=scontent.fhan14-3.fna&_nc_gid=KQGQqtBl8L_vVZxItVJFAg&oh=00_Afcowbh_R64FjeXUUHh2za5K6VDzbYU6eXl3X4tncAJDDA&oe=68FA6E65",
+        "https://i.pinimg.com/736x/4f/8f/33/4f8f33726bf9235121d00578eeee2ed0.jpg",
       bio: "Chuyên phụ trách xây dựng các gói tour độc đáo và linh hoạt. Anh luôn mang đến những hành trình sáng tạo, kết hợp giữa khám phá và trải nghiệm văn hóa bản địa.",
       socials: {
         facebook: "#",
@@ -33,7 +33,7 @@ const AboutUs = () => {
       name: "Lại Trung Lâm",
       position: "Giám đốc điều hành tour",
       image:
-        "https://scontent.fhan14-4.fna.fbcdn.net/v/t39.30808-6/481993397_1181549816747706_5713411586904103373_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=Kv6_BX91tasQ7kNvwHIAwaY&_nc_oc=AdnTCEUShbsBL1aRTVCKx-1oQI8r8i8yvxvPcd3x4yo6yGHadm_OlwXmgX_TfeNaYbuY1ZnJY02uaLk4JBUKAAVw&_nc_zt=23&_nc_ht=scontent.fhan14-4.fna&_nc_gid=B3xi8GOgXxSgDl6vPK6VeA&oh=00_AfceWCDVhndl8b6JzS8T0D0vv0cb8qri3Tiqtjz_M1tnTw&oe=68FA8F51",
+        "https://i.pinimg.com/736x/c9/e6/e9/c9e6e9b794ec82e4393e541e17d36696.jpg",
       bio: "Với phong cách làm việc tận tâm và tỉ mỉ, anh Lâm chịu trách nhiệm tổ chức, điều phối tour và đảm bảo mọi chi tiết vận hành trơn tru.",
       socials: {
         facebook: "#",

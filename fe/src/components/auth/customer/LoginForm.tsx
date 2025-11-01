@@ -15,31 +15,89 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { FaFacebook, FaGoogle } from "react-icons/fa";
+import { toast } from "sonner";
+import { useAuthService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserResponse } from "@/types/user";
 
 const formSchema = z.object({
-  emailOrPhone: z
+  usernameOrEmail: z
     .string()
-    .min(1, "Vui lòng nhập email hoặc số điện thoại")
+    .min(1, "Vui lòng nhập email hoặc tên đăng nhập")
     .refine(
       (value) =>
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || // là email
-        /^(0|\+84)\d{9,10}$/.test(value), // hoặc là số điện thoại VN
-      "Vui lòng nhập email hoặc số điện thoại hợp lệ"
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ||
+        /^[a-zA-Z0-9_]+$/.test(value),
+      "Vui lòng nhập tên đăng nhập hoặc email hợp lệ"
     ),
   password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự").max(100),
 });
 
-const LoginForm = () => {
+const LoginForm = ({ onSuccess }: { onSuccess?: () => void }) => {
+  const { setAccess, setUser } = useAuth();
+  const { login } = useAuthService();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      emailOrPhone: "",
+      usernameOrEmail: "",
       password: "",
     },
   });
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const payload = {
+        login: values.usernameOrEmail,
+        password: values.password,
+      };
+
+      const res = await login(payload);
+
+      if (res.success && res.data) {
+        onSuccess?.();
+        const currentUser: UserResponse = res.data.user;
+        setAccess(res.data.access);
+        setUser(currentUser);
+        console.log("Đăng nhập thành công!");
+        toast.dismiss();
+        toast.success("Đăng nhập thành công!");
+        return;
+      }
+
+      if (res.error && typeof res.error === "object") {
+        const firstKey = Object.keys(res.error)[0];
+        let firstMsg = res.error[firstKey]?.[0];
+        console.log("Chi tiết lỗi đăng nhập:", res.error.detail);
+        if (res.error.detail === "Invalid credentials.") {
+          firstMsg = "Thông tin đăng nhập không chính xác";
+        }
+        toast.dismiss();
+        toast.error(firstMsg);
+      } else {
+        toast.dismiss();
+        toast.error(
+          typeof res.message === "string"
+            ? res.message
+            : JSON.stringify(res.message) || "Đăng nhập thất bại!"
+        );
+      }
+    } catch (error: any) {
+      if (error?.error) {
+        console.log("Chi tiết lỗi từ server:", error.error);
+
+        if (error.error.username_or_email) {
+          console.log("Lỗi username/email:", error.error.username_or_email[0]);
+        }
+        if (error.error.password) {
+          console.log("Lỗi password:", error.error.password[0]);
+        }
+      }
+      toast.dismiss();
+      toast.error(error?.message || "Lỗi kết nối máy chủ!");
+      console.log("Lỗi kết nối tới máy chủ");
+    }
   };
+
   return (
     <>
       <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-0">
@@ -82,14 +140,14 @@ const LoginForm = () => {
                 >
                   <FormField
                     control={form.control}
-                    name="emailOrPhone"
+                    name="usernameOrEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email hoặc số điện thoại</FormLabel>
+                        <FormLabel>Tên đăng nhập hoặc Email</FormLabel>
                         <FormControl>
                           <Input
                             className="h-8 sm:h-10 text-sm sm:text-base"
-                            placeholder="viettravel@gmail.com hoặc 0987654321"
+                            placeholder="Tên đăng nhập hoặc viettravel@gmail.com"
                             {...field}
                           />
                         </FormControl>

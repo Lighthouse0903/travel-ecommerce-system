@@ -98,7 +98,6 @@ const Footer = () => {
                 direction="vertical"
                 className="flex flex-col w-full"
               >
-                {/* ✅ Responsive grid 2x2 khi nhỏ hơn sm */}
                 <ResizablePanel
                   defaultSize={90}
                   className="flex flex-wrap sm:flex-nowrap w-full"

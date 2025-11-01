@@ -1,5 +1,6 @@
 import Footer from "@/components/common/footer/Footer";
 import Header from "../../components/common/header/Header";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function PublicLayout({
   children,
@@ -10,6 +11,7 @@ export default function PublicLayout({
     <div>
       <Header />
       {children}
+      <Toaster position="top-center" />
       <Footer />
     </div>
   );

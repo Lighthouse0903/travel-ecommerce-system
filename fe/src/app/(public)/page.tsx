@@ -1,9 +1,8 @@
-"use client";
-
 import Category from "@/components/customer/homepage/Category";
+import FavouriteDestination from "@/components/customer/homepage/FavouriteDestination";
 import SearchBox from "@/components/customer/homepage/SearchBox";
 import TourDisplay from "@/components/customer/homepage/TourDisplay";
-import { Button } from "@/components/ui/button";
+
 import {
   Carousel,
   CarouselContent,
@@ -11,10 +10,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Input } from "@/components/ui/input";
-import { GoSearch } from "react-icons/go";
 
 export default function Home() {
+  const dbUrl = process.env.DATABASE_URL;
+  console.log("DB URL:", dbUrl);
+  console.log("ENV:", process.env.NEXT_PUBLIC_API_BASE_URL);
+  console.log("ok");
+
   return (
     <div>
       {/* Section 1: Header Carousel */}
@@ -101,11 +103,20 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Điểm đến yêu thích  */}
       <section className="relative bg-slate-100 flex items-center justify-center">
         <div className="w-[90%] md:w-[80%]">
-          <h1 className="text-center text-xl sm:text-2xl font-semibold mt-8 mb-7">
-            Điểm đến yêu thích
-          </h1>
+          <div className="flex flex-col items-center p-2">
+            <h1 className="text-center text-xl sm:text-2xl font-semibold mt-8 mb-2">
+              Điểm đến yêu thích
+            </h1>
+            <p className="text-center text-sm sm:text-base mb-3">
+              Khám phá các điểm đến trong nước được du khách yêu thích nhất cùng
+              Vietravel — hành trình chất lượng, giá ưu đãi, trải nghiệm trọn
+              vẹn.
+            </p>
+          </div>
+          <FavouriteDestination />
         </div>
       </section>
     </div>
