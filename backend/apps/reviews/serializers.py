@@ -21,19 +21,19 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
                 customer__user=user
             )
         except Booking.DoesNotExist:
-            raise serializers.ValidationError("Không tìm thấy booking của bạn.")
+            raise serializers.ValidationError({"booking_id": "Không tìm thấy booking của bạn."})
 
         # Kiểm tra ngày đi
         if booking.travel_date > timezone.localdate():
-            raise serializers.ValidationError("Bạn chỉ được đánh giá sau khi đã đi tour.")
+            raise serializers.ValidationError({"booking_id": "Bạn chỉ được đánh giá sau khi đã đi tour."})
 
         # Kiểm tra trạng thái booking
         if booking.status != Booking.CONFIRMED:
-            raise serializers.ValidationError("Booking chưa được xác nhận, không thể đánh giá.")
+            raise serializers.ValidationError({"booking_id": "Booking chưa được xác nhận, không thể đánh giá."})
 
         # Kiểm tra trùng review
         if hasattr(booking, "review"):
-            raise serializers.ValidationError("Booking này đã được đánh giá rồi.")
+            raise serializers.ValidationError({"booking_id": "Booking này đã được đánh giá rồi."})
 
         attrs["__booking"] = booking
         return attrs
@@ -51,10 +51,11 @@ class ReviewListItemSerializer(serializers.ModelSerializer):
         model = Review
         fields = ["review_id", "rating", "comment", "customer_name", "created_at"]
         read_only_fields = fields
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.is_deleted:
-            data['comment'] = None
+            data["comment"] = None
         return data
 # API Sửa comment
 class ReviewUpdateSerializer(serializers.ModelSerializer):

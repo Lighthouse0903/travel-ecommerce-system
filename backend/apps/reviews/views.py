@@ -6,42 +6,111 @@ class CreateReviewView(generics.CreateAPIView):
     serializer_class = ReviewCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        ser = self.get_serializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        review = ser.save()
+
+        data = {
+            "review_id": str(review.review_id),
+            "booking_id": str(review.booking.booking_id),
+            "rating": review.rating,
+            "comment": review.comment,
+            "created_at": review.created_at,
+        }
+
+        return Response(
+            {
+                "message": "Đánh giá của bạn đã được ghi nhận thành công.",
+                "data": data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 class TourReviewsListView(generics.ListAPIView):
     serializer_class = ReviewListItemSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         tour_id = self.kwargs["tour_id"]
-        return (Review.objects
-                .filter(booking__tour__tour_id=tour_id)
-                .select_related("booking__customer__user")
-                .order_by("-created_at"))
+        return (
+            Review.objects.filter(booking__tour__tour_id=tour_id)
+            .select_related("booking__customer__user")
+            .order_by("-created_at")
+        )
 
-    # Trả message nếu chưa có review
     def list(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-        if not qs.exists():
-            return Response({"message": "Tour này chưa có đánh giá."}, status=status.HTTP_200_OK)
-        return super().list(request, *args, **kwargs)
+        queryset = self.get_queryset()
+
+        # Nếu chưa có review nào
+        if not queryset.exists():
+            return Response(
+                {
+                    "message": "Tour này chưa có đánh giá.",
+                    "data": [],
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "data": serializer.data,
+                "message": "Lấy danh sách đánh giá thành công."
+            },
+            status=status.HTTP_200_OK,
+        )
 
 class MyReviewUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.select_related("booking__customer__user")
     serializer_class = ReviewUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'review_id'
+    lookup_field = "review_id"
 
     def get_queryset(self):
         return self.queryset.filter(booking__customer__user=self.request.user)
 
+    # Cập nhật bình luận
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.is_deleted:
-            return Response({"message": "Bình luận đã bị xoá, không thể sửa."}, status=status.HTTP_400_BAD_REQUEST)
-        return super().update(request, *args, **kwargs)
+            return Response(
+                {"message": "Bình luận đã bị xoá, không thể sửa.", "data": None},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                "message": "Cập nhật bình luận thành công.",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    # Xóa (ẩn) bình luận
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.is_deleted:
+            return Response(
+                {"message": "Bình luận đã bị ẩn trước đó.", "data": None},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         instance.comment = None
         instance.is_deleted = True
         instance.save(update_fields=["comment", "is_deleted"])
-        return Response({"message": "Đã ẩn bình luận, vẫn giữ điểm đánh giá."}, status=status.HTTP_200_OK)
+
+        return Response(
+            {
+                "message": "Đã ẩn bình luận, vẫn giữ nguyên điểm đánh giá.",
+                "data": {
+                    "review_id": str(instance.review_id),
+                    "rating": instance.rating,
+                    "comment": None,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )

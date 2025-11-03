@@ -12,10 +12,26 @@ class SendMessageView(generics.CreateAPIView):
     serializer_class = MessageSendSerializer
 
     def create(self, request, *args, **kwargs):
-        ser = self.get_serializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        msg = ser.save()
-        return Response(MessageOutSerializer(msg).data, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        message = serializer.save()
+
+        # Dữ liệu trả về
+        data = {
+            "message_id": str(message.message_id),
+            "sender_id": str(message.sender.user_id),
+            "receiver_id": str(message.receiver.user_id),
+            "content": message.content,
+            "created_at": message.created_at,
+        }
+
+        return Response(
+            {
+                "data": data,
+                "message": "Gửi tin nhắn thành công.",
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 class ConversationView(generics.ListAPIView):
     serializer_class = MessageListSerializer
@@ -31,8 +47,8 @@ class ConversationView(generics.ListAPIView):
         return (
             Message.objects
             .filter(
-                Q(sender=user, receiver__user_id=receiver_id) |
-                Q(sender__user_id=receiver_id, receiver=user)
+                Q(sender=user, receiver__user_id=receiver_id)
+                | Q(sender__user_id=receiver_id, receiver=user)
             )
             .select_related("sender", "receiver")
             .order_by("created_at")
@@ -42,45 +58,62 @@ class ConversationView(generics.ListAPIView):
         receiver_id = request.query_params.get("receiver_id")
         if not receiver_id:
             return Response(
-                {"message": "Thiếu receiver_id."},
+                {"message": "Thiếu receiver_id.", "data": None},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # (tuỳ chọn) kiểm tra receiver có tồn tại
+        # Kiểm tra người nhận tồn tại
         if not User.objects.filter(user_id=receiver_id).exists():
             return Response(
-                {"message": "Người nhận không tồn tại."},
+                {"message": "Người nhận không tồn tại.", "data": None},
                 status=status.HTTP_404_NOT_FOUND
             )
 
         queryset = self.get_queryset()
         if not queryset.exists():
             return Response(
-                {"message": "Chưa có tin nhắn với người này."},
+                {"message": "Chưa có tin nhắn với người này.", "data": []},
                 status=status.HTTP_200_OK
             )
 
         page = self.paginate_queryset(queryset)
-        if page is not None:
-            ser = self.get_serializer(page, many=True)
-            return self.get_paginated_response(ser.data)
+        serializer = self.get_serializer(page or queryset, many=True)
 
-        ser = self.get_serializer(queryset, many=True)
-        return Response(ser.data, status=status.HTTP_200_OK)
+        data = serializer.data
+        if page is not None:
+            # Nếu có phân trang
+            paginated = self.get_paginated_response(data)
+            return Response(
+                {
+                    "message": "Lấy danh sách tin nhắn thành công.",
+                    "data": paginated.data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # Không phân trang
+        return Response(
+            {
+                "message": "Lấy danh sách tin nhắn thành công.",
+                "data": data
+            },
+            status=status.HTTP_200_OK
+        )
 class RecentThreadsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        # Lấy tối đa 200 tin gần nhất của user để gom (tuỳ bạn chỉnh)
-        msgs = (Message.objects
-                .filter(Q(sender=user) | Q(receiver=user))
-                .select_related("sender", "receiver")
-                .order_by("-created_at")[:200])
+        # Lấy tối đa 200 tin gần nhất của user để gom (tuỳ chỉnh theo nhu cầu)
+        msgs = (
+            Message.objects
+            .filter(Q(sender=user) | Q(receiver=user))
+            .select_related("sender", "receiver")
+            .order_by("-created_at")[:200]
+        )
 
         threads = {}
         for m in msgs:
-            # xác định "đối tác" ở đầu kia
             partner = m.receiver if m.sender_id == user.user_id else m.sender
             if partner.user_id not in threads:
                 threads[partner.user_id] = {
@@ -92,9 +125,21 @@ class RecentThreadsView(APIView):
                 }
 
         data = list(threads.values())
+
         if not data:
             return Response(
-                {"message": "Chưa có cuộc trò chuyện nào."},
+                {
+                    "message": "Chưa có cuộc trò chuyện nào.",
+                    "data": []
+                },
                 status=status.HTTP_200_OK
             )
-        return Response(RecentThreadSerializer(data, many=True).data, status=status.HTTP_200_OK)
+
+        ser = RecentThreadSerializer(data, many=True)
+        return Response(
+            {
+                "message": "Lấy danh sách cuộc trò chuyện gần nhất thành công.",
+                "data": ser.data
+            },
+            status=status.HTTP_200_OK
+        )

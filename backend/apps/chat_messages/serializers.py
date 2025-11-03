@@ -18,21 +18,24 @@ class MessageSendSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         sender = self.context["request"].user
         receiver_id = attrs.get("receiver_id")
+
+        # Kiểm tra người nhận tồn tại
         try:
             receiver = User.objects.get(user_id=receiver_id)
         except User.DoesNotExist:
             raise serializers.ValidationError({"receiver_id": "Người nhận không tồn tại."})
 
+        # Không được gửi cho chính mình
         if receiver.user_id == sender.user_id:
-            raise serializers.ValidationError({"receiver_id": "Không thể gửi cho chính mình."})
+            raise serializers.ValidationError({"receiver_id": "Không thể gửi tin nhắn cho chính mình."})
 
-        # Bắt buộc 2 phía: một bên là Customer, bên kia là Agency
+        # Chỉ cho phép chat giữa Customer và Agency
         is_sender_customer = Customer.objects.filter(user=sender).exists()
-        is_sender_agency   = Agency.objects.filter(user=sender).exists()
-        is_recv_customer   = Customer.objects.filter(user=receiver).exists()
-        is_recv_agency     = Agency.objects.filter(user=receiver).exists()
+        is_sender_agency = Agency.objects.filter(user=sender).exists()
+        is_receiver_customer = Customer.objects.filter(user=receiver).exists()
+        is_receiver_agency = Agency.objects.filter(user=receiver).exists()
 
-        valid_pair = (is_sender_customer and is_recv_agency) or (is_sender_agency and is_recv_customer)
+        valid_pair = (is_sender_customer and is_receiver_agency) or (is_sender_agency and is_receiver_customer)
         if not valid_pair:
             raise serializers.ValidationError({"receiver_id": "Chỉ cho phép chat giữa Customer và Agency."})
 
@@ -55,12 +58,13 @@ class MessageOutSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 # API hển thị tin nhắn
 class MessageListSerializer(serializers.ModelSerializer):
-    sender_username   = serializers.CharField(source="sender.username", read_only=True)
+    sender_username = serializers.CharField(source="sender.username", read_only=True)
     receiver_username = serializers.CharField(source="receiver.username", read_only=True)
 
     class Meta:
         model = Message
         fields = ["message_id", "sender_username", "receiver_username", "content", "created_at"]
+        read_only_fields = fields
 
 # API lấy danh sách đoạn hội thoại gần đây
 class RecentThreadSerializer(serializers.Serializer):
