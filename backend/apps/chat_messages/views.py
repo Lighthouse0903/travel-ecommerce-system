@@ -1,7 +1,5 @@
-from Tools.demo.mcast import sender, receiver
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.utils.representation import manager_repr
 from rest_framework.views import APIView
 
 from .serializers import MessageSendSerializer, MessageOutSerializer, MessageListSerializer, RecentThreadSerializer

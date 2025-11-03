@@ -13,9 +13,9 @@ class InitPaymentView(generics.CreateAPIView):
     serializer_class = PaymentInitSerializer
 
     def create(self, request, *args, **kwargs):
-        ser = self.get_serializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        payment = ser.save()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payment = serializer.save()
 
         checkout_url = f"https://sandbox.example/checkout/{payment.payment_id}"
 
@@ -27,7 +27,14 @@ class InitPaymentView(generics.CreateAPIView):
             "provider": payment.provider,
             "checkout_url": checkout_url,
         }
-        return Response(data, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {
+                "data": data,
+                "message": "Khởi tạo thanh toán thành công."
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 # API Xác nhận thanh toán
 @method_decorator(csrf_exempt, name='dispatch')

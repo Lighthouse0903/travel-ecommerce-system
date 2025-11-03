@@ -22,9 +22,9 @@ class TourPublicSerializer(serializers.ModelSerializer):
             "tour_id", "name", "description",
             "price", "duration_days",
             "start_location", "end_location",
-            "rating", 'region', 'categories',
+            "rating", "region", "categories",
             "is_active",
             "agency", "agency_name",
-            "created_at"
+            "created_at",
         ]
         read_only_fields = fields

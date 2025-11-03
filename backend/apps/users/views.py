@@ -39,7 +39,7 @@ class RegisterView(generics.CreateAPIView):
 
         user = serializer.save()
         data = {
-            "id": str(user.user_id),
+            "user_id": str(user.user_id),
             "username": user.username,
             "email": user.email,
             "full_name": user.full_name,
@@ -49,6 +49,7 @@ class RegisterView(generics.CreateAPIView):
             {"data": data, "message": "Đăng ký tài khoản thành công!"},
             status=status.HTTP_201_CREATED
         )
+
 
 class LoginView(APIView):
     def post(self, request):
@@ -60,11 +61,14 @@ class LoginView(APIView):
         refresh_token = ser.validated_data["refresh"]
         data = {
             "access": access_token,
-            "user_id": str(user.user_id),
-            "username": user.username,
-            "email": user.email,
-            "full_name": user.full_name,
-            "roles": user.roles,
+            "user": {
+                "user_id": str(user.user_id),
+                "username": user.username,
+                "email": user.email,
+                "full_name": user.full_name,
+                "roles": user.roles,
+            }
+
         }
         resp = Response(
             {

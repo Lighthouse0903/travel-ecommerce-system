@@ -63,8 +63,17 @@ class BookingHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ["booking_id", "tour_id", "tour_name", "travel_date",
-                  "num_people", "total_price", "status", "booking_date"]
+        fields = [
+            "booking_id",
+            "tour_id",
+            "tour_name",
+            "travel_date",
+            "num_people",
+            "total_price",
+            "status",
+            "booking_date",
+        ]
+
 
 class BookingDetailSerializer(serializers.ModelSerializer):
     tour_id = serializers.UUIDField(source="tour.tour_id", read_only=True)
@@ -85,7 +94,7 @@ class BookingDetailSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_price_per_person(self, obj):
-        return obj.tour.price
+        return getattr(obj.tour, "price", None)
 
 class BookingListSerializer(serializers.ModelSerializer):
     tour_name = serializers.CharField(source="tour.name", read_only=True)
@@ -104,6 +113,7 @@ class BookingStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = ['status']
+
     def validate_status(self, value):
         if value not in [Booking.CONFIRMED, Booking.CANCELLED]:
             raise serializers.ValidationError("Chỉ cho phép 'confirmed' hoặc 'cancelled'.")
