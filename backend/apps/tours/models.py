@@ -1,9 +1,9 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.postgres.fields import ArrayField
-from django.conf import settings
+from django.utils import timezone
 import uuid
-
+import os
 class Tour(models.Model):
     tour_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -60,3 +60,25 @@ class Tour(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.duration_days}d)"
+
+
+
+def tour_image_upload_to(instance, filename):
+    tour_id = getattr(instance.tour, "tour_id", "unknown")
+    base, ext = os.path.splitext(filename)
+    unique_name = f"{base}_{uuid.uuid4().hex}{ext}"
+    return f"tours/{tour_id}/{unique_name}"
+
+
+
+class TourImage(models.Model):
+    img_id = models.BigAutoField(primary_key=True)
+    tour = models.ForeignKey(
+        Tour, on_delete=models.CASCADE, related_name='images'
+    )
+    image = models.ImageField(upload_to=tour_image_upload_to)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tours_tour_image'
+        ordering = ['-created_at']

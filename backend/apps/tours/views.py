@@ -1,100 +1,126 @@
-from django.core.serializers import serialize
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics, permissions, filters
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from django.db.models import Q
 from .models import Tour
-from .serializers import TourSerializer, TourPublicSerializer
+from .serializers import TourSerializer, TourPublicSerializer, TourImageUploadSerializer
 from .permissions import IsAgencyOwnerOrReadOnly, IsAgencyUser
-from unidecode import unidecode
+import traceback
+from botocore.exceptions import ClientError
 # API Lấy danh sách tất cả tour (public) + tạo tour (agency)
 class TourListCreateView(generics.ListCreateAPIView):
-    queryset = Tour.objects.filter(is_active=True).select_related('agency')
+    parser_classes = (MultiPartParser, FormParser)
+    queryset = Tour.objects.filter(is_active=True).select_related("agency")
     serializer_class = TourSerializer
     permission_classes = [IsAgencyOwnerOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'start_location', 'end_location', 'agency__company_name', 'price', 'region', 'categories']
-    ordering_fields = ['price', 'created_at', 'duration_days']
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page or queryset, many=True)
-
-        data = serializer.data if page is None else self.get_paginated_response(serializer.data).data
-        return Response(
-            {
-                "data": data,
-                "message": "Lấy danh sách tour thành công."
-            },
-            status=status.HTTP_200_OK
-        )
+    search_fields = [
+        "name", "start_location", "end_location",
+        "agency__company_name", "price", "region", "categories"
+    ]
+    ordering_fields = ["price", "created_at", "duration_days"]
 
     def perform_create(self, serializer):
-        agency = getattr(self.request.user, 'agency_profile', None)
+        """Ràng buộc agency hợp lệ trước khi lưu."""
+        agency = getattr(self.request.user, "agency_profile", None)
         if not agency:
             raise PermissionDenied("Bạn chưa đăng ký agency.")
-
-        if agency.status != 'approved' or not agency.verified:
-            if agency.status == 'pending':
+        if agency.status != "approved" or not agency.verified:
+            if agency.status == "pending":
                 raise PermissionDenied("Agency của bạn đang chờ duyệt. Không thể tạo tour.")
-            elif agency.status == 'rejected':
+            elif agency.status == "rejected":
                 raise PermissionDenied(f"Agency của bạn đã bị từ chối. Lý do: {agency.reason_rejected}")
             else:
                 raise PermissionDenied("Agency của bạn chưa được duyệt. Không thể tạo tour.")
-
         serializer.save(agency=agency)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer = self.get_serializer(data=request.data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            tour = serializer.instance
+
+            return Response(
+                {"data": self.get_serializer(tour).data, "message": "Tạo tour thành công."},
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            traceback.print_exc()
+            detail = {"error": str(e)}
+            if isinstance(e, ClientError):
+                detail = {
+                    "error_code": e.response.get("Error", {}).get("Code"),
+                    "error_msg": e.response.get("Error", {}).get("Message"),
+                    "request_id": e.response.get("ResponseMetadata", {}).get("RequestId"),
+                }
+            return Response({"error": "Đã xảy ra lỗi nội bộ.", "detail": detail}, status=500)
+
+
+# API đăng ảnh tour
+class TourImageUploadView(generics.GenericAPIView):
+    serializer_class = TourImageUploadSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    def post(self, request, tour_id):
+        try:
+            tour = Tour.objects.get(tour_id=tour_id)
+        except Tour.DoesNotExist:
+            return Response(
+                {
+                    "message":"Không tìm thấy tour",
+                },
+                status = status.HTTP_400_BAD_REQUEST
+            )
+        serializer = self.get_serializer(data=request.data, context={"tour":tour})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        serializer.save()
         return Response(
             {
-                "data": serializer.data,
-                "message": "Tạo tour thành công."
+                    "message":"Tải ảnh lên thành công",
+                    "data": [request.build_absolute_uri(img.image.url) for img in serializer.instance]
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_200_OK
         )
-
 # API Chi tiết / sửa / xoá tour
 class TourDetailAgencyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Tour.objects.all().select_related('agency')
     serializer_class = TourSerializer
     permission_classes = [IsAgencyOwnerOrReadOnly]
     lookup_field = 'tour_id'
+    parser_classes = (MultiPartParser, FormParser)   # <-- nhận form-data cho UPDATE
 
-    # GET - Lấy chi tiết tour
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        return Response({
-            "data": serializer.data,
-            "message": "Lấy chi tiết tour thành công."
-        }, status=status.HTTP_200_OK)
+        return Response({"data": serializer.data, "message": "Lấy chi tiết tour thành công."}, status=status.HTTP_200_OK)
 
-    # PUT/PATCH - Cập nhật tour
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        try:
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response({"data": serializer.data, "message": "Cập nhật tour thành công."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            traceback.print_exc()
+            detail = {"error": str(e)}
+            if isinstance(e, ClientError):
+                detail = {
+                    "error_code": e.response.get("Error", {}).get("Code"),
+                    "error_msg": e.response.get("Error", {}).get("Message"),
+                    "request_id": e.response.get("ResponseMetadata", {}).get("RequestId"),
+                }
+            return Response({"error": "Đã xảy ra lỗi nội bộ.", "detail": detail}, status=500)
 
-        return Response({
-            "data": serializer.data,
-            "message": "Cập nhật tour thành công."
-        }, status=status.HTTP_200_OK)
-
-    # DELETE - Xoá tour
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({
-            "message": "Xóa tour thành công."
-        }, status=status.HTTP_200_OK)
+        return Response({"message": "Xóa tour thành công."}, status=status.HTTP_200_OK)
 # API Lấy danh sách tour của chính agency (tiện cho dashboard)
 class MyToursView(generics.ListAPIView):
     serializer_class = TourSerializer
