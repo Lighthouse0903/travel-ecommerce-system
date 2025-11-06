@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import NotFound
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import AgencyApplySerializer, AgencySerializer
 from .models import Agency
 from rest_framework.response import Response
@@ -7,19 +8,21 @@ from rest_framework.response import Response
 class AgencyApplyView(generics.CreateAPIView):
     serializer_class = AgencyApplySerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        agency = serializer.save()
-
-        return Response(
-            {
-                "data": self.get_serializer(agency).data,
-                "message": "Gửi hồ sơ đại lý thành công. Vui lòng chờ xác minh."
-            },
-            status=status.HTTP_201_CREATED
-        )
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            agency = serializer.save()
+            return Response(
+                {"data": self.get_serializer(agency).data, "message": "Gửi hồ sơ đại lý thành công."},
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=500)
 class MyAgencyView(generics.RetrieveUpdateAPIView):
     serializer_class = AgencySerializer
     permission_classes = [permissions.IsAuthenticated]

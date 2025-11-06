@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from .models import Tour
-from .serializers import TourSerializer, TourPublicSerializer, TourImageUploadSerializer
+from .serializers import TourSerializer, TourPublicSerializer
 from .permissions import IsAgencyOwnerOrReadOnly, IsAgencyUser
 import traceback
 from botocore.exceptions import ClientError
@@ -23,7 +23,6 @@ class TourListCreateView(generics.ListCreateAPIView):
     ordering_fields = ["price", "created_at", "duration_days"]
 
     def perform_create(self, serializer):
-        """Ràng buộc agency hợp lệ trước khi lưu."""
         agency = getattr(self.request.user, "agency_profile", None)
         if not agency:
             raise PermissionDenied("Bạn chưa đăng ký agency.")
@@ -42,12 +41,10 @@ class TourListCreateView(generics.ListCreateAPIView):
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             tour = serializer.instance
-
             return Response(
                 {"data": self.get_serializer(tour).data, "message": "Tạo tour thành công."},
                 status=status.HTTP_201_CREATED,
             )
-
         except Exception as e:
             traceback.print_exc()
             detail = {"error": str(e)}
@@ -60,31 +57,6 @@ class TourListCreateView(generics.ListCreateAPIView):
             return Response({"error": "Đã xảy ra lỗi nội bộ.", "detail": detail}, status=500)
 
 
-# API đăng ảnh tour
-class TourImageUploadView(generics.GenericAPIView):
-    serializer_class = TourImageUploadSerializer
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
-    def post(self, request, tour_id):
-        try:
-            tour = Tour.objects.get(tour_id=tour_id)
-        except Tour.DoesNotExist:
-            return Response(
-                {
-                    "message":"Không tìm thấy tour",
-                },
-                status = status.HTTP_400_BAD_REQUEST
-            )
-        serializer = self.get_serializer(data=request.data, context={"tour":tour})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            {
-                    "message":"Tải ảnh lên thành công",
-                    "data": [request.build_absolute_uri(img.image.url) for img in serializer.instance]
-            },
-            status=status.HTTP_200_OK
-        )
 # API Chi tiết / sửa / xoá tour
 class TourDetailAgencyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Tour.objects.all().select_related('agency')
