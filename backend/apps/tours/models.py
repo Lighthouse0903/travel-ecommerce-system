@@ -3,7 +3,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 import uuid, os
-from django.db.models import Q, CheckConstraint, F
+from django.db.models import Q, CheckConstraint, F, UniqueConstraint
+from django.db.models.functions import Lower
 class Tour(models.Model):
     tour_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -73,6 +74,14 @@ class Tour(models.Model):
             CheckConstraint(
                 check=Q(discount_price__isnull=True) | Q(discount_price__lte=F('price')),
                 name='discount_lte_price'
+            ),
+            UniqueConstraint(
+                F('agency'),
+                Lower('name'),
+                Lower('start_location'),
+                Lower('end_location'),
+                F('duration_days'),
+                name='uniq_tour_agency_name_route_days_ci',
             ),
         ]
 

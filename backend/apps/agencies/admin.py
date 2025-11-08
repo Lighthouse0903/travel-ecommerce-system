@@ -28,9 +28,9 @@ class RejectForm(forms.Form):
 class AgencyAdmin(admin.ModelAdmin):
     form = AgencyAdminForm
 
-    list_display = ('company_name', 'user', 'license_number', 'status', 'verified', 'created_at')
+    list_display = ('agency_name', 'user', 'license_number', 'status', 'verified', 'created_at')
     list_filter = ('status', 'verified')
-    search_fields = ('company_name', 'user__username', 'license_number')
+    search_fields = ('agency_name', 'user__username', 'license_number')
     actions = ['approve_agencies', 'reject_agencies']
 
     def save_model(self, request, obj, form, change):
@@ -43,7 +43,7 @@ class AgencyAdmin(admin.ModelAdmin):
         if change and old_status != obj.status:
             recipient = obj.email_agency or (obj.user.email if getattr(obj, "user", None) else None)
             if not recipient:
-                self.message_user(request, f"No valid email for {obj.company_name}", messages.WARNING)
+                self.message_user(request, f"No valid email for {obj.agency_name}", messages.WARNING)
                 return
 
             if obj.status == 'approved':
@@ -55,7 +55,7 @@ class AgencyAdmin(admin.ModelAdmin):
                     try:
                         send_mail(
                             subject="Agency Registration Approved",
-                            message=f"Dear {obj.company_name}, your registration has been approved.",
+                            message=f"Dear {obj.agency_name}, your registration has been approved.",
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             recipient_list=[recipient],
                             fail_silently=False,
@@ -73,7 +73,7 @@ class AgencyAdmin(admin.ModelAdmin):
                     try:
                         send_mail(
                             subject="Agency Registration Rejected",
-                            message=f"Dear {obj.company_name}, your registration was rejected.\nReason: {obj.reason_rejected or ''}",
+                            message=f"Dear {obj.agency_name}, your registration was rejected.\nReason: {obj.reason_rejected or ''}",
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             recipient_list=[recipient],
                             fail_silently=False,
@@ -97,18 +97,18 @@ class AgencyAdmin(admin.ModelAdmin):
                     try:
                         send_mail(
                             subject="Agency Registration Approved",
-                            message=f"Dear {agency.company_name}, your registration has been approved.",
+                            message=f"Dear {agency.agency_name}, your registration has been approved.",
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             recipient_list=[recipient],
                             fail_silently=False,
                         )
                     except Exception as e:
-                        print(f"[ADMIN action] Approve mail failed ({agency.company_name}): {e}")
+                        print(f"[ADMIN action] Approve mail failed ({agency.agency_name}): {e}")
 
                 transaction.on_commit(send_approval_mail)
                 sent_count += 1
             else:
-                self.message_user(request, f"No valid email for {agency.company_name}", messages.WARNING)
+                self.message_user(request, f"No valid email for {agency.agency_name}", messages.WARNING)
 
         self.message_user(
             request,
@@ -134,18 +134,18 @@ class AgencyAdmin(admin.ModelAdmin):
                             try:
                                 send_mail(
                                     subject="Agency Registration Rejected",
-                                    message=f"Dear {agency.company_name}, your registration was rejected.\nReason: {reason}",
+                                    message=f"Dear {agency.agency_name}, your registration was rejected.\nReason: {reason}",
                                     from_email=settings.DEFAULT_FROM_EMAIL,
                                     recipient_list=[recipient],
                                     fail_silently=False,
                                 )
                             except Exception as e:
-                                print(f"[ADMIN action] Reject mail failed ({agency.company_name}): {e}")
+                                print(f"[ADMIN action] Reject mail failed ({agency.agency_name}): {e}")
 
                         transaction.on_commit(send_reject_mail)
                         sent_count += 1
                     else:
-                        self.message_user(request, f"No valid email for {agency.company_name}", messages.WARNING)
+                        self.message_user(request, f"No valid email for {agency.agency_name}", messages.WARNING)
 
                 self.message_user(
                     request,

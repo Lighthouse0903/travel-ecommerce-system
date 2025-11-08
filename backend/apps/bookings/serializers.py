@@ -78,7 +78,7 @@ class BookingHistorySerializer(serializers.ModelSerializer):
 class BookingDetailSerializer(serializers.ModelSerializer):
     tour_id = serializers.UUIDField(source="tour.tour_id", read_only=True)
     tour_name = serializers.CharField(source="tour.name", read_only=True)
-    agency_name = serializers.CharField(source="tour.agency.company_name", read_only=True)
+    agency_name = serializers.CharField(source="tour.agency.agency_name", read_only=True)
     start_location = serializers.CharField(source="tour.start_location", read_only=True)
     end_location = serializers.CharField(source="tour.end_location", read_only=True)
     price_per_person = serializers.SerializerMethodField()

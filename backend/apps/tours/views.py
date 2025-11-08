@@ -9,6 +9,8 @@ from .serializers import TourSerializer, TourPublicSerializer
 from .permissions import IsAgencyOwnerOrReadOnly, IsAgencyUser
 import traceback
 from botocore.exceptions import ClientError
+from rest_framework.exceptions import ValidationError
+from django.db import IntegrityError
 # API Lấy danh sách tất cả tour (public) + tạo tour (agency)
 class TourListCreateView(generics.ListCreateAPIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -18,7 +20,7 @@ class TourListCreateView(generics.ListCreateAPIView):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = [
         "name", "start_location", "end_location",
-        "agency__company_name", "price", "region", "categories"
+        "agency__agency_name", "price", "region", "categories"
     ]
     ordering_fields = ["price", "created_at", "duration_days"]
 
@@ -45,16 +47,39 @@ class TourListCreateView(generics.ListCreateAPIView):
                 {"data": self.get_serializer(tour).data, "message": "Tạo tour thành công."},
                 status=status.HTTP_201_CREATED,
             )
+
+        except ValidationError as e:
+            detail = e.detail if hasattr(e, "detail") else e.args
+            msg = detail.get("message") if isinstance(detail, dict) else None
+            return Response(
+                {"message": msg or "Dữ liệu không hợp lệ.", "errors": detail},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except IntegrityError as e:
+            return Response(
+                {"message": "Tour trùng (tên, tuyến, số ngày) đã tồn tại."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except ClientError as e:
+            return Response(
+                {
+                    "message": "Lỗi khi thao tác với S3.",
+                    "errors": {
+                        "error_code": e.response.get("Error", {}).get("Code"),
+                        "error_msg": e.response.get("Error", {}).get("Message"),
+                        "request_id": e.response.get("ResponseMetadata", {}).get("RequestId"),
+                    },
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
         except Exception as e:
-            traceback.print_exc()
-            detail = {"error": str(e)}
-            if isinstance(e, ClientError):
-                detail = {
-                    "error_code": e.response.get("Error", {}).get("Code"),
-                    "error_msg": e.response.get("Error", {}).get("Message"),
-                    "request_id": e.response.get("ResponseMetadata", {}).get("RequestId"),
-                }
-            return Response({"error": "Đã xảy ra lỗi nội bộ.", "detail": detail}, status=500)
+            return Response(
+                {"message": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 # API Chi tiết / sửa / xoá tour
@@ -131,7 +156,7 @@ class PublicTourListView(generics.ListAPIView):
         # ---- 1) Filter bằng DB ----
         agency = self.request.query_params.get("agency")
         if agency:
-            qs = qs.filter(agency__company_name__icontains=agency)
+            qs = qs.filter(agency__agency_name__icontains=agency)
 
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")

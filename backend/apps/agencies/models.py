@@ -30,7 +30,7 @@ class Agency(models.Model):
         on_delete=models.CASCADE,
         related_name='agency_profile'
     )
-    company_name = models.CharField(max_length=255)
+    agency_name = models.CharField(max_length=255)
     license_number = models.CharField(max_length=100, unique=True)
     hotline = models.CharField(max_length=20, blank=True, null=True)
     email_agency = models.EmailField(blank=True, null=True)

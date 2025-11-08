@@ -12,7 +12,7 @@ class TourImageSerializer(serializers.ModelSerializer):
 
 class TourSerializer(serializers.ModelSerializer):
     agency_id = serializers.UUIDField(source="agency.agency_id", read_only=True)
-    agency_name = serializers.CharField(source="agency.company_name", read_only=True)
+    agency_name = serializers.CharField(source="agency.agency_name", read_only=True)
     email_agency = serializers.EmailField(source="agency.email_agency", read_only=True)
     hotline = serializers.CharField(source="agency.hotline", read_only=True)
 
@@ -84,18 +84,27 @@ class TourSerializer(serializers.ModelSerializer):
     def validate_itinerary(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("itinerary phải là danh sách.")
-        for day in value:
+
+        for idx, day in enumerate(value, start=1):
+            if not isinstance(day, dict):
+                raise serializers.ValidationError(f"Phần tử itinerary thứ {idx} phải là object.")
             if not all(k in day for k in ["day", "title", "activities"]):
-                raise serializers.ValidationError("Mỗi ngày trong itinerary phải có day, title và activities.")
+                raise serializers.ValidationError(
+                    f"Ngày thứ {idx} phải có đủ các trường: day, title, activities."
+                )
             if not isinstance(day["activities"], list) or not day["activities"]:
-                raise serializers.ValidationError("activities phải là danh sách và không được rỗng.")
+                raise serializers.ValidationError(f"activities của ngày {idx} phải là danh sách và không rỗng.")
+
             acc = day.get("accommodation")
             if acc:
                 required_acc = ["hotel_name", "stars", "nights", "address"]
                 missing = [f for f in required_acc if f not in acc]
                 if missing:
-                    raise serializers.ValidationError(f"Thiếu trường trong accommodation: {', '.join(missing)}")
+                    raise serializers.ValidationError(
+                        f"Thiếu trong accommodation (ngày {idx}): {', '.join(missing)}"
+                    )
         return value
+
 
     def validate_policy(self, value):
         if not isinstance(value, dict):
@@ -131,10 +140,8 @@ class TourSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({f: "Giá trị phải là JSON hợp lệ."})
 
         raw_cat = self.initial_data.get("categories")
-
         if isinstance(raw_cat, str):
             try:
-                # Thử parse JSON trước
                 parsed = json.loads(raw_cat)
                 if isinstance(parsed, list):
                     attrs["categories"] = parsed
@@ -142,9 +149,11 @@ class TourSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({"categories": "Phải là danh sách JSON."})
             except Exception:
                 attrs["categories"] = [c.strip() for c in raw_cat.split(",") if c.strip()]
-
         elif isinstance(raw_cat, list):
             attrs["categories"] = raw_cat
+
+        if "is_active" not in attrs:
+            attrs["is_active"] = True
 
         price = attrs.get("price")
         discount_price = attrs.get("discount_price")
@@ -153,16 +162,66 @@ class TourSerializer(serializers.ModelSerializer):
 
         itinerary = attrs.get("itinerary")
         duration_days = attrs.get("duration_days")
-        if itinerary and duration_days and len(itinerary) != duration_days:
-            raise serializers.ValidationError({
-                "itinerary": f"Số ngày trong itinerary ({len(itinerary)}) phải bằng duration_days ({duration_days})."
-            })
+        if itinerary is not None and duration_days is not None:
+            n = len(itinerary)
+            if n != duration_days:
+                raise serializers.ValidationError({
+                    "itinerary": f"Số ngày trong itinerary ({n}) phải bằng duration_days ({duration_days})."
+                })
 
+            try:
+                days = [int(d["day"]) for d in itinerary]
+            except Exception:
+                raise serializers.ValidationError({"itinerary": "Mỗi day phải là số nguyên."})
+
+            expected = set(range(1, duration_days + 1))
+            actual = set(days)
+            if actual != expected:
+                missing = sorted(list(expected - actual))
+                extra = sorted(list(actual - expected))
+                problems = []
+                if missing:
+                    problems.append(f"thiếu các ngày: {missing}")
+                if extra:
+                    problems.append(f"thừa các ngày: {extra}")
+                raise serializers.ValidationError({
+                    "itinerary": f"Lịch trình phải gồm đủ ngày 1..{duration_days}; {', '.join(problems)}."
+                })
+
+            if len(days) != len(set(days)):
+                dupes = sorted(list({d for d in days if days.count(d) > 1}))
+                raise serializers.ValidationError({
+                    "itinerary": f"Bị trùng các ngày: {dupes}."
+                })
+        request = self.context.get("request")
+        agency = getattr(getattr(request, "user", None), "agency_profile", None)
+
+        if agency:
+            name = attrs.get("name")
+            start_loc = attrs.get("start_location")
+            end_loc = attrs.get("end_location")
+            duration = attrs.get("duration_days")
+
+            if all([name, start_loc, end_loc, duration]):
+                dup_qs = Tour.objects.filter(
+                    agency=agency,
+                    name__iexact=name,
+                    start_location__iexact=start_loc,
+                    end_location__iexact=end_loc,
+                    duration_days=duration,
+                )
+                # Nếu là update, loại chính nó
+                if self.instance and getattr(self.instance, 'pk', None):
+                    dup_qs = dup_qs.exclude(pk=self.instance.pk)
+
+                if dup_qs.exists():
+                    raise serializers.ValidationError({
+                        "message": "Tour trùng (tên, tuyến, số ngày) đã tồn tại trong agency của bạn."
+                    })
         return attrs
 
-
 class TourPublicSerializer(serializers.ModelSerializer):
-    agency_name = serializers.CharField(source="agency.company_name", read_only=True)
+    agency_name = serializers.CharField(source="agency.agency_name", read_only=True)
 
     class Meta:
         model = Tour

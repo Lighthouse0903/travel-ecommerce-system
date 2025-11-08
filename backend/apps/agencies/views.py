@@ -4,6 +4,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import AgencyApplySerializer, AgencySerializer
 from .models import Agency
 from rest_framework.response import Response
+import logging, traceback
+from rest_framework.exceptions import ValidationError
+from django.db import IntegrityError
+logger = logging.getLogger(__name__)
 
 class AgencyApplyView(generics.CreateAPIView):
     serializer_class = AgencyApplySerializer
@@ -16,13 +20,31 @@ class AgencyApplyView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             agency = serializer.save()
             return Response(
-                {"data": self.get_serializer(agency).data, "message": "Gửi hồ sơ đại lý thành công."},
+                {"data": self.get_serializer(agency).data,
+                 "message": "Gửi hồ sơ đại lý thành công."},
                 status=status.HTTP_201_CREATED
             )
+
+        except ValidationError as ve:
+            logger.warning("Agency register validation error: %s", ve.detail)
+            detail = ve.detail
+            msg = None
+            if isinstance(detail, dict) and "message" in detail:
+                msg = detail["message"]
+            else:
+                msg = str(detail)
+            return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        except IntegrityError as ie:
+            logger.exception("Agency register integrity error")
+            return Response(
+                {"message": "Dữ liệu đã tồn tại (email/hotline/license_number)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return Response({"error": str(e)}, status=500)
+            logger.exception("Agency register unexpected error")
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class MyAgencyView(generics.RetrieveUpdateAPIView):
     serializer_class = AgencySerializer
     permission_classes = [permissions.IsAuthenticated]
