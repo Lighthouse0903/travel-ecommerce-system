@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from .models import Tour
-from .serializers import TourSerializer, TourPublicSerializer
+from .serializers import TourSerializer, TourPublicSerializer, TourListItemSerializer
 from .permissions import IsAgencyOwnerOrReadOnly, IsAgencyUser
 import traceback
 from botocore.exceptions import ClientError
@@ -120,29 +120,31 @@ class TourDetailAgencyView(generics.RetrieveUpdateDestroyAPIView):
         return Response({"message": "Xóa tour thành công."}, status=status.HTTP_200_OK)
 # API Lấy danh sách tour của chính agency (tiện cho dashboard)
 class MyToursView(generics.ListAPIView):
-    serializer_class = TourSerializer
+    serializer_class = TourListItemSerializer
     permission_classes = [permissions.IsAuthenticated, IsAgencyUser]
 
     def get_queryset(self):
         agency = self.request.user.agency_profile
-        return Tour.objects.filter(agency=agency).select_related('agency')
+        # prefetch images để get_image_url không bị N+1
+        return (
+            Tour.objects.filter(agency=agency)
+            .select_related('agency')
+            .prefetch_related('images')
+            .only(
+                "tour_id", "name", "categories", "description", "price",
+                "discount_price", "duration_days", "destination", "agency_id"
+            )
+            .order_by("-created_at")
+        )
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-
-        # Nếu không có tour nào
-        if not queryset.exists():
-            return Response({
-                "data": [],
-                "message": "Bạn chưa có tour nào được tạo."
-            }, status=status.HTTP_200_OK)
-
-        # Nếu có tour
-        return Response({
-            "data": serializer.data,
-            "message": "Lấy danh sách tour của bạn thành công."
-        }, status=status.HTTP_200_OK)
+        qs = self.get_queryset()
+        data = self.get_serializer(qs, many=True).data
+        return Response(
+            {"data": data, "message": ("Bạn chưa có tour nào được tạo." if not qs.exists()
+                                       else "Lấy danh sách tour của bạn thành công.")},
+            status=status.HTTP_200_OK
+        )
 
 # API Lấy, tìm kiếm danh sách public tour
 class PublicTourListView(generics.ListAPIView):

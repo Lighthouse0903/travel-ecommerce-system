@@ -55,4 +55,4 @@ class Agency(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.company_name} (Owner: {self.user.username})"
+        return f"{self.agency_name} (Owner: {self.user.username})"
