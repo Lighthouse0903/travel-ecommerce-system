@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from .models import Tour
-from .serializers import TourSerializer, TourPublicListSerializer, TourListItemSerializer
+from .serializers import TourSerializer, TourPublicDetailSerializer, TourListItemSerializer
 from .permissions import IsAgencyOwnerOrReadOnly, IsAgencyUser
 import traceback
 from botocore.exceptions import ClientError
@@ -148,7 +148,7 @@ class MyToursView(generics.ListAPIView):
 
 # API Lấy, tìm kiếm danh sách public tour
 class PublicTourListView(generics.ListAPIView):
-    serializer_class = TourPublicListSerializer
+    serializer_class = TourPublicDetailSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
@@ -233,19 +233,24 @@ class PublicTourListView(generics.ListAPIView):
 
 # API chọn xem chi tiết tour
 class TourDetailCustomerView(generics.RetrieveAPIView):
-    queryset = Tour.objects.filter(is_active=True).select_related("agency")
-    serializer_class = TourPublicListSerializer
+    queryset = (
+        Tour.objects
+        .filter(is_active=True)
+        .select_related("agency")
+        .prefetch_related("images")
+    )
+    serializer_class = TourPublicDetailSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "tour_id"
 
     def retrieve(self, request, *args, **kwargs):
-        """Ghi đè lại để custom response format"""
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(
             {
                 "data": serializer.data,
-                "message": "Lấy thông tin tour thành công."
+                "message": "Lấy chi tiết tour thành công."
             },
             status=status.HTTP_200_OK
         )
+

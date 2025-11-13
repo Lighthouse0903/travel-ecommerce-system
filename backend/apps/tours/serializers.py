@@ -246,29 +246,35 @@ class TourListItemSerializer(serializers.ModelSerializer):
         return first_img.image.url if first_img and getattr(first_img.image, "url", None) else None
 
 
-class TourPublicListSerializer(serializers.ModelSerializer):
+class TourPublicDetailSerializer(serializers.ModelSerializer):
+    agency_id = serializers.UUIDField(source="agency.agency_id", read_only=True)
     agency_name = serializers.CharField(source="agency.agency_name", read_only=True)
-    categories = serializers.ListField(child=serializers.CharField(), read_only=True)
-    image_url = serializers.SerializerMethodField()
+    email_agency = serializers.EmailField(source="agency.email_agency", read_only=True)
+    hotline = serializers.CharField(source="agency.hotline", read_only=True)
+
+    # DRF tự map ArrayField -> list, JSONField -> object/list, nên không cần override
+    image_urls = TourImageSerializer(source="images", many=True, read_only=True)
 
     class Meta:
         model = Tour
         fields = [
             "tour_id",
-            "name",
-            "categories",
-            "description",
-            "price",
-            "discount_price",
+            "agency_id", "agency_name", "email_agency", "hotline",
+            "name", "description",
+            "price", "discount_price",
             "duration_days",
             "destination",
-            "rating",
-            "reviews_count",
-            "image_url",
-            "agency_name",
+            "start_location", "end_location",
+            "rating", "reviews_count",
+            "region", "categories",
+            "pickup_points", "itinerary",
+            "transportation",
+            "services_included", "services_excluded",
+            "policy", "guide",
+            "is_active",
+            "created_at", "updated_at",
+            "image_urls",
         ]
+        read_only_fields = fields
 
-    def get_image_url(self, obj):
-        first_img = obj.images.first()
-        return first_img.image.url if first_img and getattr(first_img.image, "url", None) else None
 
