@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from .models import Tour
-from .serializers import TourSerializer, TourPublicSerializer, TourListItemSerializer
+from .serializers import TourSerializer, TourPublicListSerializer, TourListItemSerializer
 from .permissions import IsAgencyOwnerOrReadOnly, IsAgencyUser
 import traceback
 from botocore.exceptions import ClientError
@@ -148,18 +148,23 @@ class MyToursView(generics.ListAPIView):
 
 # API Lấy, tìm kiếm danh sách public tour
 class PublicTourListView(generics.ListAPIView):
-    queryset = Tour.objects.filter(is_active=True).select_related('agency')
-    serializer_class = TourPublicSerializer
+    serializer_class = TourPublicListSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = (
+            Tour.objects.filter(is_active=True)
+            .select_related("agency")
+            .prefetch_related("images")
+            .order_by("-created_at")
+        )
 
-        # ---- 1) Filter bằng DB ----
+        # --- 1) Lọc theo agency ---
         agency = self.request.query_params.get("agency")
         if agency:
             qs = qs.filter(agency__agency_name__icontains=agency)
 
+        # --- 2) Lọc theo giá ---
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
         if min_price:
@@ -167,6 +172,7 @@ class PublicTourListView(generics.ListAPIView):
         if max_price:
             qs = qs.filter(price__lte=max_price)
 
+        # --- 3) Lọc theo địa điểm ---
         start_location = self.request.query_params.get("start_location")
         end_location = self.request.query_params.get("end_location")
         if start_location:
@@ -174,6 +180,7 @@ class PublicTourListView(generics.ListAPIView):
         if end_location:
             qs = qs.filter(end_location__icontains=end_location)
 
+        # --- 4) Lọc theo region ---
         region_param = self.request.query_params.get("region")
         if region_param:
             alias = {"north": Tour.NORTH, "central": Tour.CENTRAL, "south": Tour.SOUTH}
@@ -187,13 +194,14 @@ class PublicTourListView(generics.ListAPIView):
             if region_vals:
                 qs = qs.filter(region__in=region_vals)
 
+        # --- 5) Lọc theo category ---
         cat_param = self.request.query_params.get("category") or self.request.query_params.get("categories")
         if cat_param:
             cats = [c.strip().lower() for c in cat_param.split(",") if c.strip()]
             if cats:
                 qs = qs.filter(categories__overlap=cats)
 
-        # ---- 2) Tìm không dấu ----
+        # --- 6) Tìm kiếm không dấu ---
         q = self.request.query_params.get("q")
         if q:
             from unidecode import unidecode
@@ -205,6 +213,7 @@ class PublicTourListView(generics.ListAPIView):
                 or q_un in unidecode(t.start_location).lower()
                 or q_un in unidecode(t.end_location).lower()
             ]
+
         return qs
 
     def list(self, request, *args, **kwargs):
@@ -221,10 +230,11 @@ class PublicTourListView(generics.ListAPIView):
             "message": "Lấy danh sách tour thành công."
         }, status=status.HTTP_200_OK)
 
+
 # API chọn xem chi tiết tour
 class TourDetailCustomerView(generics.RetrieveAPIView):
     queryset = Tour.objects.filter(is_active=True).select_related("agency")
-    serializer_class = TourPublicSerializer
+    serializer_class = TourPublicListSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "tour_id"
 

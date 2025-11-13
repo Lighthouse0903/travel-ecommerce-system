@@ -2,30 +2,45 @@ from rest_framework import generics, permissions, status
 from .models import Review
 from .serializers import ReviewCreateSerializer, ReviewListItemSerializer, ReviewUpdateSerializer
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+from django.db import IntegrityError
 class CreateReviewView(generics.CreateAPIView):
     serializer_class = ReviewCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        ser = self.get_serializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        review = ser.save()
+        try:
+            ser = self.get_serializer(data=request.data)
+            ser.is_valid(raise_exception=True)
+            review = ser.save()
 
-        data = {
-            "review_id": str(review.review_id),
-            "booking_id": str(review.booking.booking_id),
-            "rating": review.rating,
-            "comment": review.comment,
-            "created_at": review.created_at,
-        }
+            data = {
+                "review_id": str(review.review_id),
+                "booking_id": str(review.booking.booking_id),
+                "rating": review.rating,
+                "comment": review.comment,
+                "created_at": review.created_at,
+            }
+            return Response(
+                {"message": "Đánh giá của bạn đã được ghi nhận thành công.", "data": data},
+                status=status.HTTP_201_CREATED,
+            )
 
-        return Response(
-            {
-                "message": "Đánh giá của bạn đã được ghi nhận thành công.",
-                "data": data,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        except ValidationError as e:
+            # Lỗi dữ liệu → 400
+            detail = e.detail if hasattr(e, "detail") else {"message": str(e)}
+            return Response({"message": "Dữ liệu không hợp lệ.", "errors": detail},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        except IntegrityError:
+            # Nếu có UniqueConstraint(booking)
+            return Response({"message": "Booking này đã được đánh giá rồi."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            # Lỗi bất ngờ → 500, trả message cụ thể để debug nhanh
+            return Response({"message": f"Lỗi nội bộ: {type(e).__name__}: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class TourReviewsListView(generics.ListAPIView):
     serializer_class = ReviewListItemSerializer
     permission_classes = [permissions.AllowAny]

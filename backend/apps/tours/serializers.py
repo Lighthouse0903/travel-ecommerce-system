@@ -220,6 +220,7 @@ class TourSerializer(serializers.ModelSerializer):
                     })
         return attrs
 
+
 class TourListItemSerializer(serializers.ModelSerializer):
     image_urls = serializers.SerializerMethodField()
     categories = serializers.ListField(child=serializers.CharField(), read_only=True)
@@ -235,6 +236,8 @@ class TourListItemSerializer(serializers.ModelSerializer):
             "discount_price",
             "duration_days",
             "destination",
+            "rating",
+            "reviews_count",
             "image_urls",
         ]
 
@@ -243,19 +246,29 @@ class TourListItemSerializer(serializers.ModelSerializer):
         return first_img.image.url if first_img and getattr(first_img.image, "url", None) else None
 
 
-class TourPublicSerializer(serializers.ModelSerializer):
+class TourPublicListSerializer(serializers.ModelSerializer):
     agency_name = serializers.CharField(source="agency.agency_name", read_only=True)
+    categories = serializers.ListField(child=serializers.CharField(), read_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
         fields = [
-            "tour_id", "name", "description",
-            "price", "duration_days",
-            "start_location", "end_location",
-            "rating", "region", "categories",
-            "is_active",
-            "agency", "agency_name",
-            "created_at",
+            "tour_id",
+            "name",
+            "categories",
+            "description",
+            "price",
+            "discount_price",
+            "duration_days",
+            "destination",
+            "rating",
+            "reviews_count",
+            "image_url",
+            "agency_name",
         ]
-        read_only_fields = fields
+
+    def get_image_url(self, obj):
+        first_img = obj.images.first()
+        return first_img.image.url if first_img and getattr(first_img.image, "url", None) else None
 

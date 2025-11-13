@@ -22,7 +22,9 @@ class Payment(models.Model):
     paid_at      = models.DateTimeField(blank=True, null=True)
     created_at   = models.DateTimeField(auto_now_add=True)
     updated_at   = models.DateTimeField(auto_now=True)
-
+    transaction_id = models.CharField(max_length=255, blank=True, null=True)
+    extra_data = models.JSONField(blank=True, null=True)
+    pay_url = models.URLField(max_length=500, blank=True, null=True)
     class Meta:
         db_table = 'payments_payment'
         ordering = ['-created_at']

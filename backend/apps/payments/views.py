@@ -7,34 +7,42 @@ from .models import Payment
 from ..bookings.models import Booking
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+import traceback
 # API Khởi tạo thanh toán
 class InitPaymentView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PaymentInitSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        payment = serializer.save()
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            payment = serializer.save()
 
-        checkout_url = f"https://sandbox.example/checkout/{payment.payment_id}"
+            data = {
+                "payment_id": str(payment.payment_id),
+                "booking_id": str(payment.booking.booking_id),
+                "amount": str(payment.amount),
+                "status": payment.status,
+                "provider": payment.provider,
+                "pay_url": payment.pay_url,
+            }
 
-        data = {
-            "payment_id": str(payment.payment_id),
-            "booking_id": str(payment.booking.booking_id),
-            "amount": str(payment.amount),
-            "status": payment.status,
-            "provider": payment.provider,
-            "checkout_url": checkout_url,
-        }
+            return Response(
+                {
+                    "data": data,
+                    "message": "Khởi tạo thanh toán thành công."
+                },
+                status=status.HTTP_201_CREATED
+            )
 
-        return Response(
-            {
-                "data": data,
-                "message": "Khởi tạo thanh toán thành công."
-            },
-            status=status.HTTP_201_CREATED
-        )
+        except Exception as e:
+            print("LỖI TRONG API KHỞI TẠO THANH TOÁN:")
+            traceback.print_exc()  # In lỗi chi tiết ra terminal
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # API Xác nhận thanh toán
 @method_decorator(csrf_exempt, name='dispatch')

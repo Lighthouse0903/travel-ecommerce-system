@@ -225,3 +225,10 @@ AWS_S3_OBJECT_PARAMETERS = {
     'ServerSideEncryption': 'AES256',   # SSE-S3
     'CacheControl': 'max-age=86400',
 }
+
+MOMO_PARTNER_CODE = os.getenv("MOMO_PARTNER_CODE")
+MOMO_ACCESS_KEY = os.getenv("MOMO_ACCESS_KEY")
+MOMO_SECRET_KEY = os.getenv("MOMO_SECRET_KEY")
+MOMO_API_ENDPOINT = os.getenv("MOMO_API_ENDPOINT")
+MOMO_REDIRECT_URL = os.getenv("MOMO_REDIRECT_URL")
+MOMO_IPN_URL = os.getenv("MOMO_IPN_URL")
