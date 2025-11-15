@@ -20,13 +20,10 @@ class CreateBookingView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         booking = serializer.save()
 
-        # Serialize lại kết quả vừa tạo (để hiển thị đầy đủ dữ liệu)
-        response_serializer = self.get_serializer(booking)
-
         return Response({
-            "data": response_serializer.data,
+            "data": self.get_serializer(booking).data,
             "message": "Đặt tour thành công, chờ thanh toán"
-        }, status=status.HTTP_201_CREATED)
+        }, status=201)
 
 
 # API Xem danh sách tour người dùng đã book
@@ -39,10 +36,18 @@ class MyBookingListView(generics.ListAPIView):
         customer = Customer.objects.filter(user=user).first()
         if not customer:
             raise PermissionDenied("Chỉ Customer mới xem được danh sách đặt tour của mình.")
-        return Booking.objects.filter(customer=customer).select_related("tour").order_by("-booking_date")
+
+        return (
+            Booking.objects
+            .filter(customer=customer)
+            .select_related("tour")
+            .prefetch_related("tour__images")
+            .order_by("-booking_date")
+        )
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+
         if not queryset.exists():
             return Response({
                 "data": [],
@@ -54,6 +59,7 @@ class MyBookingListView(generics.ListAPIView):
             "data": serializer.data,
             "message": "Lấy danh sách lịch sử đặt tour thành công."
         }, status=status.HTTP_200_OK)
+
 
 # API xem chi tiết tour đã book
 
@@ -67,30 +73,29 @@ class MyBookingDetailView(generics.RetrieveAPIView):
         customer = Customer.objects.filter(user=user).first()
         if not customer:
             raise PermissionDenied("Chỉ tài khoản Customer mới xem được chi tiết booking.")
-        return Booking.objects.filter(customer=customer).select_related("tour", "tour__agency")
+
+        return (
+            Booking.objects
+            .filter(customer=customer)
+            .select_related("tour", "tour__agency")
+            .prefetch_related("tour__images")
+        )
 
     def retrieve(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        booking_id = self.kwargs.get("booking_id")
+        booking = self.get_queryset().filter(booking_id=kwargs["booking_id"]).first()
 
-        booking = queryset.filter(booking_id=booking_id).first()
         if not booking:
             return Response(
-                {
-                    "data": None,
-                    "message": "Không tìm thấy thông tin booking của bạn."
-                },
+                {"data": None, "message": "Không tìm thấy thông tin booking của bạn."},
                 status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = self.get_serializer(booking)
         return Response(
-            {
-                "data": serializer.data,
-                "message": "Lấy chi tiết booking thành công."
-            },
+            {"data": serializer.data, "message": "Lấy chi tiết booking thành công."},
             status=status.HTTP_200_OK
         )
+
 
 # API Agency xem các tour đã được book
 class AgencyBookingListView(generics.ListAPIView):
@@ -102,10 +107,12 @@ class AgencyBookingListView(generics.ListAPIView):
         agency = Agency.objects.filter(user=user).first()
         if not agency:
             raise PermissionDenied("Chỉ tài khoản Agency mới xem được danh sách đơn của mình.")
+
         return (
             Booking.objects
             .filter(tour__agency=agency)
-            .select_related('tour', 'customer__user')
+            .select_related('tour', 'tour__agency', 'customer__user')
+            .prefetch_related('tour__images')
             .order_by('-booking_date')
         )
 
@@ -113,21 +120,15 @@ class AgencyBookingListView(generics.ListAPIView):
         queryset = self.get_queryset()
         if not queryset.exists():
             return Response(
-                {
-                    "data": [],
-                    "message": "Hiện chưa có đơn đặt tour nào."
-                },
+                {"data": [], "message": "Hiện chưa có đơn đặt tour nào."},
                 status=status.HTTP_200_OK
             )
-
         serializer = self.get_serializer(queryset, many=True)
         return Response(
-            {
-                "data": serializer.data,
-                "message": "Lấy danh sách đơn đặt tour thành công."
-            },
+            {"data": serializer.data, "message": "Lấy danh sách đơn đặt tour thành công."},
             status=status.HTTP_200_OK
         )
+
 
 # API Agency duyệt booking tour
 class AgencyUpdateBookingStatusView(generics.UpdateAPIView):

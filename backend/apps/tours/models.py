@@ -18,8 +18,25 @@ class Tour(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
 
-    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
-    discount_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    adult_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
+    children_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
+    discount = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        blank=True,
+        null=True,
+        help_text="Giảm giá theo phần trăm (%)"
+    )
+
     duration_days = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
 
     start_location = models.CharField(max_length=255)
@@ -32,19 +49,26 @@ class Tour(models.Model):
         default=0
     )
     reviews_count = models.PositiveIntegerField(default=0)
+
     NORTH, CENTRAL, SOUTH = 1, 2, 3
     REGION_CHOICES = [
         (NORTH, 'Miền Bắc'),
         (CENTRAL, 'Miền Trung'),
         (SOUTH, 'Miền Nam'),
     ]
+
+    region = models.IntegerField(choices=REGION_CHOICES)
+
     CATEGORY_CHOICES = [
         ('sea', 'Biển'), ('mountain', 'Núi'),
         ('resort', 'Nghỉ dưỡng'), ('adventure', 'Khám phá'),
         ('cultural', 'Văn hoá'), ('history', 'Lịch sử'),
     ]
-    region = models.IntegerField(choices=REGION_CHOICES, blank=False, null=False)
-    categories = ArrayField(models.CharField(max_length=30, choices=CATEGORY_CHOICES), default=list, blank=True)
+
+    categories = ArrayField(
+        models.CharField(max_length=30, choices=CATEGORY_CHOICES),
+        default=list, blank=True
+    )
 
     pickup_points = models.JSONField(default=list, blank=True)
     itinerary = models.JSONField(default=list, blank=True)
@@ -63,7 +87,8 @@ class Tour(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['name']),
-            models.Index(fields=['price']),
+            models.Index(fields=['adult_price']),
+            models.Index(fields=['children_price']),
             models.Index(fields=['region']),
             models.Index(fields=['created_at']),
             GinIndex(name='tour_categories_gin', fields=['categories']),
@@ -71,10 +96,6 @@ class Tour(models.Model):
             GinIndex(name='tour_policy_gin', fields=['policy']),
         ]
         constraints = [
-            CheckConstraint(
-                check=Q(discount_price__isnull=True) | Q(discount_price__lte=F('price')),
-                name='discount_lte_price'
-            ),
             UniqueConstraint(
                 F('agency'),
                 Lower('name'),
@@ -82,6 +103,10 @@ class Tour(models.Model):
                 Lower('end_location'),
                 F('duration_days'),
                 name='uniq_tour_agency_name_route_days_ci',
+            ),
+            CheckConstraint(
+                check=Q(discount__isnull=True) | Q(discount__gte=0),
+                name='discount_gte_zero'
             ),
         ]
 

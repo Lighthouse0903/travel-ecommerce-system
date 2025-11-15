@@ -33,18 +33,23 @@ class TourSerializer(serializers.ModelSerializer):
         fields = [
             "tour_id",
             "agency_id", "agency_name", "email_agency", "hotline",
-            "name", "description", "price", "discount_price",
+            "name", "description",
+            "adult_price", "children_price", "discount",
             "duration_days", "destination", "start_location", "end_location",
             "rating", "reviews_count", "region", "categories",
             "pickup_points", "itinerary", "transportation",
             "services_included", "services_excluded", "policy", "guide",
             "is_active", "created_at", "updated_at", "images", "image_urls"
         ]
+
         read_only_fields = [
             "tour_id", "agency_id", "agency_name", "email_agency", "hotline",
             "created_at", "updated_at", "rating", "reviews_count"
         ]
 
+    # ---------------------------
+    # IMAGE SAVE
+    # ---------------------------
     def _save_image_to_s3(self, instance, f):
         try:
             f.seek(0)
@@ -73,6 +78,9 @@ class TourSerializer(serializers.ModelSerializer):
                 self._save_image_to_s3(instance, f)
         return instance
 
+    # ---------------------------
+    # VALIDATIONS
+    # ---------------------------
     def validate_pickup_points(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("pickup_points phải là danh sách.")
@@ -105,7 +113,6 @@ class TourSerializer(serializers.ModelSerializer):
                     )
         return value
 
-
     def validate_policy(self, value):
         if not isinstance(value, dict):
             raise serializers.ValidationError("policy phải là object.")
@@ -127,6 +134,9 @@ class TourSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        # ---------------------------
+        # Parse JSON strings → objects
+        # ---------------------------
         json_fields = [
             "pickup_points", "itinerary", "transportation",
             "services_included", "services_excluded", "policy", "guide"
@@ -139,6 +149,9 @@ class TourSerializer(serializers.ModelSerializer):
                 except Exception:
                     raise serializers.ValidationError({f: "Giá trị phải là JSON hợp lệ."})
 
+        # ---------------------------
+        # Parse categories
+        # ---------------------------
         raw_cat = self.initial_data.get("categories")
         if isinstance(raw_cat, str):
             try:
@@ -152,16 +165,19 @@ class TourSerializer(serializers.ModelSerializer):
         elif isinstance(raw_cat, list):
             attrs["categories"] = raw_cat
 
-        if "is_active" not in attrs:
+        # ---------------------------
+        # Default is_active
+        # ---------------------------
+        raw_is_active = self.initial_data.get("is_active", None)
+        if raw_is_active in (None, "", "null", "undefined"):
             attrs["is_active"] = True
 
-        price = attrs.get("price")
-        discount_price = attrs.get("discount_price")
-        if discount_price is not None and price is not None and discount_price > price:
-            raise serializers.ValidationError({"discount_price": "Giá giảm không được lớn hơn giá gốc."})
-
+        # ---------------------------
+        # Validate itinerary vs duration
+        # ---------------------------
         itinerary = attrs.get("itinerary")
         duration_days = attrs.get("duration_days")
+
         if itinerary is not None and duration_days is not None:
             n = len(itinerary)
             if n != duration_days:
@@ -176,6 +192,7 @@ class TourSerializer(serializers.ModelSerializer):
 
             expected = set(range(1, duration_days + 1))
             actual = set(days)
+
             if actual != expected:
                 missing = sorted(list(expected - actual))
                 extra = sorted(list(actual - expected))
@@ -188,11 +205,16 @@ class TourSerializer(serializers.ModelSerializer):
                     "itinerary": f"Lịch trình phải gồm đủ ngày 1..{duration_days}; {', '.join(problems)}."
                 })
 
+            # trùng ngày
             if len(days) != len(set(days)):
                 dupes = sorted(list({d for d in days if days.count(d) > 1}))
                 raise serializers.ValidationError({
                     "itinerary": f"Bị trùng các ngày: {dupes}."
                 })
+
+        # ---------------------------
+        # Check trùng tour trong agency
+        # ---------------------------
         request = self.context.get("request")
         agency = getattr(getattr(request, "user", None), "agency_profile", None)
 
@@ -210,15 +232,16 @@ class TourSerializer(serializers.ModelSerializer):
                     end_location__iexact=end_loc,
                     duration_days=duration,
                 )
-                # Nếu là update, loại chính nó
-                if self.instance and getattr(self.instance, 'pk', None):
+                if self.instance and getattr(self.instance, "pk", None):
                     dup_qs = dup_qs.exclude(pk=self.instance.pk)
 
                 if dup_qs.exists():
                     raise serializers.ValidationError({
                         "message": "Tour trùng (tên, tuyến, số ngày) đã tồn tại trong agency của bạn."
                     })
+
         return attrs
+
 
 
 class TourListItemSerializer(serializers.ModelSerializer):
@@ -245,6 +268,33 @@ class TourListItemSerializer(serializers.ModelSerializer):
         first_img = obj.images.first()
         return first_img.image.url if first_img and getattr(first_img.image, "url", None) else None
 
+class TourPublicListSerializer(serializers.ModelSerializer):
+    categories = serializers.ListField(child=serializers.CharField(), read_only=True)
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Tour
+        fields = [
+            "tour_id",
+            "name",
+            "categories",
+            "description",
+            "adult_price",
+            "children_price",
+            "discount",
+            "duration_days",
+            "destination",
+            "rating",
+            "reviews_count",
+            "image_url",
+        ]
+        read_only_fields = fields
+
+    def get_image_url(self, obj):
+        first_img = obj.images.first()
+        return first_img.image.url if first_img else None
+
+
 
 class TourPublicDetailSerializer(serializers.ModelSerializer):
     agency_id = serializers.UUIDField(source="agency.agency_id", read_only=True)
@@ -252,29 +302,58 @@ class TourPublicDetailSerializer(serializers.ModelSerializer):
     email_agency = serializers.EmailField(source="agency.email_agency", read_only=True)
     hotline = serializers.CharField(source="agency.hotline", read_only=True)
 
-    # DRF tự map ArrayField -> list, JSONField -> object/list, nên không cần override
+    # ảnh
     image_urls = TourImageSerializer(source="images", many=True, read_only=True)
+
+    # --- giá sau giảm ---
+    final_adult_price = serializers.SerializerMethodField()
+    final_children_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
         fields = [
             "tour_id",
             "agency_id", "agency_name", "email_agency", "hotline",
+
             "name", "description",
-            "price", "discount_price",
+
+            # --- giá ---
+            "adult_price",
+            "children_price",
+            "discount",
+            "final_adult_price",
+            "final_children_price",
+
             "duration_days",
             "destination",
             "start_location", "end_location",
+
             "rating", "reviews_count",
             "region", "categories",
+
             "pickup_points", "itinerary",
             "transportation",
             "services_included", "services_excluded",
             "policy", "guide",
+
             "is_active",
             "created_at", "updated_at",
             "image_urls",
         ]
         read_only_fields = fields
+
+    # ----------------------
+    # TÍNH GIÁ SAU GIẢM
+    # ----------------------
+    def get_final_adult_price(self, obj):
+        if obj.discount:
+            return float(obj.adult_price) * (100 - float(obj.discount)) / 100
+        return float(obj.adult_price)
+
+    def get_final_children_price(self, obj):
+        if obj.discount:
+            return float(obj.children_price) * (100 - float(obj.discount)) / 100
+        return float(obj.children_price)
+
 
 
