@@ -28,31 +28,38 @@ class BookingCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request = self.context["request"]
 
-        # --- 1. Tour hợp lệ ---
+        # --- 1. Lấy tour ---
         try:
             tour = Tour.objects.get(tour_id=attrs["tour_id"], is_active=True)
         except Tour.DoesNotExist:
             raise serializers.ValidationError({"tour_id": "Tour không tồn tại hoặc đã ngừng bán."})
 
-        # --- 2. Không tự mua tour của mình ---
+        # --- 2. Không tự đặt tour của mình ---
         if tour.agency and tour.agency.user_id == request.user.user_id:
             raise serializers.ValidationError({"tour_id": "Bạn không thể đặt tour của chính mình."})
 
-        # --- 3. Ngày đi ---
-        if attrs["travel_date"] < timezone.localdate():
+        # --- 3. Validate ngày ---
+        travel = attrs["travel_date"]
+        if travel < timezone.localdate():
             raise serializers.ValidationError({"travel_date": "Ngày khởi hành phải từ hôm nay trở đi."})
 
-        # --- 4. Validate số người ---
-        adults = attrs.get("num_adults", 0)
-        children = attrs.get("num_children", 0)
+        # --- 4. Convert số người ---
+        adults = int(attrs.get("num_adults", 0))
+        children = int(attrs.get("num_children", 0))
+
         if adults < 1:
             raise serializers.ValidationError({"num_adults": "Ít nhất phải có 1 người lớn."})
-        if adults + children < 1:
-            raise serializers.ValidationError({"num_people": "Tổng số người phải >= 1"})
 
-        # --- 5. Validate pickup_point có nằm trong tour.pickup_points ---
+        # --- 5. Validate pickup ---
+        pickup_data = tour.pickup_points or []  # Fix NULL
+
+        # fix nếu pickup_points là string JSON trong DB
+        if isinstance(pickup_data, str):
+            import json
+            pickup_data = json.loads(pickup_data)
+
+        valid_locations = [p.get("location") for p in pickup_data]
         pickup_input = attrs["pickup_point"]
-        valid_locations = [p["location"] for p in tour.pickup_points]
 
         if pickup_input not in valid_locations:
             raise serializers.ValidationError({
@@ -70,16 +77,13 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"detail": "Tài khoản này chưa có hồ sơ Customer."})
 
         tour = validated_data.pop("__tour")
+        validated_data.pop("tour_id", None)
 
-        adults = validated_data.pop("num_adults")
-        children = validated_data.pop("num_children")
+        adults = int(validated_data.pop("num_adults"))
+        children = int(validated_data.pop("num_children"))
         pickup_point = validated_data.pop("pickup_point")
 
-        # --- TÍNH TIỀN ---
-        total = (
-            tour.adult_price * adults +
-            tour.children_price * children
-        )
+        total = tour.adult_price * adults + tour.children_price * children
 
         return Booking.objects.create(
             customer=customer,
@@ -90,6 +94,8 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             total_price=total,
             **validated_data
         )
+
+
 
 
 class BookingHistorySerializer(serializers.ModelSerializer):

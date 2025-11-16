@@ -33,12 +33,10 @@ class Booking(models.Model):
     booking_date = models.DateTimeField(auto_now_add=True)
     travel_date = models.DateField()
 
-    # -------------------------
-    # NEW FIELDS
-    # -------------------------
     num_adults = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     num_children = models.PositiveIntegerField(default=0)
     pickup_point = models.CharField(max_length=255, null=True, blank=True)
+
     total_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -64,6 +62,16 @@ class Booking(models.Model):
         return f'{self.booking_id} | {self.customer.user.username} -> {self.tour.name}'
 
     def save(self, *args, **kwargs):
-        if self.tour_id and self.num_people:
-            self.total_price = (self.tour.price or Decimal('0')) * Decimal(self.num_people)
+        if self.tour_id:
+            adults = self.num_adults or 0
+            children = self.num_children or 0
+
+            adult_price = self.tour.adult_price or Decimal("0")
+            children_price = self.tour.children_price or Decimal("0")
+
+            self.total_price = (
+                adult_price * Decimal(adults)
+                + children_price * Decimal(children)
+            )
+
         super().save(*args, **kwargs)

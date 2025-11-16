@@ -16,14 +16,24 @@ class CreateBookingView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        booking = serializer.save()
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            booking = serializer.save()
 
-        return Response({
-            "data": self.get_serializer(booking).data,
-            "message": "Đặt tour thành công, chờ thanh toán"
-        }, status=201)
+            return Response({
+                "data": self.get_serializer(booking).data,
+                "message": "Đặt tour thành công, chờ thanh toán"
+            }, status=201)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()  # <--- QUAN TRỌNG: IN LỖI THẬT SỰ
+
+            return Response({
+                "message": "Đã xảy ra lỗi hệ thống.",
+                "detail": str(e)
+            }, status=500)
 
 
 # API Xem danh sách tour người dùng đã book
