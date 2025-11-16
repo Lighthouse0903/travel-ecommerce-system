@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [access, setAccess] = useState<string | null>(null);
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [loading, setLoading] = useState(true); // ✅ thêm state loading
+  const [loading, setLoading] = useState(true);
 
   // === Refresh token ===
   const refreshAccessToken = async (): Promise<string | null> => {
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // === Lấy profile ===
+  // === Fetch user profile ===
   const fetchUserProfile = async (token: string) => {
     try {
       const res = await fetch(`${API_URL}/users/profile/`, {
@@ -46,9 +46,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Get profile failed");
-
       const data = await res.json();
-      setUser(data.data ?? data); // ✅ phòng trường hợp BE trả {data:{...}}
+      setUser(data.data ?? data);
     } catch (err) {
       console.error("Lỗi khi lấy profile:", err);
       setUser(null);
@@ -71,32 +70,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // === INIT AUTH khi F5 ===
+  // === INIT AUTH ===
   useEffect(() => {
     const initAuth = async () => {
-      const newAccess = await refreshAccessToken();
-      if (newAccess) await fetchUserProfile(newAccess);
-      setLoading(false); // ✅ rất quan trọng: chỉ render children sau khi xong
+      try {
+        const newAccess = await refreshAccessToken();
+        if (newAccess) {
+          await fetchUserProfile(newAccess);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("Init auth error:", err);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
     initAuth();
   }, []);
-
-  // ✅ Không render children cho tới khi auth khởi tạo xong
-  if (loading) {
-    return <div>Đang kiểm tra đăng nhập...</div>;
-  }
 
   return (
     <AuthContext.Provider
       value={{ access, user, setAccess, setUser, logout, loading }}
     >
-      {loading ? (
-        <div className="flex h-screen items-center justify-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 };

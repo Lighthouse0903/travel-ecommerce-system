@@ -30,7 +30,7 @@ const Header2 = () => {
         <div className="flex justify-start items-center gap-x-2">
           <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden">
             <img
-              src={"./images/logo.jpg"}
+              src={"/images/logo.jpg"}
               alt="ảnh logo"
               className="w-full h-full object-contain"
             />

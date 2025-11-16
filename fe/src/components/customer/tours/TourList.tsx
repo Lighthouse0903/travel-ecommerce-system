@@ -1,296 +1,36 @@
-import React from "react";
+"use client";
+import { useEffect, useState } from "react";
 import TourCard from "./TourCard";
-import { Tour } from "@/types/tour";
+import { useTourService } from "@/services/tourService";
+import { TourListPageType } from "@/types/tour";
+import { CATEGORY_CHOICES } from "@/types/tour";
 
-const tours: Tour[] = [
-  {
-    id: "tour_001",
-    title: "Tour Sapa 3N2Đ - Chinh phục Fansipan",
-    slug: "tour-sapa-3n2d-fansipan",
-    thumbnail:
-      "https://i.pinimg.com/736x/25/5b/df/255bdf555c114e66553fdebfc0135f73.jpg",
-    price: 4990000,
-    discountPrice: 5500000,
-    rating: 4.7,
-    reviewsCount: 126,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Bắc",
-    category: "Phiêu lưu",
-  },
-  {
-    id: "tour_002",
-    title: "Tour Hà Giang 4N3Đ - Vòng cung đá Đồng Văn",
-    slug: "tour-ha-giang-4n3d-dong-van",
-    thumbnail:
-      "https://i.pinimg.com/736x/5e/4d/bb/5e4dbb6a861b9a31e18f36bfc2252a94.jpg",
-    price: 5890000,
-    discountPrice: 6500000,
-    rating: 4.8,
-    reviewsCount: 203,
-    duration: "4 ngày 3 đêm",
-    region: "Miền Bắc",
-    category: "Khám phá",
-  },
-  {
-    id: "tour_003",
-    title: "Tour Hạ Long 2N1Đ - Du thuyền nghỉ dưỡng",
-    slug: "tour-ha-long-2n1d-du-thuyen",
-    thumbnail:
-      "https://i.pinimg.com/736x/17/7d/0b/177d0b23893576b7f3cfbfaeec6eecc4.jpg",
-    price: 3590000,
-    discountPrice: 4200000,
-    rating: 4.6,
-    reviewsCount: 98,
-    duration: "2 ngày 1 đêm",
-    region: "Miền Bắc",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_004",
-    title: "Tour Ninh Bình - Tràng An - Bái Đính 1N",
-    slug: "tour-ninh-binh-1n-trang-an-bai-dinh",
-    thumbnail:
-      "https://i.pinimg.com/736x/8c/89/26/8c8926eac321b516f97d53492bfb4744.jpg",
-    price: 890000,
-    discountPrice: 1200000,
-    rating: 4.5,
-    reviewsCount: 64,
-    duration: "1 ngày",
-    region: "Miền Bắc",
-    category: "Văn hóa",
-  },
-  {
-    id: "tour_005",
-    title: "Tour Đà Nẵng - Hội An - Bà Nà Hills 4N3Đ",
-    slug: "tour-da-nang-hoi-an-ba-na-4n3d",
-    thumbnail:
-      "https://i.pinimg.com/736x/7f/32/9e/7f329e7a2a4b4a985247f543b1959af0.jpg",
-    price: 5990000,
-    discountPrice: 6700000,
-    rating: 4.8,
-    reviewsCount: 175,
-    duration: "4 ngày 3 đêm",
-    region: "Miền Trung",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_006",
-    title: "Tour Huế cổ kính - Khám phá Đại Nội 2N1Đ",
-    slug: "tour-hue-2n1d-dai-noi",
-    thumbnail:
-      "https://i.pinimg.com/736x/73/f0/6d/73f06d9b0a9dc23f71ac94293f3e68c1.jpg",
-    price: 2790000,
-    discountPrice: 3200000,
-    rating: 4.6,
-    reviewsCount: 84,
-    duration: "2 ngày 1 đêm",
-    region: "Miền Trung",
-    category: "Văn hóa",
-  },
-  {
-    id: "tour_007",
-    title: "Tour Quy Nhơn 3N2Đ - Thiên đường biển xanh",
-    slug: "tour-quy-nhon-3n2d-bien-xanh",
-    thumbnail:
-      "https://i.pinimg.com/736x/20/8b/64/208b64c17a8f7f3857b1e4a9a00b57df.jpg",
-    price: 4590000,
-    discountPrice: 5200000,
-    rating: 4.7,
-    reviewsCount: 142,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Trung",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_008",
-    title: "Tour Phú Yên - Hoa vàng trên cỏ xanh 3N2Đ",
-    slug: "tour-phu-yen-3n2d-hoa-vang",
-    thumbnail:
-      "https://i.pinimg.com/736x/2b/3a/d2/2b3ad2f85844a52ad3279f60777c661b.jpg",
-    price: 4790000,
-    discountPrice: 5400000,
-    rating: 4.8,
-    reviewsCount: 131,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Trung",
-    category: "Khám phá",
-  },
-  {
-    id: "tour_009",
-    title: "Tour Đà Lạt 3N2Đ - Thành phố ngàn hoa",
-    slug: "tour-da-lat-3n2d-ngan-hoa",
-    thumbnail:
-      "https://i.pinimg.com/736x/b1/5d/9a/b15d9a7f62f88228c53e05b2722e2e19.jpg",
-    price: 3990000,
-    discountPrice: 4500000,
-    rating: 4.9,
-    reviewsCount: 254,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Nam",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_010",
-    title: "Tour Nha Trang 4N3Đ - Thiên đường biển đảo",
-    slug: "tour-nha-trang-4n3d-bien-dao",
-    thumbnail:
-      "https://i.pinimg.com/736x/a8/7a/ce/a87ace11b7a1bfa7f7a01f45630db6b3.jpg",
-    price: 5690000,
-    discountPrice: 6300000,
-    rating: 4.7,
-    reviewsCount: 198,
-    duration: "4 ngày 3 đêm",
-    region: "Miền Nam",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_011",
-    title: "Tour Phú Quốc 3N2Đ - Thiên đường Nam đảo",
-    slug: "tour-phu-quoc-3n2d-nam-dao",
-    thumbnail:
-      "https://i.pinimg.com/736x/2e/45/18/2e45182f2437c52d773cc5dd93a26627.jpg",
-    price: 4990000,
-    discountPrice: 5600000,
-    rating: 4.8,
-    reviewsCount: 223,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Nam",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_012",
-    title: "Tour Cần Thơ - Chợ nổi Cái Răng 2N1Đ",
-    slug: "tour-can-tho-2n1d-cho-noi",
-    thumbnail:
-      "https://i.pinimg.com/736x/f3/63/bb/f363bb13e1d2ad5f9c701f8ab16c8911.jpg",
-    price: 2390000,
-    discountPrice: 2800000,
-    rating: 4.6,
-    reviewsCount: 97,
-    duration: "2 ngày 1 đêm",
-    region: "Miền Tây",
-    category: "Văn hóa",
-  },
-  {
-    id: "tour_013",
-    title: "Tour Sóc Trăng - Bạc Liêu - Cà Mau 3N2Đ",
-    slug: "tour-soc-trang-bac-lieu-ca-mau-3n2d",
-    thumbnail:
-      "https://i.pinimg.com/736x/b8/6d/47/b86d47d7d420ef99f77d56b61f3ee234.jpg",
-    price: 3690000,
-    discountPrice: 4100000,
-    rating: 4.5,
-    reviewsCount: 56,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Tây",
-    category: "Khám phá",
-  },
-  {
-    id: "tour_014",
-    title: "Tour Mộc Châu 2N1Đ - Cao nguyên xanh mát",
-    slug: "tour-moc-chau-2n1d-cao-nguyen",
-    thumbnail:
-      "https://i.pinimg.com/736x/41/cc/f3/41ccf36b3ecb501260b8d3f1e7e2c7ef.jpg",
-    price: 2590000,
-    discountPrice: 3000000,
-    rating: 4.7,
-    reviewsCount: 88,
-    duration: "2 ngày 1 đêm",
-    region: "Miền Bắc",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_015",
-    title: "Tour Buôn Ma Thuột 3N2Đ - Vùng đất cà phê",
-    slug: "tour-buon-ma-thuot-3n2d-ca-phe",
-    thumbnail:
-      "https://i.pinimg.com/736x/5c/37/7d/5c377d1631ce9e3e09758f44717a12f8.jpg",
-    price: 3790000,
-    discountPrice: 4200000,
-    rating: 4.5,
-    reviewsCount: 72,
-    duration: "3 ngày 2 đêm",
-    region: "Tây Nguyên",
-    category: "Văn hóa",
-  },
-  {
-    id: "tour_016",
-    title: "Tour Tây Ninh - Núi Bà Đen 1N",
-    slug: "tour-tay-ninh-1n-nui-ba-den",
-    thumbnail:
-      "https://i.pinimg.com/736x/0d/24/f1/0d24f1db3d2b4f64b8181d80c4e33eb3.jpg",
-    price: 890000,
-    discountPrice: 1200000,
-    rating: 4.6,
-    reviewsCount: 64,
-    duration: "1 ngày",
-    region: "Miền Nam",
-    category: "Tâm linh",
-  },
-  {
-    id: "tour_017",
-    title: "Tour Bình Định - Kỳ Co - Eo Gió 3N2Đ",
-    slug: "tour-binh-dinh-3n2d-ky-co-eo-gio",
-    thumbnail:
-      "https://i.pinimg.com/736x/65/bb/d3/65bbd3e3a640d42185c661ba52c87f2d.jpg",
-    price: 4590000,
-    discountPrice: 5200000,
-    rating: 4.7,
-    reviewsCount: 105,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Trung",
-    category: "Biển đảo",
-  },
-  {
-    id: "tour_018",
-    title: "Tour Vũng Tàu 2N1Đ - Check-in Tượng Chúa",
-    slug: "tour-vung-tau-2n1d-tuong-chua",
-    thumbnail:
-      "https://i.pinimg.com/736x/3e/18/9f/3e189f68e5439ce7a9b9d12e8efef3e5.jpg",
-    price: 1790000,
-    discountPrice: 2200000,
-    rating: 4.4,
-    reviewsCount: 77,
-    duration: "2 ngày 1 đêm",
-    region: "Miền Nam",
-    category: "Nghỉ dưỡng",
-  },
-  {
-    id: "tour_019",
-    title: "Tour Côn Đảo 3N2Đ - Hành trình linh thiêng",
-    slug: "tour-con-dao-3n2d-linh-thieng",
-    thumbnail:
-      "https://i.pinimg.com/736x/59/f1/77/59f177c43115c1cf5dd27639b04c9232.jpg",
-    price: 5290000,
-    discountPrice: 5900000,
-    rating: 4.8,
-    reviewsCount: 111,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Nam",
-    category: "Tâm linh",
-  },
-  {
-    id: "tour_020",
-    title: "Tour Sapa mùa đông - Săn mây Ô Quy Hồ",
-    slug: "tour-sapa-mua-dong-san-may",
-    thumbnail:
-      "https://i.pinimg.com/736x/43/5a/26/435a26f347e45f0cb671b2e01b3b6b44.jpg",
-    price: 4890000,
-    discountPrice: 5500000,
-    rating: 4.9,
-    reviewsCount: 182,
-    duration: "3 ngày 2 đêm",
-    region: "Miền Bắc",
-    category: "Phiêu lưu",
-  },
-];
+const TourList: React.FC = () => {
+  const { getListPublicTour } = useTourService();
+  const [tours, setTours] = useState<TourListPageType[]>([]);
 
-const TourList = () => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getListPublicTour();
+        if (res.success) {
+          console.log("Danh sách tour nhận về: ", res.data);
+          setTours((res.data ?? []) as TourListPageType[]);
+        } else {
+          console.log("Lỗi khi lấy dánh sách tour Public");
+        }
+      } catch (e) {
+        console.log("Lỗi Server: ", e);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
-    <div className="w-full grid grid-cols-1 gap-y-2 mt-6">
-      {tours.map((item) => {
-        return <TourCard tour={item} key={item.id} />;
-      })}
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+      {tours.map((tour) => (
+        <TourCard key={tour.tour_id} {...tour} />
+      ))}
     </div>
   );
 };

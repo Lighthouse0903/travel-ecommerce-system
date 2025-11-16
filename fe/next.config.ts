@@ -17,8 +17,7 @@ const config: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "scontent.*.fbcdn.net",
-        port: "",
+        hostname: "travel-tours-media.s3.ap-southeast-2.amazonaws.com",
         pathname: "/**",
       },
     ],

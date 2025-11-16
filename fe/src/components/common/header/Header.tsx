@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Header1 from "./Header1";
 import Header2 from "./Header2";
 
-const header = () => {
+const Header = () => {
   return (
     <div className="sticky z-[100] top-0 right-0 left-0 flex flex-col text-gray-700 bg-slate-200">
       <Header1 />
@@ -14,4 +14,4 @@ const header = () => {
   );
 };
 
-export default header;
+export default Header;

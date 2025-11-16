@@ -28,5 +28,10 @@ export interface AuthContextType {
   setAccess: (token: string | null) => void;
   setUser: (user: UserResponse | null | any) => void;
   logout: () => void;
-  loading: boolean; // ✅ Thêm dòng này
+  loading: boolean;
+}
+
+export interface ResetPassword {
+  current_password: string;
+  new_password: string;
 }

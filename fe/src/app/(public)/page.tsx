@@ -12,11 +12,6 @@ import {
 } from "@/components/ui/carousel";
 
 export default function Home() {
-  const dbUrl = process.env.DATABASE_URL;
-  console.log("DB URL:", dbUrl);
-  console.log("ENV:", process.env.NEXT_PUBLIC_API_BASE_URL);
-  console.log("ok");
-
   return (
     <div>
       {/* Section 1: Header Carousel */}

@@ -1,3 +1,4 @@
+// src/hooks/fetchInstance.ts
 const API_URL = "http://127.0.0.1:8000/api";
 import { ApiResponse } from "@/types/common";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,11 +8,12 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export const useFetchInstance = () => {
   const { access, setAccess } = useAuth();
 
+  // Refresh token
   const refreshAccessToken = async (): Promise<string | null> => {
     try {
       const res = await fetch(`${API_URL}/users/refresh/`, {
         method: "POST",
-        credentials: "include",
+        credentials: "include", // refresh token trong cookie
       });
       if (!res.ok) return null;
       const data = await res.json();
@@ -25,6 +27,7 @@ export const useFetchInstance = () => {
     }
   };
 
+  // Hàm request gốc
   const request = async <T>(
     url: string,
     method: HttpMethod,
@@ -33,27 +36,48 @@ export const useFetchInstance = () => {
   ): Promise<ApiResponse<T>> => {
     let token = access;
 
-    const headers = new Headers({ "Content-Type": "application/json" });
-    if (requireAuth && token) headers.set("Authorization", `Bearer ${token}`);
+    const headers = new Headers();
+
+    // Nếu KHÔNG phải FormData thì MỚI set Content-Type JSON
+    if (!(body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    // Nếu endpoint cần auth thì gắn token
+    if (requireAuth && token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
 
     const options: RequestInit = {
       method,
       headers,
-      credentials: "include",
+      credentials: "include", // để gửi cookie refresh
     };
-    if (body) options.body = JSON.stringify(body);
 
-    let response = await fetch(`${API_URL}${url}`, options);
+    if (body)
+      options.body = body instanceof FormData ? body : JSON.stringify(body);
 
-    // Nếu 401 thì thử refresh lại
+    // Gọi API
+    let response: Response;
+    try {
+      response = await fetch(`${API_URL}${url}`, options);
+    } catch (err) {
+      return {
+        success: false,
+        status: 0,
+        message: "Không thể kết nối tới máy chủ.",
+        error: "Không thể kết nối tới máy chủ",
+        data: null,
+        meta: null,
+      };
+    }
+
+    // Nếu 401 → thử refresh token
     if (response.status === 401 && requireAuth) {
       const newToken = await refreshAccessToken();
       if (newToken) {
         headers.set("Authorization", `Bearer ${newToken}`);
-        response = await fetch(`${API_URL}${url}`, {
-          ...options,
-          headers,
-        });
+        response = await fetch(`${API_URL}${url}`, { ...options, headers });
       }
     }
 
@@ -66,10 +90,7 @@ export const useFetchInstance = () => {
       return {
         success: false,
         status: response.status,
-        message:
-          json?.detail ||
-          json?.message ||
-          "Yêu cầu thất bại, vui lòng thử lại.",
+        message: json?.message || `Lỗi ${response.status}: Yêu cầu thất bại.`,
         error: json,
         data: null,
         meta: null,
@@ -79,13 +100,14 @@ export const useFetchInstance = () => {
     return {
       success: true,
       status: response.status,
-      message: json?.message || "Request successful",
+      message: json?.message || "Thành công",
       data: (json?.data ?? json) as T,
       error: null,
-      meta: null,
+      meta: json?.meta ?? null,
     };
   };
 
+  // Public API
   return {
     get: <T>(url: string, requireAuth = false) =>
       request<T>(url, "GET", undefined, requireAuth),

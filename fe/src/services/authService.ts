@@ -1,15 +1,17 @@
-import { useFetchInstance } from "./fetchInstance";
+import { useFetchInstance } from "../hooks/fetchInstance";
 import {
   RegisterPayload,
   RegisterResponse,
   LoginPayload,
   LoginResponse,
+  ResetPassword,
 } from "@/types/auth";
 import { ApiResponse } from "@/types/common";
 import { useAuth } from "@/contexts/AuthContext";
+import { UpdateProfile } from "@/types/user";
 
 export const useAuthService = () => {
-  const { post } = useFetchInstance();
+  const { post, put } = useFetchInstance();
   const { setAccess, setUser } = useAuth();
 
   // Hàm gọi API đăng ký
@@ -39,5 +41,20 @@ export const useAuthService = () => {
     setUser(null);
     return res;
   };
-  return { register, login, logout };
+
+  // Hàm gọi API cập nhật hồ sơ
+  const update = async (
+    update: UpdateProfile
+  ): Promise<ApiResponse<UpdateProfile>> => {
+    return put<UpdateProfile>("/users/profile/", update, true);
+  };
+
+  // Hàm gọi API đổi mật khẩu
+  const change_password = async (
+    resetPassword: ResetPassword
+  ): Promise<ApiResponse<ResetPassword>> => {
+    return put<ResetPassword>("/users/change-password/", resetPassword, true);
+  };
+
+  return { register, login, logout, update, change_password };
 };

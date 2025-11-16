@@ -29,11 +29,11 @@ const AccountPopoverContent = ({ onClose }: { onClose?: () => void }) => {
 
       <div className="flex flex-col text-sm">
         <Link
-          href="/profile"
+          href="/dashboard/profile"
           onClick={onClose}
           className="px-2 py-2 hover:bg-slate-50 rounded"
         >
-          Chỉnh sửa hồ sơ
+          Thông tin cá nhân
         </Link>
         <Link
           href="/bookings"
@@ -57,14 +57,14 @@ const AccountPopoverContent = ({ onClose }: { onClose?: () => void }) => {
           Thanh toán & hóa đơn
         </Link>
         <Link
-          href="/regiter_agency"
+          href="/dashboard/register_agency"
           onClick={onClose}
           className="px-2 py-2 hover:bg-slate-50 rounded"
         >
           Đăng kí đại lý
         </Link>
         <Link
-          href="/change_password"
+          href="/dashboard/change_password"
           onClick={onClose}
           className="px-2 py-2 hover:bg-slate-50 rounded"
         >
