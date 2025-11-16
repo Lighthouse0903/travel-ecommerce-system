@@ -38,7 +38,7 @@ class Booking(models.Model):
     # -------------------------
     num_adults = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     num_children = models.PositiveIntegerField(default=0)
-    pickup_point = models.CharField(max_length=255)
+    pickup_point = models.CharField(max_length=255, null=True, blank=True)
     total_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,

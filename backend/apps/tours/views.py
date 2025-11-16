@@ -177,14 +177,14 @@ class MyToursView(generics.ListAPIView):
 
     def get_queryset(self):
         agency = self.request.user.agency_profile
-        # prefetch images để get_image_url không bị N+1
         return (
             Tour.objects.filter(agency=agency)
-            .select_related('agency')
-            .prefetch_related('images')
+            .select_related("agency")
+            .prefetch_related("images")
             .only(
-                "tour_id", "name", "categories", "description", "price",
-                "discount_price", "duration_days", "destination", "agency_id"
+                "tour_id", "name", "categories", "description",
+                "adult_price", "children_price", "discount",
+                "duration_days", "destination", "agency_id"
             )
             .order_by("-created_at")
         )
@@ -193,9 +193,15 @@ class MyToursView(generics.ListAPIView):
         qs = self.get_queryset()
         data = self.get_serializer(qs, many=True).data
         return Response(
-            {"data": data, "message": ("Bạn chưa có tour nào được tạo." if not qs.exists()
-                                       else "Lấy danh sách tour của bạn thành công.")},
-            status=status.HTTP_200_OK
+            {
+                "data": data,
+                "message": (
+                    "Bạn chưa có tour nào được tạo."
+                    if not qs.exists()
+                    else "Lấy danh sách tour của bạn thành công."
+                ),
+            },
+            status=status.HTTP_200_OK,
         )
 
 # API Lấy, tìm kiếm danh sách public tour

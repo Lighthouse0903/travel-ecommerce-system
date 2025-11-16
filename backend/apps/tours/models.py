@@ -21,12 +21,14 @@ class Tour(models.Model):
     adult_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(0)],
+        default=0
     )
     children_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(0)],
+        default=0
     )
     discount = models.DecimalField(
         max_digits=5,
