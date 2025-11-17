@@ -1,16 +1,16 @@
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics, permissions, filters
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from .models import Tour
 from .serializers import TourSerializer, TourPublicDetailSerializer, TourListItemSerializer, TourPublicListSerializer
 from .permissions import IsAgencyOwnerOrReadOnly, IsAgencyUser
-import traceback
+import traceback, logging
 from botocore.exceptions import ClientError
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
+
 # API Lấy danh sách tất cả tour (public) + tạo tour (agency)
 class TourListCreateView(generics.ListCreateAPIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -171,6 +171,7 @@ class TourDetailAgencyView(generics.RetrieveUpdateDestroyAPIView):
         )
 
 # API Lấy danh sách tour của chính agency (tiện cho dashboard)
+logger = logging.getLogger(__name__)
 class MyToursView(generics.ListAPIView):
     serializer_class = TourListItemSerializer
     permission_classes = [permissions.IsAuthenticated, IsAgencyUser]
@@ -184,25 +185,31 @@ class MyToursView(generics.ListAPIView):
             .only(
                 "tour_id", "name", "categories", "description",
                 "adult_price", "children_price", "discount",
-                "duration_days", "destination", "agency_id"
+                "duration_days", "destination", "agency_id",
+                "rating", "reviews_count", "created_at",
             )
             .order_by("-created_at")
         )
 
     def list(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-        data = self.get_serializer(qs, many=True).data
-        return Response(
-            {
-                "data": data,
-                "message": (
-                    "Bạn chưa có tour nào được tạo."
-                    if not qs.exists()
-                    else "Lấy danh sách tour của bạn thành công."
-                ),
-            },
-            status=status.HTTP_200_OK,
-        )
+        try:
+            qs = self.get_queryset()
+            data = self.get_serializer(qs, many=True).data
+            return Response(
+                {
+                    "data": data,
+                    "message": (
+                        "Bạn chưa có tour nào được tạo."
+                        if not qs.exists()
+                        else "Lấy danh sách tour của bạn thành công."
+                    ),
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            logger.error("🔥 ERROR in MyToursView.list(): %s", str(e))
+            traceback.print_exc()
+            raise e
 
 # API Lấy, tìm kiếm danh sách public tour
 class PublicTourListView(generics.ListAPIView):

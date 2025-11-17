@@ -6,7 +6,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from .models import Booking
-from .serializers import BookingCreateSerializer, BookingHistorySerializer, BookingDetailSerializer, BookingListSerializer, BookingStatusUpdateSerializer
+from .serializers import BookingCreateSerializer, BookingHistorySerializer, BookingDetailSerializer, BookingListSerializer, BookingStatusUpdateSerializer, AgencyBookingDetailSerializer
 from ..customers.models import Customer
 from ..agencies.models import Agency
 
@@ -136,6 +136,40 @@ class AgencyBookingListView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(
             {"data": serializer.data, "message": "Lấy danh sách đơn đặt tour thành công."},
+            status=status.HTTP_200_OK
+        )
+
+class AgencyBookingDetailView(generics.RetrieveAPIView):
+    serializer_class = AgencyBookingDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "booking_id"
+
+    def get_queryset(self):
+        # Ensure only agency can see their bookings
+        user = self.request.user
+        agency = Agency.objects.filter(user=user).first()
+        if not agency:
+            raise PermissionDenied("Chỉ Agency mới xem được chi tiết đơn đặt tour.")
+
+        return (
+            Booking.objects
+            .filter(tour__agency=agency)
+            .select_related("tour", "tour__agency", "customer__user")
+            .prefetch_related("tour__images")
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        booking = self.get_queryset().filter(booking_id=kwargs["booking_id"]).first()
+
+        if not booking:
+            return Response(
+                {"data": None, "message": "Không tìm thấy đơn đặt tour trong agency của bạn."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(booking)
+        return Response(
+            {"data": serializer.data, "message": "Lấy chi tiết booking thành công."},
             status=status.HTTP_200_OK
         )
 
