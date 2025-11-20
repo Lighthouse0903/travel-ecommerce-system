@@ -164,6 +164,11 @@ class BookingDetailSerializer(serializers.ModelSerializer):
     customer_phone = serializers.CharField(source="customer.user.phone", read_only=True)
     customer_address = serializers.CharField(source="customer.user.address", read_only=True)
 
+    # ----- REVIEW INFO -----
+    review_id = serializers.SerializerMethodField()
+    review_rating = serializers.SerializerMethodField()
+    review_comment = serializers.SerializerMethodField()
+
     class Meta:
         model = Booking
         fields = [
@@ -183,6 +188,11 @@ class BookingDetailSerializer(serializers.ModelSerializer):
             "customer_phone",
             "customer_address",
 
+            # REVIEW
+            "review_id",
+            "review_rating",
+            "review_comment",
+
             # TOUR INFO
             "tour_id",
             "tour_name",
@@ -198,14 +208,12 @@ class BookingDetailSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    # ----- METHODS -----
     def get_tour_image(self, obj):
         first_img = obj.tour.images.first()
         return first_img.image.url if first_img else None
 
     def get_final_price_per_person(self, obj):
-        """
-        Giá sau khi áp dụng discount (%)
-        """
         tour = obj.tour
         discount = tour.discount or 0
 
@@ -220,6 +228,20 @@ class BookingDetailSerializer(serializers.ModelSerializer):
             "adult": f"{adult:.2f}",
             "children": f"{child:.2f}",
         }
+
+    def get_review_id(self, obj):
+        review = getattr(obj, "review", None)
+        return str(review.review_id) if review else None
+
+    def get_review_rating(self, obj):
+        review = getattr(obj, "review", None)
+        return review.rating if review else None
+
+    def get_review_comment(self, obj):
+        review = getattr(obj, "review", None)
+        return review.comment if review else None
+
+
 
 class AgencyBookingDetailSerializer(serializers.ModelSerializer):
     # ----- Customer info -----
