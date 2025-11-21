@@ -62,25 +62,17 @@ class TourReviewsListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
 
-        # Nếu chưa có review nào
         if not queryset.exists():
             return Response(
-                {
-                    "message": "Tour này chưa có đánh giá.",
-                    "data": [],
-                },
+                {"message": "Tour này chưa có đánh giá.", "data": []},
                 status=status.HTTP_200_OK,
             )
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(
-            {
-                "data": serializer.data,
-                "message": "Lấy danh sách đánh giá thành công."
-            },
+            {"data": serializer.data, "message": "Lấy danh sách đánh giá thành công."},
             status=status.HTTP_200_OK,
         )
-
 class MyReviewUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.select_related("booking__customer__user")
     serializer_class = ReviewUpdateSerializer

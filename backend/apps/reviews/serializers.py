@@ -59,15 +59,30 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
 class ReviewListItemSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source="booking.customer.user.full_name", read_only=True)
 
+    # thêm mới
+    user_id = serializers.UUIDField(source="booking.customer.user.user_id", read_only=True)
+    customer_id = serializers.UUIDField(source="booking.customer.customer_id", read_only=True)
+
     class Meta:
         model = Review
-        fields = ["review_id", "rating", "comment", "customer_name", "created_at"]
+        fields = [
+            "review_id",
+            "rating",
+            "comment",
+            "customer_name",
+            "user_id",
+            "customer_id",
+            "created_at"
+        ]
         read_only_fields = fields
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+
+        # Nếu review bị xóa → ẩn comment
         if instance.is_deleted:
             data["comment"] = None
+
         return data
 # API Sửa comment
 class ReviewUpdateSerializer(serializers.ModelSerializer):

@@ -2,8 +2,8 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import MessageSendSerializer, MessageOutSerializer, MessageListSerializer, RecentThreadSerializer
-from django.db.models import Q
+from .serializers import MessageSendSerializer, ConversationListSerializer, MessageListSerializer, RecentThreadSerializer, MessageSerializer
+from django.db.models import Q, Max
 from .models import Message
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -143,3 +143,102 @@ class RecentThreadsView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+class ConversationListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ConversationListSerializer
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+
+        # Lấy list sender/receiver + thời gian tin nhắn cuối
+        partners = (
+            Message.objects
+            .filter(Q(sender=user) | Q(receiver=user))
+            .values("sender_id", "receiver_id")
+            .annotate(last_time=Max("created_at"))
+            .order_by("-last_time")
+        )
+
+        conversations = []
+        added = set()
+
+        for p in partners:
+            # Xác định ai là receiver (partner)
+            partner_id = (
+                p["receiver_id"] if p["sender_id"] == user.user_id else p["sender_id"]
+            )
+
+            if partner_id in added:
+                continue
+            added.add(partner_id)
+
+            partner = User.objects.filter(user_id=partner_id).first()
+            if not partner:
+                continue
+
+            # Lấy tin nhắn cuối cùng giữa user & partner
+            last_msg = (
+                Message.objects.filter(
+                    (Q(sender=user) & Q(receiver=partner)) |
+                    (Q(sender=partner) & Q(receiver=user))
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            conversations.append({
+                "receiver_id": partner.user_id,
+                "receiver_name": partner.full_name,
+                "last_message": last_msg.content if last_msg else "",
+                "last_message_time": last_msg.created_at if last_msg else None,
+            })
+
+        serializer = self.get_serializer(conversations, many=True)
+        return Response({
+            "data": serializer.data,
+            "message": "Lấy danh sách đoạn hội thoại thành công."
+        })
+
+class ConversationDetailView(generics.ListAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        receiver_id = self.kwargs.get("receiver_id")
+
+        # Validate receiver có tồn tại không
+        receiver = User.objects.filter(user_id=receiver_id).first()
+        if not receiver:
+            return Message.objects.none()
+
+        # lấy tất cả tin nhắn giữa user & receiver
+        return (
+            Message.objects
+            .filter(
+                Q(sender=user, receiver=receiver) |
+                Q(sender=receiver, receiver=user)
+            )
+            .order_by("created_at")
+        )
+
+    def list(self, request, *args, **kwargs):
+        receiver_id = kwargs.get("receiver_id")
+        receiver = User.objects.filter(user_id=receiver_id).first()
+
+        if not receiver:
+            return Response(
+                {"data": [], "message": "Người nhận không tồn tại."},
+                status=404
+            )
+
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response({
+            "receiver_id": receiver.user_id,
+            "receiver_name": receiver.full_name,
+            "data": serializer.data,
+            "message": "Lấy lịch sử tin nhắn thành công."
+        })

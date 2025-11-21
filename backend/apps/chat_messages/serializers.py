@@ -73,3 +73,18 @@ class RecentThreadSerializer(serializers.Serializer):
     last_message = serializers.CharField()
     last_time = serializers.DateTimeField()
     direction = serializers.CharField()
+
+class ConversationListSerializer(serializers.Serializer):
+    receiver_id = serializers.UUIDField()
+    receiver_name = serializers.CharField()
+    last_message = serializers.CharField()
+    last_message_time = serializers.DateTimeField()
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_id = serializers.UUIDField(source="sender.user_id", read_only=True)
+    receiver_id = serializers.UUIDField(source="receiver.user_id", read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ["message_id", "sender_id", "receiver_id", "content", "created_at"]
+        read_only_fields = fields
