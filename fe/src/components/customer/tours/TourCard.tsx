@@ -3,8 +3,10 @@ import { Tag } from "lucide-react";
 import StarRating from "@/components/common/rating/StarRating";
 import { TourListPageType } from "@/types/tour";
 import { CATEGORY_MAP } from "@/types/tour";
+import Link from "next/link";
 
 const TourCard: React.FC<TourListPageType> = ({
+  tour_id,
   image_url,
   duration_days,
   destination,
@@ -69,10 +71,11 @@ const TourCard: React.FC<TourListPageType> = ({
               {adult_price.toLocaleString("vi-VN")} đ
             </p>
           </div>
-
-          <button className="px-4 py-2 rounded-full bg-slate-800 text-white text-xs hover:bg-slate-700 transition">
-            Xem chi tiết
-          </button>
+          <Link href={`/tour/${tour_id}`}>
+            <button className="px-4 py-2 rounded-full bg-slate-800 text-white text-xs hover:bg-slate-700 transition">
+              Xem chi tiết
+            </button>
+          </Link>
         </div>
       </div>
     </div>

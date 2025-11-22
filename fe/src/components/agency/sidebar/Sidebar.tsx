@@ -1,4 +1,4 @@
-import SidebarClient from "./SidebarClient";
+import SidebarClient from "./SidebarAgency";
 
 const DashboardAgencySidebar = () => {
   return <SidebarClient />;

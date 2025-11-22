@@ -1,12 +1,27 @@
-import RegisterAgencyForm from "@/components/auth/user/RegisterAgencyForm";
-import React from "react";
+"use client";
 
-const page = () => {
-  return (
-    <div>
-      <RegisterAgencyForm />
-    </div>
-  );
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import RegisterAgencyForm from "@/components/auth/user/RegisterAgencyForm";
+
+const RegisterAgencyPage = () => {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const isAgency = user?.roles?.includes(2);
+
+  useEffect(() => {
+    if (isAgency) {
+      router.replace("/agency/dashboard");
+    }
+  }, [isAgency, router]);
+
+  if (isAgency) {
+    return null;
+  }
+
+  return <RegisterAgencyForm />;
 };
 
-export default page;
+export default RegisterAgencyPage;

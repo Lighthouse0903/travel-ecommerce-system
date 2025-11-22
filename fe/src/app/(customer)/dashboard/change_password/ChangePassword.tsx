@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import { motion } from "framer-motion";
+import { z } from "zod";
+import { toast } from "sonner";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { z } from "zod";
-import { toast } from "sonner";
 import { useAuthService } from "@/services/authService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const passwordSchema = z
   .object({
@@ -23,6 +27,8 @@ const passwordSchema = z
   });
 
 const ChangePassword = () => {
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
     current_password: "",
     new_password: "",
@@ -34,14 +40,21 @@ const ChangePassword = () => {
 
   const { change_password } = useAuthService();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fadeUp = {
+    initial: { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4 },
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
 
     const result = passwordSchema.safeParse(formData);
@@ -58,33 +71,39 @@ const ChangePassword = () => {
       setLoading(false);
       return;
     }
-    const reset_password = {
+
+    const payload = {
       current_password: formData.current_password,
       new_password: formData.new_password,
     };
 
-    console.log("Thông tin đổi mật khẩu:", reset_password);
-    const res = await change_password(reset_password);
-    console.log(res);
-    toast.dismiss();
-    if (res.success) {
-      toast.success(
-        typeof res.message === "string"
-          ? res.message
-          : "Đổi mật khẩu thành công"
-      );
-      setFormData({
-        current_password: "",
-        new_password: "",
-        confirm_password: "",
-      });
-    } else {
-      toast.error(
-        typeof res.error === "string" ? res.error : "Đổi mật khẩu thất bại"
-      );
+    try {
+      toast.dismiss();
+      const res = await change_password(payload);
+      if (res.success) {
+        toast.success(
+          typeof res.message === "string"
+            ? res.message
+            : "Đổi mật khẩu thành công"
+        );
+        setFormData({
+          current_password: "",
+          new_password: "",
+          confirm_password: "",
+        });
+        setErrors({});
+      } else {
+        toast.error(
+          typeof res.message === "string"
+            ? res.message
+            : "Đổi mật khẩu thất bại"
+        );
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra, vui lòng thử lại");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleCancel = () => {
@@ -96,90 +115,133 @@ const ChangePassword = () => {
     setErrors({});
   };
 
+  if (!user) {
+    return (
+      <div className="w-full overflow-hidden">
+        <motion.div {...fadeUp}>
+          <div className="p-4 w-full space-y-6">
+            <h1 className="text-2xl font-semibold">Đổi mật khẩu</h1>
+
+            <Card className="shadow-sm border">
+              <CardHeader>
+                <CardTitle>
+                  <Skeleton className="h-6 w-1/3" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-5">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-9 flex-1" />
+                  <Skeleton className="h-9 flex-1" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle>Đổi mật khẩu</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Mật khẩu hiện tại */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Mật khẩu hiện tại
-              </label>
-              <Input
-                name="current_password"
-                type="password"
-                value={formData.current_password}
-                onChange={handleChange}
-                placeholder="Nhập mật khẩu hiện tại"
-              />
-              {errors.current_password && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.current_password}
-                </p>
-              )}
-            </div>
+    <div className="w-full overflow-hidden">
+      <motion.div {...fadeUp}>
+        <div className="p-4 w-full space-y-6">
+          <h1 className="text-2xl font-semibold">Đổi mật khẩu</h1>
 
-            {/* Mật khẩu mới */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Mật khẩu mới
-              </label>
-              <Input
-                name="new_password"
-                type="password"
-                value={formData.new_password}
-                onChange={handleChange}
-                placeholder="Nhập mật khẩu mới"
-              />
-              {errors.new_password && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.new_password}
-                </p>
-              )}
-            </div>
+          <Card className="shadow-sm border">
+            <VisuallyHidden>
+              <CardHeader>
+                <CardTitle>Đổi mật khẩu</CardTitle>
+              </CardHeader>
+            </VisuallyHidden>
 
-            {/* Xác nhận mật khẩu mới */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Xác nhận mật khẩu mới
-              </label>
-              <Input
-                name="confirm_password"
-                type="password"
-                value={formData.confirm_password}
-                onChange={handleChange}
-                placeholder="Nhập lại mật khẩu mới"
-              />
-              {errors.confirm_password && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.confirm_password}
-                </p>
-              )}
-            </div>
+            <CardContent className="space-y-4 text-sm p-5">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Mật khẩu hiện tại
+                  </label>
+                  <Input
+                    name="current_password"
+                    type="password"
+                    value={formData.current_password}
+                    onChange={handleChange}
+                    placeholder="Nhập mật khẩu hiện tại"
+                  />
+                  {errors.current_password && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.current_password}
+                    </p>
+                  )}
+                </div>
 
-            {/* Nút hành động */}
-            <div className="flex gap-2 pt-2">
-              <Button type="submit" className="flex-1" disabled={loading}>
-                {loading ? "Đang lưu..." : "Lưu thay đổi"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Hủy
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </motion.div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Mật khẩu mới
+                  </label>
+                  <Input
+                    name="new_password"
+                    type="password"
+                    value={formData.new_password}
+                    onChange={handleChange}
+                    placeholder="Nhập mật khẩu mới"
+                  />
+                  {errors.new_password && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.new_password}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Xác nhận mật khẩu mới
+                  </label>
+                  <Input
+                    name="confirm_password"
+                    type="password"
+                    value={formData.confirm_password}
+                    onChange={handleChange}
+                    placeholder="Nhập lại mật khẩu mới"
+                  />
+                  {errors.confirm_password && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.confirm_password}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="submit" className="flex-1" disabled={loading}>
+                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleCancel}
+                    disabled={loading}
+                  >
+                    Hủy
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 

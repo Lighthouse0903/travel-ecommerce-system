@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import TourCard from "./TourCard";
 import { useTourService } from "@/services/tourService";
 import { TourListPageType } from "@/types/tour";
-import { CATEGORY_CHOICES } from "@/types/tour";
 
 const TourList: React.FC = () => {
   const { getListPublicTour } = useTourService();

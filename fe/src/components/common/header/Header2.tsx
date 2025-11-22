@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { MenuIcon } from "lucide-react";
 import { FaRegHeart } from "react-icons/fa";

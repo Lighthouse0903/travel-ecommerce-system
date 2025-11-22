@@ -39,6 +39,11 @@ const SidebarClient = () => {
       icon: PlusSquare,
     },
     {
+      href: "/agency/dashboard/chat",
+      label: "Chat với khách hàng",
+      icon: LayoutDashboard,
+    },
+    {
       href: "/agency/dashboard/bookings",
       label: "Đơn đặt tour",
       icon: ShoppingBag,

@@ -8,11 +8,14 @@ import React, {
 } from "react";
 import { AuthContextType } from "@/types/auth";
 import { UserResponse } from "@/types/user";
+import { useRouter } from "next/navigation";
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL! + "/api";
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter();
   const [access, setAccess] = useState<string | null>(null);
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,6 +70,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setAccess(null);
       setUser(null);
+
+      router.replace("/");
     }
   };
 

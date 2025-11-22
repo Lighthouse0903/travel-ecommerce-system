@@ -23,11 +23,12 @@ import BookingCard from "@/components/customer/tours/BookingCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { TourResponse } from "@/types/tour";
+import ListReviewCard from "@/components/common/tours/tour-detail/ListReviewCard";
 
 type SectionKey = "overview" | "itinerary" | "service" | "policy";
 
 const PublicTourDetail: React.FC = () => {
-  const { idOrSlug } = useParams();
+  const { id } = useParams();
   const { getDetailPublicTour } = useTourService();
 
   const [tour, setTour] = useState<TourResponse | null>(null);
@@ -59,14 +60,14 @@ const PublicTourDetail: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getDetailPublicTour(idOrSlug as string);
+        const res = await getDetailPublicTour(id as string);
         setTour((res?.data ?? null) as TourResponse);
       } catch (e) {
         console.log("Lỗi khi lấy chi tiết tour:", e);
       }
     };
-    if (idOrSlug) fetchData();
-  }, [idOrSlug]);
+    if (id) fetchData();
+  }, [id]);
 
   // tính discount
   const hasDiscount = useMemo(() => {
@@ -98,6 +99,7 @@ const PublicTourDetail: React.FC = () => {
       : adultPrice;
 
   const displayPrice = finalPrice;
+  const pickupPoints = tour.pickup_points;
 
   return (
     <div className="mx-auto pt-5 w-[95%] sm:w-[90%]">
@@ -106,7 +108,7 @@ const PublicTourDetail: React.FC = () => {
         {title}
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
         {/* Cột trái */}
         <div className="space-y-10">
           <Gallery
@@ -179,11 +181,15 @@ const PublicTourDetail: React.FC = () => {
           <div ref={policyRef} className="space-y-3 sm:space-y-4 scroll-mt-20">
             <PolicyAndGuide policy={tour.policy} guide={tour.guide} />
           </div>
+
+          {/* Review */}
+          <ListReviewCard tourId={id as string} />
         </div>
 
         {/* Cột phải */}
         <div className="space-y-6 h-fit">
           <BookingCard
+            pickup_points={pickupPoints}
             price={displayPrice}
             originalPrice={originalPrice}
             hasDiscount={hasDiscount}

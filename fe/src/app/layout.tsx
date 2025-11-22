@@ -6,6 +6,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/common/header/Header";
 import Footer from "@/components/common/footer/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import LoginModal from "@/components/common/dialogs/LoginModal";
+import { LoginModalProvider } from "@/contexts/LoginModalContext";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -35,10 +37,13 @@ export default function RootLayout({
         className={`${montserrat.variable} ${inter.variable} antialiased bg-background text-foreground`}
       >
         <AuthProvider>
-          <Header />
-          {children}
-          <Toaster position="top-center" />
-          <Footer />
+          <LoginModalProvider>
+            <LoginModal />
+            <Header />
+            {children}
+            <Toaster position="top-center" />
+            <Footer />
+          </LoginModalProvider>
         </AuthProvider>
       </body>
     </html>

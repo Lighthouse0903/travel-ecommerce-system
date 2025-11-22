@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-// import TourCard from "@/components/agency/tour/TourCard";
+import TourCard from "@/components/agency/tour/TourCard";
 import { TourListPageType } from "@/types/tour";
 import { useTourService } from "@/services/tourService";
 
@@ -43,9 +43,9 @@ const TourListPage = () => {
 
       {/* Grid danh sách tour */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* {tours?.map((tour) => (
-          // <TourCard key={tour.tour_id} tour={tour} onDelete={handleDelete} />
-        ))} */}
+        {tours?.map((tour) => (
+          <TourCard key={tour.tour_id} tour={tour} onDelete={handleDelete} />
+        ))}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import DashboardAgencySidebar from "@/components/agency/sidebar/AgencySidebar";
+import DashboardAgencySidebar from "@/components/agency/sidebar/Sidebar";
 
 export default function AgencyLayout({
   children,

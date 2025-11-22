@@ -52,46 +52,34 @@ const RegisterForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const res = await register(values);
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    try {
+      const res = await register(values);
+      if (isSubmitting) return;
+      setIsSubmitting(true);
 
-    if (res.success) {
-      setTimeout(() => {
-        onSuccess?.();
-      }, 1000);
-      toast.dismiss();
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
+      if (res.success) {
+        setTimeout(() => {
+          onSuccess?.();
+        }, 1000);
+        toast.dismiss();
+        toast.success("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
 
-      return;
-    }
-
-    if (res.error && typeof res.error === "object") {
-      const firstKey = Object.keys(res.error)[0];
-      const firstMsg = res.error[firstKey]?.[0]?.toLowerCase();
-
-      let message = "Đăng ký thất bại!";
-
-      if (firstMsg?.includes("user with this email already exists")) {
-        message = "Email này đã được sử dụng.";
-      } else if (
-        firstMsg?.includes("a user with that username already exists")
-      ) {
-        message = "Tên người dùng này đã tồn tại.";
+        return;
       } else {
-        message = res.message || firstMsg || "Đăng ký thất bại!";
+        // xử lý lỗi
+        const raw = res.error.message;
+        let msg = "Lỗi không xác định";
+        if (raw && typeof raw === "object") {
+          const firstValue = Object.values(raw)[0];
+          msg = Array.isArray(firstValue) ? firstValue[0] : firstValue;
+        }
+        console.log("Lỗi :", msg);
+        toast.error(msg);
       }
-
-      console.log("Chi tiết lỗi đăng ký:", res.error);
+    } catch (err: any) {
       toast.dismiss();
-      toast.error(message);
-    } else {
-      toast.dismiss();
-      toast.error(
-        typeof res.message === "string"
-          ? res.message
-          : JSON.stringify(res.message) || "Đăng kí thất bại!"
-      );
+      toast.error(err?.message || "Lỗi kết nối máy chủ!");
+      console.log("Lỗi kết nối tới máy chủ");
     }
   };
 

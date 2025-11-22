@@ -16,7 +16,7 @@ export default function CustomerLayout({
 }>) {
   return (
     <div className="w-full flex justify-center items-center ">
-      <div className="w-[90%] md:w-[85%] flex flex-col md:flex-row gap-1 md:gap-5 px-0 mt-6">
+      <div className="w-[99%] md:w-[95%] flex flex-col md:flex-row gap-1 md:gap-5 px-0 mt-6">
         {/* Mobile Sidebar Trigger */}
         <div className="flex items-center justify-between md:hidden mb-2">
           <Sheet>

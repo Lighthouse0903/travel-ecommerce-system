@@ -52,6 +52,7 @@ const LoginForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       };
 
       const res = await login(payload);
+      console.log("API login trả về: ", res);
 
       if (res.success && res.data) {
         onSuccess?.();
@@ -62,36 +63,18 @@ const LoginForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         toast.dismiss();
         toast.success("Đăng nhập thành công!");
         return;
-      }
-
-      if (res.error && typeof res.error === "object") {
-        const firstKey = Object.keys(res.error)[0];
-        let firstMsg = res.error[firstKey]?.[0];
-        console.log("Chi tiết lỗi đăng nhập:", res.error.detail);
-        if (res.error.detail === "Invalid credentials.") {
-          firstMsg = "Thông tin đăng nhập không chính xác";
-        }
-        toast.dismiss();
-        toast.error(firstMsg);
       } else {
-        toast.dismiss();
-        toast.error(
-          typeof res.message === "string"
-            ? res.message
-            : JSON.stringify(res.message) || "Đăng nhập thất bại!"
-        );
+        // xử lý lỗi
+        const raw = res.error.message;
+        let msg = "Lỗi không xác định";
+        if (raw && typeof raw === "object") {
+          const firstValue = Object.values(raw)[0];
+          msg = Array.isArray(firstValue) ? firstValue[0] : firstValue;
+        }
+        console.log("Lỗi :", msg);
+        toast.error(msg);
       }
     } catch (error: any) {
-      if (error?.error) {
-        console.log("Chi tiết lỗi từ server:", error.error);
-
-        if (error.error.username_or_email) {
-          console.log("Lỗi username/email:", error.error.username_or_email[0]);
-        }
-        if (error.error.password) {
-          console.log("Lỗi password:", error.error.password[0]);
-        }
-      }
       toast.dismiss();
       toast.error(error?.message || "Lỗi kết nối máy chủ!");
       console.log("Lỗi kết nối tới máy chủ");

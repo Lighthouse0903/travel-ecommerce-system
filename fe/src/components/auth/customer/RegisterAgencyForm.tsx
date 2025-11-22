@@ -50,6 +50,10 @@ const formSchema = z.object({
 
 const RegisterAgencyForm = () => {
   const { register } = useAgencyService();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -62,7 +66,7 @@ const RegisterAgencyForm = () => {
     },
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Hiện toast lỗi validation đầu tiên
   useEffect(() => {
     const errors = form.formState.errors;
     if (Object.keys(errors).length > 0) {
@@ -74,6 +78,9 @@ const RegisterAgencyForm = () => {
   }, [form.formState.errors]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Chặn double submit + chặn submit lại sau khi đã gửi thành công
+    if (isSubmitting || isSubmitted) return;
+
     setIsSubmitting(true);
 
     try {
@@ -92,22 +99,31 @@ const RegisterAgencyForm = () => {
       }
 
       const res = await register(formData);
-      console.log(res);
+      console.log("Kết quả API đăng ký đại lý:", res);
+
       if (res.success) {
+        // GIỮ LẠI DỮ LIỆU, KHÔNG RESET FORM
+        setIsSubmitted(true); // đóng băng form
+
         if (typeof res.message === "string") {
           toast.success(res.message);
         } else {
-          toast.success("Đăng kí đại lý thành công");
+          toast.success(
+            "Gửi yêu cầu đăng ký đại lý thành công! Vui lòng chờ admin phê duyệt."
+          );
         }
-        form.reset();
-      } else {
-        let errorMsg: string | undefined;
 
-        if (typeof res.message === "string") {
-          errorMsg = res.message;
-        }
-        toast.error(errorMsg || "Đăng kí đại lý thất bại");
+        return;
       }
+
+      // Xử lý lỗi trả về từ backend
+      let errorMsg: string | undefined;
+
+      if (typeof res.message === "string") {
+        errorMsg = res.message;
+      }
+
+      toast.error(errorMsg || "Đăng kí đại lý thất bại");
     } catch (error) {
       console.error(error);
       toast.error("Có lỗi xảy ra, vui lòng thử lại!");
@@ -116,11 +132,17 @@ const RegisterAgencyForm = () => {
     }
   };
 
+  const disabled = isSubmitting || isSubmitted;
+
   return (
     <div className="bg-slate-50 rounded-xl shadow-xl p-6 w-full">
-      <h1 className="text-2xl font-bold text-center mb-6">
+      <h1 className="text-2xl font-bold text-center mb-2">
         Đăng ký trở thành Đại lý Viettravel
       </h1>
+      <p className="text-center text-sm text-slate-600 mb-6">
+        Vui lòng điền đầy đủ thông tin. Sau khi gửi, yêu cầu của bạn sẽ được
+        admin kiểm duyệt trong thời gian sớm nhất.
+      </p>
 
       <Form {...form}>
         <form
@@ -137,6 +159,7 @@ const RegisterAgencyForm = () => {
                 <FormControl>
                   <Input
                     placeholder="Công ty TNHH Viettravel Partner"
+                    disabled={disabled}
                     {...field}
                   />
                 </FormControl>
@@ -153,7 +176,11 @@ const RegisterAgencyForm = () => {
                 <FormItem>
                   <FormLabel>Số giấy phép kinh doanh</FormLabel>
                   <FormControl>
-                    <Input placeholder="0123456789" {...field} />
+                    <Input
+                      placeholder="0123456789"
+                      disabled={disabled}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,7 +194,11 @@ const RegisterAgencyForm = () => {
                 <FormItem>
                   <FormLabel>Hotline</FormLabel>
                   <FormControl>
-                    <Input placeholder="0987654321" {...field} />
+                    <Input
+                      placeholder="0987654321"
+                      disabled={disabled}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -183,7 +214,11 @@ const RegisterAgencyForm = () => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="example@agency.com" {...field} />
+                    <Input
+                      placeholder="example@agency.com"
+                      disabled={disabled}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -197,7 +232,11 @@ const RegisterAgencyForm = () => {
                 <FormItem>
                   <FormLabel>Địa chỉ</FormLabel>
                   <FormControl>
-                    <Input placeholder="Hà Đông, Hà Nội" {...field} />
+                    <Input
+                      placeholder="Hà Đông, Hà Nội"
+                      disabled={disabled}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -217,6 +256,7 @@ const RegisterAgencyForm = () => {
                       type="image"
                       value={field.value ? Array.from(field.value) : []}
                       onChange={(files) => {
+                        if (disabled) return; // không cho đổi file khi đã gửi
                         const dataTransfer = new DataTransfer();
                         files.forEach((file) => dataTransfer.items.add(file));
                         field.onChange(dataTransfer.files);
@@ -240,6 +280,7 @@ const RegisterAgencyForm = () => {
                       type="image"
                       value={field.value ? Array.from(field.value) : []}
                       onChange={(files) => {
+                        if (disabled) return;
                         const dataTransfer = new DataTransfer();
                         files.forEach((file) => dataTransfer.items.add(file));
                         field.onChange(dataTransfer.files);
@@ -263,10 +304,11 @@ const RegisterAgencyForm = () => {
                     type="checkbox"
                     className="w-4 h-4"
                     checked={field.value}
+                    disabled={disabled}
                     onChange={(e) => field.onChange(e.target.checked)}
                   />
                 </FormControl>
-                <FormLabel>
+                <FormLabel className="text-sm">
                   Tôi đồng ý với{" "}
                   <a href="#" className="text-blue-500 underline">
                     điều khoản và chính sách
@@ -277,9 +319,21 @@ const RegisterAgencyForm = () => {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu đăng ký"}
+          <Button type="submit" className="w-full" disabled={disabled}>
+            {isSubmitted
+              ? "Đã gửi yêu cầu đăng ký"
+              : isSubmitting
+              ? "Đang gửi..."
+              : "Gửi yêu cầu đăng ký"}
           </Button>
+
+          {isSubmitted && (
+            <p className="text-center text-sm text-green-700 mt-2">
+              Yêu cầu đăng ký đại lý của bạn đã được gửi. Vui lòng chờ admin phê
+              duyệt, chúng tôi sẽ liên hệ qua email hoặc hotline bạn đã cung
+              cấp.
+            </p>
+          )}
         </form>
       </Form>
     </div>

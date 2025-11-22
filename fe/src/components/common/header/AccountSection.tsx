@@ -1,4 +1,5 @@
-import React, { use, useState } from "react";
+"use client";
+import React, { useState } from "react";
 
 import { FaRegUser } from "react-icons/fa";
 
@@ -11,7 +12,7 @@ import {
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import LoginForm from "@/components/auth/customer/LoginForm";
-import RegisterForm from "@/components/auth/customer/RegiterForm";
+import RegisterForm from "@/components/auth/customer/RegisterForm";
 import { useAuth } from "@/contexts/AuthContext";
 
 import AccountPopoverContent from "../popover/AccountPopoverContent";

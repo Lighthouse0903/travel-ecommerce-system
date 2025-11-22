@@ -1,6 +1,6 @@
-// src/hooks/fetchInstance.ts
-const API_URL = "http://127.0.0.1:8000/api";
-import { ApiResponse } from "@/types/common";
+const API_URL = process.env.NEXT_PUBLIC_API_URL! + "/api";
+
+import { ApiResponse, ApiError, ApiFieldErrors } from "@/types/common";
 import { useAuth } from "@/contexts/AuthContext";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -8,26 +8,33 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export const useFetchInstance = () => {
   const { access, setAccess } = useAuth();
 
-  // Refresh token
+  // ================================
+  // REFRESH TOKEN
+  // ================================
   const refreshAccessToken = async (): Promise<string | null> => {
     try {
       const res = await fetch(`${API_URL}/users/refresh/`, {
         method: "POST",
         credentials: "include", // refresh token trong cookie
       });
+
       if (!res.ok) return null;
+
       const data = await res.json();
       if (data?.access) {
         setAccess(data.access);
         return data.access;
       }
+
       return null;
     } catch {
       return null;
     }
   };
 
-  // Hàm request gốc
+  // ================================
+  // REQUEST CORE
+  // ================================
   const request = async <T>(
     url: string,
     method: HttpMethod,
@@ -38,12 +45,12 @@ export const useFetchInstance = () => {
 
     const headers = new Headers();
 
-    // Nếu KHÔNG phải FormData thì MỚI set Content-Type JSON
+    // Nếu KHÔNG phải FormData → gửi JSON
     if (!(body instanceof FormData)) {
       headers.set("Content-Type", "application/json");
     }
 
-    // Nếu endpoint cần auth thì gắn token
+    // Gắn Authorization nếu cần
     if (requireAuth && token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
@@ -57,22 +64,31 @@ export const useFetchInstance = () => {
     if (body)
       options.body = body instanceof FormData ? body : JSON.stringify(body);
 
-    // Gọi API
+    // ================================
+    // CALL API
+    // ================================
     let response: Response;
+
     try {
       response = await fetch(`${API_URL}${url}`, options);
     } catch (err) {
+      const errorPayload: ApiError = {
+        message: "Không thể kết nối tới máy chủ.",
+      };
+
       return {
         success: false,
         status: 0,
-        message: "Không thể kết nối tới máy chủ.",
-        error: "Không thể kết nối tới máy chủ",
+        message: errorPayload.message,
+        error: errorPayload,
         data: null,
         meta: null,
       };
     }
 
-    // Nếu 401 → thử refresh token
+    // ================================
+    // HANDLE 401 → REFRESH TOKEN
+    // ================================
     if (response.status === 401 && requireAuth) {
       const newToken = await refreshAccessToken();
       if (newToken) {
@@ -81,22 +97,38 @@ export const useFetchInstance = () => {
       }
     }
 
+    // Parse JSON
     const isJson = response.headers
       .get("content-type")
       ?.includes("application/json");
+
     const json = isJson ? await response.json() : null;
 
+    // ================================
+    // HANDLE ERROR RESPONSE
+    // ================================
     if (!response.ok) {
+      const errorPayload: ApiError = {
+        message:
+          json?.message ||
+          json?.detail ||
+          `Lỗi ${response.status}: Yêu cầu thất bại.`,
+        errors: (json?.errors ?? undefined) as ApiFieldErrors | undefined,
+      };
+
       return {
         success: false,
         status: response.status,
-        message: json?.message || `Lỗi ${response.status}: Yêu cầu thất bại.`,
-        error: json,
+        message: errorPayload.message,
+        error: errorPayload,
         data: null,
         meta: null,
       };
     }
 
+    // ================================
+    // SUCCESS RESPONSE
+    // ================================
     return {
       success: true,
       status: response.status,
@@ -107,7 +139,9 @@ export const useFetchInstance = () => {
     };
   };
 
-  // Public API
+  // ================================
+  // PUBLIC METHODS
+  // ================================
   return {
     get: <T>(url: string, requireAuth = false) =>
       request<T>(url, "GET", undefined, requireAuth),
