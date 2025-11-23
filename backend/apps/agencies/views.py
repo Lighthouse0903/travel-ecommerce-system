@@ -16,26 +16,25 @@ class AgencyApplyView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.get_serializer(data=request.data, context={"request": request})
             serializer.is_valid(raise_exception=True)
             agency = serializer.save()
+
             return Response(
-                {"data": self.get_serializer(agency).data,
-                 "message": "Gửi hồ sơ đại lý thành công."},
+                {
+                    "data": self.get_serializer(agency, context={"request": request}).data,
+                    "message": "Gửi hồ sơ đại lý thành công."
+                },
                 status=status.HTTP_201_CREATED
             )
 
         except ValidationError as ve:
             logger.warning("Agency register validation error: %s", ve.detail)
             detail = ve.detail
-            msg = None
-            if isinstance(detail, dict) and "message" in detail:
-                msg = detail["message"]
-            else:
-                msg = str(detail)
+            msg = detail.get("message") if isinstance(detail, dict) else str(detail)
             return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        except IntegrityError as ie:
+        except IntegrityError:
             logger.exception("Agency register integrity error")
             return Response(
                 {"message": "Dữ liệu đã tồn tại (email/hotline/license_number)."},
@@ -45,6 +44,7 @@ class AgencyApplyView(generics.CreateAPIView):
         except Exception as e:
             logger.exception("Agency register unexpected error")
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class MyAgencyView(generics.RetrieveUpdateAPIView):
     serializer_class = AgencySerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -53,17 +53,13 @@ class MyAgencyView(generics.RetrieveUpdateAPIView):
         try:
             return Agency.objects.get(user=self.request.user)
         except Agency.DoesNotExist:
-            # Trả lỗi dạng JSON đẹp
             raise NotFound(detail="Bạn chưa đăng ký Agency.")
 
     def get(self, request, *args, **kwargs):
         agency = self.get_object()
         serializer = self.get_serializer(agency)
         return Response(
-            {
-                "data": serializer.data,
-                "message": "Lấy thông tin Agency thành công."
-            },
+            {"data": serializer.data, "message": "Lấy thông tin Agency thành công."},
             status=status.HTTP_200_OK
         )
 
@@ -73,9 +69,8 @@ class MyAgencyView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
-            {
-                "data": serializer.data,
-                "message": "Cập nhật thông tin Agency thành công."
-            },
+            {"data": serializer.data, "message": "Cập nhật thông tin Agency thành công."},
             status=status.HTTP_200_OK
         )
+
+
