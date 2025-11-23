@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { MenuIcon } from "lucide-react";
-import { FaRegHeart } from "react-icons/fa";
 import { FaRegBell } from "react-icons/fa";
 
 import {
@@ -46,7 +45,7 @@ const Header2 = () => {
       </div>
       <div className="flex items-center justify-between gap-x-3">
         <div className="flex items-center justify-between">
-          <FaRegBell size={23} />
+          <FaRegBell size={23} className="text-gray-700 shrink-0" />
           {/* <span className="hidden sm:inline">Yêu thích</span> */}
         </div>
 

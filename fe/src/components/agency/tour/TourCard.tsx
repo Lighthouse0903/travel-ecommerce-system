@@ -112,7 +112,7 @@ const TourCard: React.FC<TourCardProps> = ({
         <div className="flex items-center text-sm">
           <StarRating stars={tour.rating} />
           <span className="ml-1 text-xs text-slate-600">
-            ({tour.review_count} đánh giá)
+            ({tour.reviews_count} đánh giá)
           </span>
         </div>
 

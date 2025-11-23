@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import FileUpload from "@/components/common/Upload/FileUpload";
 import { useAgencyService } from "@/services/agencyService";
+import { AgencyResponse } from "@/types/agency";
+import { useRouter } from "next/navigation";
 
 // Schema xác thực cho form đăng kí đại lý
 const formSchema = z.object({
@@ -49,10 +51,14 @@ const formSchema = z.object({
 });
 
 const RegisterAgencyForm = () => {
-  const { register } = useAgencyService();
+  const { registerAgency, getInforAgency } = useAgencyService();
+  const [existingAgency, setExistingAgency] = useState<AgencyResponse | null>(
+    null
+  );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,10 +83,45 @@ const RegisterAgencyForm = () => {
     }
   }, [form.formState.errors]);
 
+  useEffect(() => {
+    const fetchAgency = async () => {
+      try {
+        const res = await getInforAgency();
+
+        if (res.success && res.data) {
+          const agency = res.data;
+          setExistingAgency(agency);
+
+          if (agency.status === "approved") {
+            // Đã được duyệt -> không cho vào trang đăng ký nữa
+            router.push("/agency/dashboard/profile");
+            return;
+          }
+
+          if (agency.status === "pending") {
+            // Đã gửi yêu cầu -> đóng băng form + prefill
+            form.reset({
+              agency_name: agency.agency_name,
+              license_number: agency.license_number,
+              hotline: agency.hotline,
+              email_agency: agency.email_agency,
+              address_agency: agency.address_agency,
+              agree: true,
+            });
+            setIsSubmitted(true); // đóng băng form
+          }
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchAgency();
+  }, []);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // Chặn double submit + chặn submit lại sau khi đã gửi thành công
     if (isSubmitting || isSubmitted) return;
-
     setIsSubmitting(true);
 
     try {
@@ -98,32 +139,31 @@ const RegisterAgencyForm = () => {
         console.log(`${key}:`, val);
       }
 
-      const res = await register(formData);
-      console.log("Kết quả API đăng ký đại lý:", res);
+      const res = await registerAgency(formData);
+      console.log("Api registerAgency response", res);
 
       if (res.success) {
-        // GIỮ LẠI DỮ LIỆU, KHÔNG RESET FORM
         setIsSubmitted(true); // đóng băng form
 
-        if (typeof res.message === "string") {
-          toast.success(res.message);
-        } else {
-          toast.success(
-            "Gửi yêu cầu đăng ký đại lý thành công! Vui lòng chờ admin phê duyệt."
-          );
-        }
+        let msg =
+          typeof res.message === "string"
+            ? res.message
+            : "Gửi yêu cầu đăng ký đại lý thành công! Vui lòng chờ admin phê duyệt.";
+
+        toast.success(msg);
 
         return;
+      } else {
+        // xử lý lỗi
+        const raw = res.error.message;
+        let msg = "Lỗi không xác định";
+        if (raw && typeof raw === "object") {
+          const firstValue = Object.values(raw)[0];
+          msg = Array.isArray(firstValue) ? firstValue[0] : firstValue;
+        }
+        console.log("Lỗi :", msg);
+        toast.error(msg);
       }
-
-      // Xử lý lỗi trả về từ backend
-      let errorMsg: string | undefined;
-
-      if (typeof res.message === "string") {
-        errorMsg = res.message;
-      }
-
-      toast.error(errorMsg || "Đăng kí đại lý thất bại");
     } catch (error) {
       console.error(error);
       toast.error("Có lỗi xảy ra, vui lòng thử lại!");

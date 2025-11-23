@@ -20,6 +20,31 @@ const config: NextConfig = {
         hostname: "travel-tours-media.s3.ap-southeast-2.amazonaws.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "bvhttdl.mediacdn.vn",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "statics.vinpearl.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cafefcdn.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "wyndham-thanhthuy.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "mia.vn",
+        pathname: "/**",
+      },
     ],
   },
 };

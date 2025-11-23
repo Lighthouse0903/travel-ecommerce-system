@@ -121,14 +121,14 @@ export interface TourListPageType {
   tour_id: string;
   name: string;
   categories: string[];
-  description: string;
+  description?: string;
   adult_price: string | number;
   children_price: string | number;
   discount: string | number;
   duration_days: number;
   destination: string;
   rating: number;
-  review_count: number;
+  reviews_count: number;
   image_url: string;
 }
 
@@ -140,6 +140,12 @@ export const CATEGORY_CHOICES = [
   { value: "cultural", label: "Văn hoá" },
   { value: "history", label: "Lịch sử" },
 ];
+
+export interface FilterTour {
+  categories: string[];
+  region: string;
+  price: number;
+}
 
 export const CATEGORY_MAP = CATEGORY_CHOICES.reduce((acc, cur) => {
   acc[cur.value] = cur.label;

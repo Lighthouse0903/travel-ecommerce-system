@@ -31,11 +31,26 @@ export const useTourService = () => {
     return patch<TourResponse>(`/tours/manage/${id}/`, payload, true);
   };
 
-  // ======Các hàm dành cho Khách Hàng ======
+  // ======Các hàm dành cho Khách Hàng public ======
 
   // hàm gọi API lấy thông tin list public tour
-  const getListPublicTour = (): Promise<ApiResponse<TourListPageType[]>> => {
-    return get<TourListPageType[]>(`/tours/public/`, false);
+  const getListPublicTour = (
+    query?: Record<string, string | number | undefined>
+  ): Promise<ApiResponse<TourListPageType[]>> => {
+    let qs = "";
+
+    if (query) {
+      const params = new URLSearchParams();
+      Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") {
+          params.set(key, String(value));
+        }
+      });
+      const s = params.toString();
+      if (s) qs = `?${s}`;
+    }
+
+    return get<TourListPageType[]>(`/tours/public/${qs}`, true);
   };
 
   // hàm gọi API lấy thông tin 1 tour Public chi tiết
@@ -44,6 +59,11 @@ export const useTourService = () => {
   ): Promise<ApiResponse<TourResponse>> => {
     return get<TourResponse>(`/tours/public/${id}/`, false);
   };
+
+  // hàm gọi API search tour
+  const searchTour = (): Promise<ApiResponse<TourResponse[]>> => {
+    return get<TourResponse[]>(`/tours/public/`, false);
+  };
   return {
     createTour,
     getDetailTour,
@@ -51,5 +71,6 @@ export const useTourService = () => {
     updateTour,
     getListPublicTour,
     getDetailPublicTour,
+    searchTour,
   };
 };

@@ -39,7 +39,7 @@ const AccountSection = () => {
               </>
             ) : (
               <>
-                <FaRegUser size={23} />
+                <FaRegUser size={23} className="text-gray-700 shrink-0" />
                 <span className="hidden sm:inline">Tài khoản</span>
               </>
             )}

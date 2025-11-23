@@ -178,10 +178,16 @@ const LoginForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                   <FaFacebook size={30} />
                   aceBook
                 </div>
-                <div className="flex justify-center items-center">
-                  <FaGoogle size={30} />
-                  oogle
-                </div>
+                <Link
+                  href={
+                    "https://accounts.google.com/v3/signin/accountchooser?access_type=online&client_id=267409294920-qbp6nricpf74r0hq2bcgn34btfvufniv.apps.googleusercontent.com&redirect_uri=http%3A%2F%2F127.0.0.1%3A8000%2Faccounts%2Fgoogle%2Flogin%2Fcallback%2F&response_type=code&scope=email+profile&state=Dot9Gr2F0dY8AK3o&dsh=S1697957075%3A1763805564979263&o2v=2&service=lso&flowName=GeneralOAuthFlow&opparams=%253F&continue=https%3A%2F%2Faccounts.google.com%2Fsignin%2Foauth%2Fconsent%3Fauthuser%3Dunknown%26part%3DAJi8hAMRy0OXgF3kKr_mxoThnQ2kgHPq9Dx1LylCMkPytimk13xRgk6w8Jjbcb_CxEOHqxaFa6tqh0iuOE-Qf5nCryUUuNI3tmD2_AT3eaRPyWasGF2tZiPzsyAx0jQIFaKd0Kig8cXVnq48zVhfSDeTGbNSVPwFZWFbY8NOn_uBSZZ3n2ONlZWXpSYacAVbo4Xg0QuUqvZIC1wy80yOglpOhnrxdPSaFL0zIMsQIV8tWAqGpggUo-BXQv5dQXptB7ttUbdEKwMNGWIAyLH0QepK_ZrcBQPQD3mdFktHcMH9nV5t8I6A5aiQozyrOYihd-pmbvL0ivLB0s2kAmAP8IdcO39X1Ss8fHXF_0pcauzngKXEnPD0BPWhuhO5SNtEp7mfQaFeCPmaAWa9hVot2zt21m1_HcwjRJDle240vpSkHGVxV0KsU_bdaziFWVTQeouVLfHXRMXT974Gac4ZnqNpouhGUaNMgA%26flowName%3DGeneralOAuthFlow%26as%3DS1697957075%253A1763805564979263%26client_id%3D267409294920-qbp6nricpf74r0hq2bcgn34btfvufniv.apps.googleusercontent.com%26requestPath%3D%252Fsignin%252Foauth%252Fconsent%23&app_domain=http%3A%2F%2F127.0.0.1%3A8000"
+                  }
+                >
+                  <div className="flex justify-center items-center">
+                    <FaGoogle size={30} />
+                    oogle
+                  </div>
+                </Link>
               </div>
             </div>
           </div>
