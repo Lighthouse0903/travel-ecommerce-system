@@ -33,6 +33,56 @@ class AgencyAdmin(admin.ModelAdmin):
     search_fields = ('agency_name', 'user__username', 'license_number')
     actions = ['approve_agencies', 'reject_agencies']
 
+
+    def _approve_agency(self, agency):
+        agency.status = "approved"
+        agency.reason_rejected = None
+        agency.verified = True
+        agency.save(update_fields=["status", "reason_rejected", "verified"])
+
+        # --- Update user role ---
+        user = agency.user
+        roles = user.roles or []
+
+        if getattr(user, "PROVIDER", None) is None:
+            print("⚠ WARNING: user.PROVIDER does not exist")
+        else:
+            if user.PROVIDER not in roles:
+                user.roles = roles + [user.PROVIDER]
+                user.save(update_fields=["roles"])
+
+        # Send email
+        recipient = agency.email_agency or (agency.user.email if agency.user else None)
+        if recipient:
+            def send_mail_async():
+                send_mail(
+                    subject="Agency Registration Approved",
+                    message=f"Dear {agency.agency_name}, your registration has been approved.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[recipient],
+                    fail_silently=False,
+                )
+            transaction.on_commit(send_mail_async)
+
+    def _reject_agency(self, agency, reason):
+        agency.status = "rejected"
+        agency.reason_rejected = reason
+        agency.verified = False
+        agency.save(update_fields=["status", "reason_rejected", "verified"])
+
+        recipient = agency.email_agency or (agency.user.email if agency.user else None)
+        if recipient:
+            def send_mail_async():
+                send_mail(
+                    subject="Agency Registration Rejected",
+                    message=f"Dear {agency.agency_name}, your registration was rejected.\nReason: {reason}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[recipient],
+                    fail_silently=False,
+                )
+            transaction.on_commit(send_mail_async)
+
+
     def save_model(self, request, obj, form, change):
         old_status = None
         if change:
@@ -40,117 +90,33 @@ class AgencyAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-        if change and old_status != obj.status:
-            recipient = obj.email_agency or (obj.user.email if getattr(obj, "user", None) else None)
-            if not recipient:
-                self.message_user(request, f"No valid email for {obj.agency_name}", messages.WARNING)
-                return
+        if not change or old_status == obj.status:
+            return
 
-            if obj.status == 'approved':
-                obj.verified = True
-                obj.reason_rejected = None
-                obj.save(update_fields=['verified', 'reason_rejected'])
+        if obj.status == "approved":
+            self._approve_agency(obj)
 
-                def send_approval():
-                    try:
-                        send_mail(
-                            subject="Agency Registration Approved",
-                            message=f"Dear {obj.agency_name}, your registration has been approved.",
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[recipient],
-                            fail_silently=False,
-                        )
-                    except Exception as e:
-                        print(f"[ADMIN save_model] Approve mail failed: {e}")
+        elif obj.status == "rejected":
+            self._reject_agency(obj, obj.reason_rejected or "")
 
-                transaction.on_commit(send_approval)
-
-            elif obj.status == 'rejected':
-                obj.verified = False
-                obj.save(update_fields=['verified'])
-
-                def send_reject():
-                    try:
-                        send_mail(
-                            subject="Agency Registration Rejected",
-                            message=f"Dear {obj.agency_name}, your registration was rejected.\nReason: {obj.reason_rejected or ''}",
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[recipient],
-                            fail_silently=False,
-                        )
-                    except Exception as e:
-                        print(f"[ADMIN save_model] Reject mail failed: {e}")
-
-                transaction.on_commit(send_reject)
 
     def approve_agencies(self, request, queryset):
-        sent_count = 0
         for agency in queryset:
-            agency.status = 'approved'
-            agency.reason_rejected = None
-            agency.verified = True
-            agency.save()
+            self._approve_agency(agency)
 
-            recipient = agency.email_agency or (agency.user.email if agency.user else None)
-            if recipient:
-                def send_approval_mail():
-                    try:
-                        send_mail(
-                            subject="Agency Registration Approved",
-                            message=f"Dear {agency.agency_name}, your registration has been approved.",
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[recipient],
-                            fail_silently=False,
-                        )
-                    except Exception as e:
-                        print(f"[ADMIN action] Approve mail failed ({agency.agency_name}): {e}")
+        self.message_user(request, f"{queryset.count()} agencies approved.")
+    approve_agencies.short_description = "Approve selected agencies"
 
-                transaction.on_commit(send_approval_mail)
-                sent_count += 1
-            else:
-                self.message_user(request, f"No valid email for {agency.agency_name}", messages.WARNING)
-
-        self.message_user(
-            request,
-            f"{queryset.count()} agency(ies) approved successfully, {sent_count} email(s) queued to send."
-        )
-    approve_agencies.short_description = 'Approve selected agencies'
 
     def reject_agencies(self, request, queryset):
         if "apply" in request.POST:
             form = RejectForm(request.POST)
             if form.is_valid():
                 reason = form.cleaned_data["reason"]
-                sent_count = 0
                 for agency in queryset:
-                    agency.status = "rejected"
-                    agency.reason_rejected = reason
-                    agency.verified = False
-                    agency.save()
+                    self._reject_agency(agency, reason)
 
-                    recipient = agency.email_agency or (agency.user.email if agency.user else None)
-                    if recipient:
-                        def send_reject_mail():
-                            try:
-                                send_mail(
-                                    subject="Agency Registration Rejected",
-                                    message=f"Dear {agency.agency_name}, your registration was rejected.\nReason: {reason}",
-                                    from_email=settings.DEFAULT_FROM_EMAIL,
-                                    recipient_list=[recipient],
-                                    fail_silently=False,
-                                )
-                            except Exception as e:
-                                print(f"[ADMIN action] Reject mail failed ({agency.agency_name}): {e}")
-
-                        transaction.on_commit(send_reject_mail)
-                        sent_count += 1
-                    else:
-                        self.message_user(request, f"No valid email for {agency.agency_name}", messages.WARNING)
-
-                self.message_user(
-                    request,
-                    f"{queryset.count()} agency(ies) rejected. {sent_count} email(s) queued to send."
-                )
+                self.message_user(request, f"{queryset.count()} agencies rejected.")
                 return None
         else:
             form = RejectForm(initial={'_selected_action': queryset.values_list('agency_id', flat=True)})

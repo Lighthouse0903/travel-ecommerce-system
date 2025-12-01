@@ -79,7 +79,7 @@ class AgencyApplySerializer(serializers.ModelSerializer):
 
         agency = Agency(
             user=user,
-            status="pending",
+            status="pending",  # user gửi hồ sơ → pending
             verified=False,
             **validated_data,
         )
@@ -90,11 +90,6 @@ class AgencyApplySerializer(serializers.ModelSerializer):
             self._save_file_unique(agency.license_file, license_file)
 
         agency.save()
-
-        roles = (user.roles or [])
-        if hasattr(user, "PROVIDER") and user.PROVIDER not in roles:
-            user.roles = roles + [user.PROVIDER]
-            user.save(update_fields=["roles"])
         return agency
 
 

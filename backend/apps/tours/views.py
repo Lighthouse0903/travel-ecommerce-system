@@ -237,13 +237,18 @@ class PublicTourListView(generics.ListAPIView):
         if max_price:
             qs = qs.filter(adult_price__lte=max_price)
 
-        # --- Filter location ---
+        # --- Filter start / end location ---
         start_location = self.request.query_params.get("start_location")
         end_location = self.request.query_params.get("end_location")
         if start_location:
             qs = qs.filter(start_location__icontains=start_location)
         if end_location:
             qs = qs.filter(end_location__icontains=end_location)
+
+        # --- Filter destination (đơn giản: icontains) ---
+        destination = self.request.query_params.get("destination")
+        if destination:
+            qs = qs.filter(destination__icontains=destination)
 
         # --- Filter region ---
         region_param = self.request.query_params.get("region")
@@ -267,7 +272,7 @@ class PublicTourListView(generics.ListAPIView):
             cats = [c.strip() for c in cat_param.split(",") if c.strip()]
             qs = qs.filter(categories__overlap=cats)
 
-        # --- Search không dấu ---
+        # --- Search q (không dấu) ---
         q = self.request.query_params.get("q")
         if q:
             from unidecode import unidecode
@@ -280,24 +285,6 @@ class PublicTourListView(generics.ListAPIView):
             ]
 
         return qs
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-
-        if not queryset:
-            return Response(
-                {"message": "Không tìm thấy kết quả."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(
-            {
-                "data": serializer.data,
-                "message": "Lấy danh sách tour của bạn thành công."
-            },
-            status=status.HTTP_200_OK
-        )
 
 
 

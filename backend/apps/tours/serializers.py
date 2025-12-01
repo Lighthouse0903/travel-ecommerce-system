@@ -310,12 +310,14 @@ class TourPublicDetailSerializer(serializers.ModelSerializer):
     # --- giá sau giảm ---
     final_adult_price = serializers.SerializerMethodField()
     final_children_price = serializers.SerializerMethodField()
+      # user_id của owner agency để phục vụ chat
+    agency_user_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
         fields = [
             "tour_id",
-            "agency_id", "agency_name", "email_agency", "hotline",
+            "agency_id","agency_user_id", "agency_name", "email_agency", "hotline",
 
             "name", "description",
 
@@ -356,6 +358,22 @@ class TourPublicDetailSerializer(serializers.ModelSerializer):
         if obj.discount:
             return float(obj.children_price) * (100 - float(obj.discount)) / 100
         return float(obj.children_price)
+    
+    def get_agency_user_id(self, obj):
+        agency = getattr(obj, "agency", None)
+        if not agency:
+            return None
+
+        user = getattr(agency, "user", None)
+        if not user:
+            return None
+
+        # Nếu User dùng UUIDField tên là user_id
+     
+        return getattr(user, "user_id", getattr(user, "pk", None))
+        # hoặc cho chắc chắn:
+        # return str(getattr(user, "user_id", getattr(user, "pk", None)))
+
 
 
 
