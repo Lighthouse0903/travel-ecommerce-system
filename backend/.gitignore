@@ -1,0 +1,60 @@
+# ======================================
+# Python / Django Git Ignore Template
+# ======================================
+
+# Virtual environment
+venv/
+.env/
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyCharm project files
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Byte-compiled / cache
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Django stuff
+db.sqlite3
+*.db
+*.sqlite3
+media/
+staticfiles/
+
+# Environment & secrets
+.env
+config/settings/local.py
+
+# Backup / temp files
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# PyCharm project files
+*.iml
+.idea/
+
+# Node & frontend (if you add React/FE later)
+node_modules/
+build/
+dist/
+
+# Coverage / testing
+.coverage
+htmlcov/
+*.cover
+.pytest_cache/
+.tox/
