@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Tour, TourImage
+from .models import Tour, TourImage, TourThumbnail
 import os, uuid, json
 from django.core.files.base import ContentFile
 
@@ -9,24 +9,36 @@ class TourImageSerializer(serializers.ModelSerializer):
         model = TourImage
         fields = ["img_id", "image"]
 
+class TourThumbnailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TourThumbnail
+        fields = ["thumbnail"]
+
 
 class TourSerializer(serializers.ModelSerializer):
+    # agency infor
     agency_id = serializers.UUIDField(source="agency.agency_id", read_only=True)
     agency_name = serializers.CharField(source="agency.agency_name", read_only=True)
     email_agency = serializers.EmailField(source="agency.email_agency", read_only=True)
     hotline = serializers.CharField(source="agency.hotline", read_only=True)
 
+
+    # upload
+    thumbnail = serializers.ImageField(write_only=True, required=False)
     images = serializers.ListField(child=serializers.ImageField(), write_only=True, required=False)
+
+    # urls
+    thumbnail_url = serializers.SerializerMethodField(read_only=True)
     image_urls = TourImageSerializer(source="images", many=True, read_only=True)
 
-    pickup_points = serializers.JSONField(required=False)
+    # JSONFIELD
     itinerary = serializers.JSONField(required=False)
     transportation = serializers.JSONField(required=False)
     services_included = serializers.JSONField(required=False)
     services_excluded = serializers.JSONField(required=False)
     policy = serializers.JSONField(required=False)
-    guide = serializers.JSONField(required=False)
     is_active = serializers.BooleanField(required=False)
+
 
     class Meta:
         model = Tour
@@ -34,61 +46,80 @@ class TourSerializer(serializers.ModelSerializer):
             "tour_id",
             "agency_id", "agency_name", "email_agency", "hotline",
             "name", "description",
+            "departure_location", "destination",
             "adult_price", "children_price", "discount",
-            "duration_days", "destination", "start_location", "end_location",
+            "duration_days",
             "rating", "reviews_count", "region", "categories",
-            "pickup_points", "itinerary", "transportation",
-            "services_included", "services_excluded", "policy", "guide",
-            "is_active", "created_at", "updated_at", "images", "image_urls"
+            "itinerary", "transportation",
+            "services_included", "services_excluded", "policy",
+            "is_active", "created_at", "updated_at",
+            "thumbnail", "thumbnail_url",
+            "images", "image_urls",
         ]
 
         read_only_fields = [
             "tour_id", "agency_id", "agency_name", "email_agency", "hotline",
-            "created_at", "updated_at", "rating", "reviews_count"
+            "created_at", "updated_at", "rating", "reviews_count", "thumbnail_url", "image_urls"
         ]
 
-    # ---------------------------
+    def get_thumbnail_url(self, obj):
+        thumb = getattr(obj, "thumbnail", None)
+        if not thumb:
+            return None
+        f = getattr(thumb, "thumbnail", None)
+        return getattr(f, "url", None)
+
     # IMAGE SAVE
-    # ---------------------------
-    def _save_image_to_s3(self, instance, f):
+    def _save_gallery_image(self, instance, f):
         try:
             f.seek(0)
         except Exception:
             pass
-        name, ext = os.path.splitext(getattr(f, "name", "upload"))
-        safe_name = f"{name}_{uuid.uuid4().hex}{ext}"
+        _, ext = os.path.splitext(getattr(f, "name", "upload"))
+        safe_name = f"{uuid.uuid4().hex}{ext}"
         data = f.read()
         ti = TourImage(tour=instance)
         ti.image.save(safe_name, ContentFile(data), save=True)
+    
+    def _save_thumbnail(self, instance, f):
+        try:
+            f.seek(0)
+        except Exception:
+            pass
+        _, ext = os.path.splitext(getattr(f, "name", "upload"))
+        safe_name = f"{uuid.uuid4().hex}{ext}"
+        data = f.read()
+
+        thumb, _ = TourThumbnail.objects.get_or_create(tour=instance)
+        thumb.thumbnail.save(safe_name, ContentFile(data), save=True)
 
     def create(self, validated_data):
         images = validated_data.pop("images", [])
+        thumbnail = validated_data.pop("thumbnail", None)
         tour = Tour.objects.create(**validated_data)
+        if thumbnail:
+            self._save_thumbnail(tour, thumbnail)
+
         for f in images:
-            self._save_image_to_s3(tour, f)
+            self._save_gallery_image(tour, f)
         return tour
 
     def update(self, instance, validated_data):
         images = validated_data.pop("images", None)
+        thumbnail = validated_data.pop("thumbnail", None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        if thumbnail:
+            self._save_thumbnail(instance, thumbnail)
+
         if images:
             for f in images:
-                self._save_image_to_s3(instance, f)
+                self._save_gallery_image(instance, f)
         return instance
 
-    # ---------------------------
-    # VALIDATIONS
-    # ---------------------------
-    def validate_pickup_points(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("pickup_points phải là danh sách.")
-        for p in value:
-            if not all(k in p for k in ["location", "address", "time"]):
-                raise serializers.ValidationError("Mỗi điểm đón phải có location, address và time.")
-        return value
 
+    # VALIDATIONS
     def validate_itinerary(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("itinerary phải là danh sách.")
@@ -124,22 +155,12 @@ class TourSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"policy": "deposit_percent phải trong khoảng 0–100."})
         return value
 
-    def validate_guide(self, value):
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("guide phải là object.")
-        required = ["name_guide", "phone_guide"]
-        for field in required:
-            if field not in value:
-                raise serializers.ValidationError(f"Thiếu trường {field} trong guide.")
-        return value
 
     def validate(self, attrs):
-        # ---------------------------
         # Parse JSON strings → objects
-        # ---------------------------
         json_fields = [
-            "pickup_points", "itinerary", "transportation",
-            "services_included", "services_excluded", "policy", "guide"
+            "itinerary", "transportation",
+            "services_included", "services_excluded", "policy"
         ]
         for f in json_fields:
             raw = self.initial_data.get(f)
@@ -149,9 +170,8 @@ class TourSerializer(serializers.ModelSerializer):
                 except Exception:
                     raise serializers.ValidationError({f: "Giá trị phải là JSON hợp lệ."})
 
-        # ---------------------------
+    
         # Parse categories
-        # ---------------------------
         raw_cat = self.initial_data.get("categories")
         if isinstance(raw_cat, str):
             try:
@@ -165,16 +185,14 @@ class TourSerializer(serializers.ModelSerializer):
         elif isinstance(raw_cat, list):
             attrs["categories"] = raw_cat
 
-        # ---------------------------
         # Default is_active
-        # ---------------------------
-        raw_is_active = self.initial_data.get("is_active", None)
-        if raw_is_active in (None, "", "null", "undefined"):
-            attrs["is_active"] = True
+        if self.instance is None:
+            raw_is_active = self.initial_data.get("is_active", None)
+            if raw_is_active in (None, "", "null", "undefined"):
+                attrs["is_active"] = True
 
-        # ---------------------------
+
         # Validate itinerary vs duration
-        # ---------------------------
         itinerary = attrs.get("itinerary")
         duration_days = attrs.get("duration_days")
 
@@ -212,24 +230,22 @@ class TourSerializer(serializers.ModelSerializer):
                     "itinerary": f"Bị trùng các ngày: {dupes}."
                 })
 
-        # ---------------------------
         # Check trùng tour trong agency
-        # ---------------------------
         request = self.context.get("request")
         agency = getattr(getattr(request, "user", None), "agency_profile", None)
 
         if agency:
             name = attrs.get("name")
-            start_loc = attrs.get("start_location")
-            end_loc = attrs.get("end_location")
+            dep = attrs.get("departure_location")
+            dest = attrs.get("destination")
             duration = attrs.get("duration_days")
 
-            if all([name, start_loc, end_loc, duration]):
+            if all([name, dep, dest, duration]):
                 dup_qs = Tour.objects.filter(
                     agency=agency,
                     name__iexact=name,
-                    start_location__iexact=start_loc,
-                    end_location__iexact=end_loc,
+                    departure_location__iexact=dep,
+                    destination__iexact=dest,
                     duration_days=duration,
                 )
                 if self.instance and getattr(self.instance, "pk", None):
@@ -237,16 +253,15 @@ class TourSerializer(serializers.ModelSerializer):
 
                 if dup_qs.exists():
                     raise serializers.ValidationError({
-                        "message": "Tour trùng (tên, tuyến, số ngày) đã tồn tại trong agency của bạn."
+                        "message": "Tour trùng (tên, nơi khởi hành, điểm đến, số ngày) đã tồn tại."
                     })
-
         return attrs
 
 
 
 class TourListItemSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
     categories = serializers.ListField(child=serializers.CharField(), read_only=True)
+    thumbnail_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
@@ -259,20 +274,24 @@ class TourListItemSerializer(serializers.ModelSerializer):
             "children_price",
             "discount",
             "duration_days",
+            "departure_location",
             "destination",
             "rating",
             "reviews_count",
-            "image_url",
+            "thumbnail_url",
+            "is_active",
         ]
 
-    def get_image_url(self, obj):
-        first_img = obj.images.first()
-        return first_img.image.url if first_img and getattr(first_img.image, "url", None) else None
+    def get_thumbnail_url(self, obj):
+        thumb = getattr(obj, "thumbnail", None)
+        if not thumb:
+            return None
+        return getattr(getattr(thumb, "thumbnail", None), "url", None)
 
 
 class TourPublicListSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(child=serializers.CharField(), read_only=True)
-    image_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
@@ -285,17 +304,20 @@ class TourPublicListSerializer(serializers.ModelSerializer):
             "children_price",
             "discount",
             "duration_days",
+            "departure_location",
             "destination",
             "rating",
             "reviews_count",
-            "image_url",
+            "thumbnail_url",
+            "is_active",  
         ]
         read_only_fields = fields
 
-    def get_image_url(self, obj):
-        first_img = obj.images.first()
-        return first_img.image.url if first_img else None
-
+    def get_thumbnail_url(self, obj):
+        thumb = getattr(obj, "thumbnail", None)
+        if not thumb:
+            return None
+        return getattr(getattr(thumb, "thumbnail", None), "url", None)
 
 
 class TourPublicDetailSerializer(serializers.ModelSerializer):
@@ -304,51 +326,41 @@ class TourPublicDetailSerializer(serializers.ModelSerializer):
     email_agency = serializers.EmailField(source="agency.email_agency", read_only=True)
     hotline = serializers.CharField(source="agency.hotline", read_only=True)
 
-    # ảnh
+    thumbnail_url = serializers.SerializerMethodField()
     image_urls = TourImageSerializer(source="images", many=True, read_only=True)
 
-    # --- giá sau giảm ---
     final_adult_price = serializers.SerializerMethodField()
     final_children_price = serializers.SerializerMethodField()
-      # user_id của owner agency để phục vụ chat
     agency_user_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
         fields = [
             "tour_id",
-            "agency_id","agency_user_id", "agency_name", "email_agency", "hotline",
-
+            "agency_id", "agency_user_id", "agency_name", "email_agency", "hotline",
             "name", "description",
-
-            # --- giá ---
-            "adult_price",
-            "children_price",
-            "discount",
-            "final_adult_price",
-            "final_children_price",
-
+            "adult_price", "children_price", "discount",
+            "final_adult_price", "final_children_price",
             "duration_days",
-            "destination",
-            "start_location", "end_location",
-
+            "departure_location", "destination",
             "rating", "reviews_count",
             "region", "categories",
-
-            "pickup_points", "itinerary",
-            "transportation",
-            "services_included", "services_excluded",
-            "policy", "guide",
-
-            "is_active",
-            "created_at", "updated_at",
+            "itinerary", "transportation",
+            "services_included", "services_excluded", "policy",
+            "is_active", "created_at", "updated_at",
+            "thumbnail_url",
             "image_urls",
         ]
         read_only_fields = fields
+    
+    def get_thumbnail_url(self, obj):
+        thumb = getattr(obj, "thumbnail", None)
+        if not thumb:
+            return None
+        return getattr(getattr(thumb, "thumbnail", None), "url", None)
 
-    # ----------------------
+ 
     # TÍNH GIÁ SAU GIẢM
-    # ----------------------
     def get_final_adult_price(self, obj):
         if obj.discount:
             return float(obj.adult_price) * (100 - float(obj.discount)) / 100
@@ -358,22 +370,15 @@ class TourPublicDetailSerializer(serializers.ModelSerializer):
         if obj.discount:
             return float(obj.children_price) * (100 - float(obj.discount)) / 100
         return float(obj.children_price)
-    
+
     def get_agency_user_id(self, obj):
         agency = getattr(obj, "agency", None)
         if not agency:
             return None
-
         user = getattr(agency, "user", None)
         if not user:
             return None
-
-        # Nếu User dùng UUIDField tên là user_id
-     
         return getattr(user, "user_id", getattr(user, "pk", None))
-        # hoặc cho chắc chắn:
-        # return str(getattr(user, "user_id", getattr(user, "pk", None)))
-
 
 
 
