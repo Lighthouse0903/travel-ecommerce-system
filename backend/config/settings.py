@@ -191,8 +191,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # TẠM THỜI COMMENT ĐI ĐỂ DEBUG
-    # 'EXCEPTION_HANDLER': 'utils.custom_exception_handler.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'utils.custom_exception_handler.custom_exception_handler',
 }
 
 # Internationalization
