@@ -21,6 +21,9 @@ from channels.layers import get_channel_layer
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -59,7 +62,9 @@ INSTALLED_APPS = [
     'apps.customers',
     'apps.tours',
     'apps.bookings',
-    'apps.reviews',
+    'chatAi',
+    # 'apps.reviews',
+    'apps.reviews.apps.ReviewsConfig',
     'apps.chat_messages',
     'apps.payments'
 ]
@@ -206,6 +211,7 @@ USE_I18N = True
 USE_TZ = True
 
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -251,3 +257,7 @@ MOMO_SECRET_KEY = os.getenv("MOMO_SECRET_KEY")
 MOMO_API_ENDPOINT = os.getenv("MOMO_API_ENDPOINT")
 MOMO_REDIRECT_URL = os.getenv("MOMO_REDIRECT_URL")
 MOMO_IPN_URL = os.getenv("MOMO_IPN_URL")
+
+# AI service
+CHATBOT_API_URL = "https://lampe2112-chatbot.hf.space/"
+CHATBOT_TIMEOUT = 120

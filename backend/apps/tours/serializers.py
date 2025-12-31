@@ -332,12 +332,14 @@ class TourPublicDetailSerializer(serializers.ModelSerializer):
     final_adult_price = serializers.SerializerMethodField()
     final_children_price = serializers.SerializerMethodField()
     agency_user_id = serializers.SerializerMethodField()
+    agency_avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
         fields = [
             "tour_id",
             "agency_id", "agency_user_id", "agency_name", "email_agency", "hotline",
+            "agency_avatar_url", 
             "name", "description",
             "adult_price", "children_price", "discount",
             "final_adult_price", "final_children_price",
@@ -379,6 +381,18 @@ class TourPublicDetailSerializer(serializers.ModelSerializer):
         if not user:
             return None
         return getattr(user, "user_id", getattr(user, "pk", None))
+    
+    
+    def get_agency_avatar_url(self, obj):
+        agency = getattr(obj, "agency", None)
+        if not agency:
+            return None
+
+        logo_field = getattr(agency, "avatar", None)
+        if not logo_field:
+            return None
+
+        return getattr(logo_field, "url", None)
 
 
 
