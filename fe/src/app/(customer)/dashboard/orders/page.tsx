@@ -15,56 +15,48 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { BookingListPage } from "@/types/booking";
+import { BookingListItem, BookingStatus } from "@/types/booking";
 import { useBookingService } from "@/services/bookingService";
 import { toast } from "sonner";
 import { formatDate } from "@/utils/formatDate";
+import { PaginationMeta } from "@/types/pagination";
+import { usePagination } from "@/hooks/usePagination";
+import PaginationCustom from "@/components/common/pagination/Pagination";
 
-const STATUS_CONFIG: Record<
-  string,
+export const STATUS_CONFIG: Record<
+  BookingStatus,
   {
     label: string;
     className: string;
   }
 > = {
   pending: {
-    label: "Chờ thanh toán",
+    label: "Chờ đại lý xác nhận",
     className: "bg-amber-100 text-amber-800 border border-amber-300",
   },
   paid_waiting: {
-    label: "Đã thanh toán - Chờ xác nhận",
+    label: "Chờ thanh toán",
     className: "bg-sky-100 text-sky-800 border border-sky-300",
   },
-  confirmed: {
-    label: "Đã xác nhận",
+  paid: {
+    label: "Đã thanh toán",
     className: "bg-emerald-100 text-emerald-800 border border-emerald-300",
   },
-  cancelled: {
-    label: "Đã hủy",
+  rejected: {
+    label: "Bị từ chối",
     className: "bg-rose-100 text-rose-800 border border-rose-300",
   },
 };
 
-const getStatusConfig = (status: string | undefined) => {
-  if (!status) {
-    return {
-      label: "Không xác định",
-      className: "bg-slate-100 text-slate-700 border border-slate-300",
-    };
-  }
-
-  return (
-    STATUS_CONFIG[status] ?? {
-      label: status,
-      className: "bg-slate-100 text-slate-700 border border-slate-300",
-    }
-  );
-};
-
 const CustomerBookingListPage = () => {
-  const [bookings, setBookings] = useState<BookingListPage[]>([]);
+  const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const { getListBookingCustomer } = useBookingService();
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
+  const { page, pageSize, setPage } = usePagination({
+    defaultPageSize: 5,
+    maxPageSize: 50,
+  });
   const fadeUp = {
     initial: { opacity: 0, y: 30 },
     animate: { opacity: 1, y: 0 },
@@ -74,10 +66,13 @@ const CustomerBookingListPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getListBookingCustomer();
+        const res = await getListBookingCustomer({ page, page_size: pageSize });
         if (res.success) {
           setBookings(res.data ?? []);
+          setMeta((res.meta as PaginationMeta) ?? null);
         } else {
+          setBookings([]);
+          setMeta(null);
           toast.error(
             typeof res.message === "string"
               ? res.message
@@ -89,7 +84,7 @@ const CustomerBookingListPage = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [getListBookingCustomer, page, pageSize]);
 
   return (
     <div className="w-full flex justify-center p-4">
@@ -132,7 +127,7 @@ const CustomerBookingListPage = () => {
               )}
 
               {bookings.map((item) => {
-                const config = getStatusConfig(item.status);
+                const config = STATUS_CONFIG[item.status];
 
                 return (
                   <TableRow
@@ -140,7 +135,7 @@ const CustomerBookingListPage = () => {
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <TableCell className="font-medium">
-                      {item.booking_id}
+                      {item.booking_id.slice(0, 8).toUpperCase()}
                     </TableCell>
 
                     <TableCell>
@@ -160,14 +155,14 @@ const CustomerBookingListPage = () => {
                     </TableCell>
 
                     <TableCell className="text-right font-semibold text-blue-600">
-                      {item.total_price.toLocaleString("vi-VN")} đ
+                      {Number(item.total_price).toLocaleString("vi-VN")} đ
                     </TableCell>
 
                     <TableCell className="text-right">
                       <Link href={`/dashboard/orders/${item.booking_id}`}>
                         <Button
                           size="sm"
-                          className="text-xs px-3 bg-emerald-500 hover:bg-emerald-600 text-white"
+                          className="text-xs px-3 bg-[#2A5FAE] hover:bg-[#4B5FAA] text-white rounded-xl ring-2"
                         >
                           Xem chi tiết
                         </Button>
@@ -179,6 +174,15 @@ const CustomerBookingListPage = () => {
             </TableBody>
           </Table>
         </Card>
+        {meta?.total_pages && meta.total_pages > 1 && (
+          <div className="w-full mt-6 flex justify-center">
+            <PaginationCustom
+              page={page}
+              totalPages={meta.total_pages}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
       </motion.div>
     </div>
   );

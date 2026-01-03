@@ -4,7 +4,7 @@ import { ApiResponse } from "@/types/common";
 import { PaymentRequest, PaymentResponse } from "@/types/payment";
 
 export const usePaymentService = () => {
-  const { get, post, patch, put, del } = useFetchInstance();
+  const { post } = useFetchInstance();
 
   // hàm gọi API create payment
   const createMomoPayment = (

@@ -58,3 +58,32 @@ const TourSlugPage: React.FC = () => {
 };
 
 export default TourSlugPage;
+
+// const token =
+//   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0MDUwMDA0LCJpYXQiOjE3NjQwNDY0MDQsImp0aSI6ImJlNDEzODM0OTY4MzRhMDQ5MjNiNzc3ZmNhOTdiNzM5IiwidXNlcl9pZCI6IjhjMTQyNjY0LTEyOTUtNDFiYi04YmEwLTQ2NWI2ODUzYjhhMiJ9.xfCyRRIYYN3Zh8Ztfiy2x8N0QMIZWXrVEGbjXpRvIMU"; // id thật
+
+// const ws = new WebSocket(
+//   `ws://localhost:8000/ws/chat/${conversationId}/?token=${token}`
+// );
+
+// ws.onopen = () => {
+//   console.log("WS connected");
+// };
+
+// ws.onmessage = (event) => {
+//   console.log("New message:", JSON.parse(event.data));
+// };
+
+// ws.onclose = () => {
+//   console.log("WS disconnected");
+// };
+
+// // Gửi message:
+// function sendMessage(text) {
+//   ws.send(
+//     JSON.stringify({
+//       type: "message",
+//       content: text,
+//     })
+//   );
+// }

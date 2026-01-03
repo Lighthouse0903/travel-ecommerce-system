@@ -5,12 +5,6 @@ export interface Agency {
   hotline: string;
 }
 
-export interface PickupPoint {
-  location: string;
-  address: string;
-  time: string;
-}
-
 export interface Accommodation {
   hotel_name: string;
   stars: number;
@@ -18,23 +12,29 @@ export interface Accommodation {
   address: string;
 }
 
+export type ItineraryActivity = {
+  time: string; // "07:00"
+  text: string; // "Đón khách tại điểm hẹn"
+};
+
 export interface Itinerary {
   day: number;
   title: string;
-  activities: string[];
+  activities: ItineraryActivity[];
   accommodation: Accommodation | null;
 }
+
+export type BEItineraryDay = {
+  day: number;
+  title: string;
+  activities: string[];
+  accommodation?: Accommodation | null;
+};
 
 export interface Policy {
   deposit_percent: number;
   cancellation_fee: string;
   refund_policy: string;
-}
-
-export interface Guide {
-  name_guide: string;
-  phone_guide: string;
-  experience_years: number;
 }
 
 export interface TourRequest {
@@ -47,24 +47,21 @@ export interface TourRequest {
   duration_days: number;
 
   // Địa điểm
-  start_location: string;
-  end_location: string;
-  destination?: string | null;
+  departure_location: string;
+  destination: string;
   region: number;
 
   // Phân loại
   categories: string[];
 
   // Lịch trình & dịch vụ
-  pickup_points: PickupPoint[];
   itinerary: Itinerary[];
   transportation: string[];
   services_included: string[];
   services_excluded: string[];
 
   policy: Policy;
-  guide: Guide;
-
+  thumbnail: File;
   images: File[];
 
   is_active?: boolean;
@@ -77,9 +74,10 @@ export interface ImageURL {
 
 export interface TourResponse {
   tour_id: string;
-
   agency_id: string | null;
+  agency_user_id?: string;
   agency_name: string | null;
+  agency_avatar_url?: string | null;
   email_agency: string | null;
   hotline: string | null;
 
@@ -92,20 +90,17 @@ export interface TourResponse {
   discount?: string | number | null;
   duration_days: number;
 
-  start_location: string;
-  end_location: string;
+  departure_location: string;
   destination: string | null;
   region: number;
   categories: string[];
 
-  pickup_points: PickupPoint[];
-  itinerary: Itinerary[];
+  itinerary: BEItineraryDay[];
   transportation: string[];
   services_included: string[];
   services_excluded: string[];
 
   policy: Policy;
-  guide: Guide;
 
   rating: string | number;
   reviews_count: number;
@@ -114,23 +109,26 @@ export interface TourResponse {
   created_at: string;
   updated_at: string;
 
+  thumbnail_url: string | null;
   image_urls: ImageURL[];
 }
 
-export interface TourListPageType {
+export type TourListPageType = {
   tour_id: string;
   name: string;
   categories: string[];
-  description?: string;
-  adult_price: string | number;
-  children_price: string | number;
-  discount: string | number;
+  description: string | null;
+  adult_price: string | number | null;
+  children_price: string | number | null;
+  discount: string | number | null;
   duration_days: number;
+  departure_location: string;
   destination: string;
-  rating: number;
+  rating: string | number | null;
   reviews_count: number;
-  image_url: string;
-}
+  thumbnail_url: string | null;
+  is_active: boolean;
+};
 
 export const CATEGORY_CHOICES = [
   { value: "sea", label: "Biển" },

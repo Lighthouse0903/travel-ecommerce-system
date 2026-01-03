@@ -2,27 +2,59 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAgencyProfile } from "@/contexts/AgencyProfileContext";
+
+type MenuLink = {
+  href: string;
+  label: string;
+  disabled?: boolean;
+};
 
 const AccountPopoverContent = ({ onClose }: { onClose?: () => void }) => {
   const { user, logout } = useAuth();
-  const isAgency = user?.roles?.includes(2);
+  const { loading, profile } = useAgencyProfile();
 
   const handleLogout = async () => {
     await logout();
     onClose?.();
   };
 
-  const baseLinks = [
+  const baseLinks: MenuLink[] = [
     { href: "/dashboard/profile", label: "Thông tin cá nhân" },
-    { href: "/dashboard/orders", label: "Đơn đã đặt" },
+    { href: "/dashboard/orders", label: "Đơn hàng của tôi" },
     { href: "/dashboard/favorites", label: "Yêu thích" },
     { href: "/dashboard/billing", label: "Thanh toán & Hóa đơn" },
     { href: "/dashboard/change_password", label: "Đổi mật khẩu" },
   ];
 
-  const agencyLink = isAgency
-    ? { href: "/agency/dashboard", label: "Đại lý của bạn" }
-    : { href: "/dashboard/register_agency", label: "Đăng ký đại lý" };
+  const agencyLink = (() => {
+    if (loading) {
+      return {
+        href: "/dashboard/register_agency/terms",
+        label: "Đang kiểm tra đại lý...",
+        disabled: true,
+      };
+    }
+
+    if (!profile) {
+      return {
+        href: "/dashboard/register_agency/terms",
+        label: "Đăng ký đại lý",
+      };
+    }
+
+    if (profile.status === "approved") {
+      return {
+        href: "/agency/dashboard",
+        label: "Đại lý của bạn",
+      };
+    }
+
+    return {
+      href: "/dashboard/register_agency/status",
+      label: "Trạng thái đăng ký đại lý",
+    };
+  })();
 
   const links = [...baseLinks, agencyLink];
 
@@ -45,16 +77,25 @@ const AccountPopoverContent = ({ onClose }: { onClose?: () => void }) => {
       <hr className="my-2" />
 
       <div className="flex flex-col text-sm">
-        {links.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onClose}
-            className="px-2 py-2 hover:bg-slate-50 rounded"
-          >
-            {item.label}
-          </Link>
-        ))}
+        {links.map((item) =>
+          item.disabled ? (
+            <span
+              key={item.href}
+              className="px-2 py-2 rounded text-gray-400 cursor-not-allowed"
+            >
+              {item.label}
+            </span>
+          ) : (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onClose}
+              className="px-2 py-2 hover:bg-slate-50 rounded"
+            >
+              {item.label}
+            </Link>
+          )
+        )}
       </div>
 
       <hr className="my-2" />

@@ -1,168 +1,199 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useTourService } from "@/services/tourService";
-import Gallery from "@/components/common/tours/tour-detail/Gallery";
-import Description from "@/components/common/tours/tour-detail/Description";
-import Itinerary from "@/components/common/tours/tour-detail/Itinerary";
-import Service from "@/components/common/tours/tour-detail/Service";
-import PolicyAndGuide from "@/components/common/tours/tour-detail/PolicyAndGuide";
-import Sidebar from "@/components/common/tours/tour-detail/Sidebar";
-import { TourResponse } from "@/types/tour";
 import { toast } from "sonner";
+import { Pencil } from "lucide-react";
 
-const TourDetail: React.FC = () => {
-  const { id } = useParams();
-  console.log("Id tour: ", id as string);
-  const { getDetailTour, updateTour } = useTourService();
+import { useTourService } from "@/services/tourService";
+import type { TourResponse } from "@/types/tour";
+
+import GalleryView from "@/components/common/tours/GalleryView";
+import ItineraryView from "@/components/common/tours/ItineraryView";
+import ServiceView from "@/components/common/tours/ServiceView";
+import DesciptionView from "@/components/common/tours/DesciptionView";
+import TourMetaPanel from "@/components/common/tours/SidebarView";
+import AgencyPolicyView from "@/components/common/tours/AgencyPolicyView";
+
+import TourDetailSkeleton from "./TourDetailSkeleton";
+import { Button } from "@/components/ui/button";
+
+type GalleryItem = { img_id?: string | number; image: string };
+
+type DayItineraryView = {
+  day: number;
+  title: string;
+  activities: string[];
+  accommodation: {
+    hotel_name: string;
+    stars: number;
+    nights: number;
+    address: string;
+  } | null;
+};
+
+const normalizeActivityToString = (a: unknown) => {
+  if (typeof a === "string") return a.trim();
+  if (!a || typeof a !== "object") return "";
+  const obj = a as { time?: unknown; text?: unknown };
+  const time = typeof obj.time === "string" ? obj.time.trim() : "";
+  const text = typeof obj.text === "string" ? obj.text.trim() : "";
+  if (time && text) return `${time} - ${text}`;
+  return text || "";
+};
+
+const TourDetailPage: React.FC = () => {
+  const params = useParams();
+  const tourId = (params?.id as string) || "";
+
+  const { getDetailTour } = useTourService();
 
   const [tour, setTour] = useState<TourResponse | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
+
     const fetchData = async () => {
-      try {
-        const res = await getDetailTour(id as string);
-        if (!mounted) return;
-        const data = (res?.data ?? null) as TourResponse | null;
-        setTour(data);
-      } catch (e) {
-        console.log("Lỗi khi lấy chi tiết tour:", e);
-        setTour(null);
+      if (!tourId) {
+        if (mounted) setLoading(false);
+        return;
       }
+
+      setLoading(true);
+      const res = await getDetailTour(tourId);
+
+      if (!mounted) return;
+
+      if (!res.success) {
+        setTour(null);
+        setLoading(false);
+        toast.error(res.message ?? "Không lấy được chi tiết tour.");
+        return;
+      }
+
+      setTour(res.data ?? null);
+      setLoading(false);
     };
-    if (id) fetchData();
+
+    fetchData();
+
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [tourId]);
 
-  // Clamp activeIndex khi số ảnh thay đổi
-  useEffect(() => {
-    if (!tour?.image_urls) return;
-    setActiveIndex((i) => {
-      const last = Math.max(0, tour.image_urls.length - 1);
-      return Math.min(i, last);
+  const thumbnail = tour?.thumbnail_url ?? null;
+
+  const images: GalleryItem[] = useMemo(() => {
+    return (tour?.image_urls ?? [])
+      .map((it, idx) => {
+        if (typeof it === "string") return { img_id: idx, image: it };
+        return { img_id: it.img_id ?? idx, image: it.image ?? "" };
+      })
+      .filter((x) => !!x.image);
+  }, [tour?.image_urls]);
+
+  const itineraryForView: DayItineraryView[] = useMemo(() => {
+    return (tour?.itinerary ?? []).map((d) => {
+      const activitiesRaw = Array.isArray(d.activities) ? d.activities : [];
+      const activities = activitiesRaw
+        .map(normalizeActivityToString)
+        .filter(Boolean);
+
+      const acc = d.accommodation ?? null;
+
+      return {
+        day: d.day,
+        title: d.title ?? "",
+        activities,
+        accommodation: acc
+          ? {
+              hotel_name: acc.hotel_name ?? "",
+              stars: Number(acc.stars ?? 0),
+              nights: Number(acc.nights ?? 0),
+              address: acc.address ?? "",
+            }
+          : null,
+      };
     });
-  }, [tour?.image_urls?.length]);
+  }, [tour?.itinerary]);
 
-  const hasDiscount = useMemo(() => {
-    if (!tour) return false;
-    const d = Number(tour.discount);
-    return Number.isFinite(d) && d > 0;
-  }, [tour?.discount]);
+  const servicesIncluded = tour?.services_included ?? [];
+  const servicesExcluded = tour?.services_excluded ?? [];
+  const policy = tour?.policy ?? null;
+  const description = tour?.description ?? "";
 
-  if (!tour)
+  if (loading) return <TourDetailSkeleton />;
+
+  if (!tour) {
     return (
-      <div className="flex items-center justify-center h-[60vh] text-gray-500">
-        Đang tải thông tin tour...
+      <div className="mx-auto max-w-6xl px-3 md:px-6 py-12">
+        <div className="bg-white rounded-2xl border p-8 text-center text-gray-600">
+          Không tìm thấy thông tin tour hoặc tour đã bị xoá.
+        </div>
       </div>
     );
-
-  const images = (tour.image_urls ?? []).map((it: any, idx: number) =>
-    typeof it === "string"
-      ? { img_id: idx, image: it }
-      : { img_id: it?.img_id ?? idx, image: it?.image ?? "" }
-  );
-
-  function toFormData(partial: Record<string, any>) {
-    const fd = new FormData();
-    Object.entries(partial).forEach(([k, v]) => {
-      if (v === undefined) return;
-      if (v instanceof File || v instanceof Blob) fd.append(k, v);
-      else if (Array.isArray(v) || typeof v === "object")
-        fd.append(k, JSON.stringify(v));
-      else fd.append(k, String(v));
-    });
-    return fd;
   }
 
-  const patchTour = async (partial: Record<string, any>) => {
-    if (!id) return { success: false, message: "Missing id" };
-    setSaving(true);
-    try {
-      const fd = toFormData(partial);
-      const res = await updateTour(id as string, fd); // service đã chuẩn hoá trả {success,data,message}
-      if (res.success) {
-        // đồng bộ UI ngay: merge phần vừa sửa vào state
-        setTour((prev) => (prev ? ({ ...prev, ...partial } as any) : prev));
-      }
-      return res;
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
-    <div className="mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <main className="lg:col-span-2 space-y-6">
-        <Gallery
-          images={images}
-          tour={tour}
-          activeIndex={activeIndex}
-          setActiveIndex={setActiveIndex}
-          hasDiscount={hasDiscount}
-        />
-        <Description
-          saving={saving}
-          editable={true}
-          onUpdate={async (newDesc) => {
-            const res = await patchTour({ description: newDesc });
-            toast.success("Cập nhật mô tả thành công");
-          }}
-          description={tour.description ?? ""}
-        />
-        <Itinerary
-          itinerary={tour.itinerary}
-          editable={true}
-          saving={saving}
-          onUpdate={async (partial) => {
-            // partial = { itinerary: DayItinerary[] }
-            const res = await patchTour(partial);
-            toast.success("Cập nhật lịch trình thành công");
-          }}
-        />
+    <div className="mx-auto max-w-6xl px-3 md:px-6 py-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold leading-tight">
+            {tour.name}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {tour.departure_location}{" "}
+            {tour.destination ? `→ ${tour.destination}` : ""}
+          </p>
+        </div>
 
-        <Service
-          included={tour.services_included}
-          excluded={tour.services_excluded}
-          saving={saving}
-          editable={true}
-          onUpdate={async ({ services_included, services_excluded }) => {
-            // cha stringify object/array khi build FormData trong patchTour
-            const res = await patchTour({
-              services_included,
-              services_excluded,
-            });
-            toast.success("Cập nhật dịch vụ thành công");
-          }}
-        />
+        <Link href={`/agency/dashboard/tours/${tourId}/edit`}>
+          <Button className="gap-2">
+            <Pencil className="w-4 h-4" />
+            Chỉnh sửa tour
+          </Button>
+        </Link>
+      </div>
 
-        <PolicyAndGuide
-          policy={tour.policy}
-          guide={tour.guide}
-          editable={true}
-          saving={saving}
-          onUpdate={async ({ policy, guide }) => {
-            const res = await patchTour({ policy, guide });
-            toast.success("Cập nhật Chính sách & Hướng dẫn viên thành công");
-          }}
-        />
-      </main>
-      <Sidebar
-        tour={tour}
-        saving={saving}
-        editable={true}
-        onUpdate={async (partial) => {
-          const res = await patchTour(partial);
-          toast.success("Cập nhật thông tin thành công");
-        }}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="bg-white rounded-2xl border shadow-sm p-3">
+            <GalleryView thumbnail={thumbnail} images={images} />
+          </div>
+        </div>
+
+        <div className="lg:col-span-4">
+          <div className="lg:sticky lg:top-24">
+            <TourMetaPanel tour={tour} />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-6">
+        <section className="scroll-mt-36">
+          <DesciptionView description={description} />
+        </section>
+
+        <section className="scroll-mt-36">
+          <ItineraryView itinerary={itineraryForView} />
+        </section>
+
+        <section className="scroll-mt-36">
+          <ServiceView
+            included={servicesIncluded}
+            excluded={servicesExcluded}
+          />
+        </section>
+
+        <section className="scroll-mt-36">
+          <AgencyPolicyView policy={policy} />
+        </section>
+      </div>
     </div>
   );
 };
 
-export default TourDetail;
+export default TourDetailPage;

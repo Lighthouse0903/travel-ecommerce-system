@@ -1,22 +1,34 @@
 import { useFetchInstance } from "@/hooks/fetchInstance";
 import {
+  BookingListItem,
   BookingDetail,
-  BookingListPage,
-  BookingRequest,
-  BookingResponse,
   BookingStatus,
+  CreateBookingRequest,
 } from "@/types/booking";
 import { ApiResponse } from "@/types/common";
+import { PaginationMeta } from "@/types/pagination";
+import { useCallback } from "react";
+
+// helper phục vụ cho Query param
+const buildQS = (query?: Record<string, string | number | undefined>) => {
+  if (!query) return "";
+  const param = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") param.set(key, String(value));
+  });
+  const s = param.toString();
+  return s ? `?${s}` : "";
+};
 
 export const useBookingService = () => {
-  const { get, post, patch, put, del } = useFetchInstance();
+  const { get, post, patch } = useFetchInstance();
 
-  //=========== Hàm danh cho khách hàng==============
+  // Hàm danh cho khách hàng
   // hàm gọi API create booking
   const createBooking = (
-    payload: BookingRequest
-  ): Promise<ApiResponse<BookingResponse>> => {
-    return post<BookingResponse>(`/bookings/create/`, payload, true);
+    payload: CreateBookingRequest
+  ): Promise<ApiResponse<BookingDetail>> => {
+    return post<BookingDetail>(`/bookings/create/`, payload, true);
   };
 
   // hàm gọi API lấy chi tiết booking của 1 khách hàng
@@ -27,14 +39,19 @@ export const useBookingService = () => {
   };
 
   // hàm gọi API lấy danh sách booking của khách hàng
-  const getListBookingCustomer = (): Promise<
-    ApiResponse<BookingListPage[]>
-  > => {
-    return get<BookingListPage[]>(`/bookings/my/`, true);
-  };
+  const getListBookingCustomer = useCallback(
+    (
+      query?: Record<string, string | number | undefined>
+    ): Promise<ApiResponse<BookingListItem[], PaginationMeta>> => {
+      return get<BookingListItem[], PaginationMeta>(
+        `/bookings/my/${buildQS(query)}`,
+        true
+      );
+    },
+    [get]
+  );
 
-  //=========== Hàm dành cho đại lý==============
-
+  // Hàm dành cho đại lý
   // hàm gọi API lấy chi tiết booking của 1 khách hàng bên đại lý
   const getDetailBookingAgency = (
     bookingId: string
@@ -43,19 +60,28 @@ export const useBookingService = () => {
   };
 
   // hàm gọi API lấy danh sách booking của khách hàng
-  const getListBookingAgency = (): Promise<ApiResponse<BookingListPage[]>> => {
-    return get<BookingListPage[]>(`/bookings/agency/`, true);
-  };
+  const getListBookingAgency = useCallback(
+    (
+      query?: Record<string, string | number | undefined>
+    ): Promise<ApiResponse<BookingListItem[], PaginationMeta>> => {
+      return get<BookingListItem[], PaginationMeta>(
+        `/bookings/agency/${buildQS(query)}`,
+        true
+      );
+    },
+    [get]
+  );
 
   // hàm gọi APi cập nhật status: xác nhận hoặc hủy đơn hàng
 
   const updateStatusBooking = (
     bookingId: string,
-    status: BookingStatus
+    status: BookingStatus,
+    rejected_reason?: string
   ): Promise<ApiResponse<BookingDetail>> => {
     return patch<BookingDetail>(
       `/bookings/${bookingId}/status/`,
-      { status },
+      { status, rejected_reason },
       true
     );
   };

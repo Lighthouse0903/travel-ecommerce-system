@@ -8,7 +8,7 @@ import Footer from "@/components/common/footer/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import LoginModal from "@/components/common/dialogs/LoginModal";
 import { LoginModalProvider } from "@/contexts/LoginModalContext";
-
+import { AgencyProfileProvider } from "@/contexts/AgencyProfileContext";
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
@@ -37,13 +37,15 @@ export default function RootLayout({
         className={`${montserrat.variable} ${inter.variable} antialiased bg-background text-foreground`}
       >
         <AuthProvider>
-          <LoginModalProvider>
-            <LoginModal />
-            <Header />
-            {children}
-            <Toaster position="top-center" />
-            <Footer />
-          </LoginModalProvider>
+          <AgencyProfileProvider>
+            <LoginModalProvider>
+              <LoginModal />
+              <Header />
+              {children}
+              <Toaster position="top-center" />
+              <Footer />
+            </LoginModalProvider>
+          </AgencyProfileProvider>
         </AuthProvider>
       </body>
     </html>

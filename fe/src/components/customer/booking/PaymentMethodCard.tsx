@@ -13,8 +13,7 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
   booking_date,
   status,
 }) => {
-  // Đơn đã thanh toán nếu status = paid_waiting hoặc confirmed
-  const isPaid = status === "paid_waiting" || status === "confirmed";
+  const isPaid = status === "paid";
 
   return (
     <div>

@@ -1,39 +1,74 @@
-export interface AgencyResponse {
+export type AgencyStatus = "pending" | "approved" | "rejected";
+export type AgencyType = "business" | "individual";
+
+// thông tin response khi đănng kí và getProfileAgency trả về
+export interface AgencyProfile {
   agency_id: string;
+
   agency_name: string;
+  agency_type: AgencyType;
   license_number: string;
   hotline: string;
   email_agency: string;
   address_agency: string;
+  description: string | null;
+
+  legal_representative_name: string;
+  legal_id_number: string;
+  tax_code: string | null;
+
+  bank_name: string;
+  bank_account_number: string;
+  bank_account_holder: string;
+
+  avatar_url: string | null;
+  license_url: string | null;
+  legal_id_front_url: string | null;
+  legal_id_back_url: string | null;
+
   verified: boolean;
-  status: "pending" | "approved" | "rejected";
-  reason_rejected?: string;
-  user_id?: string;
-  representative_name?: string;
-  avatar_url?: string;
-  license_url?: string;
-  description?: string;
+  status: AgencyStatus;
+  reason_rejected: string | null;
+
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 }
 
-export type Agency = AgencyResponse;
+// type của Form khi đăng kí đại lý
+export type RegisterAgencyFormValues = {
+  agency_name?: string;
+  agency_type?: AgencyType;
+  email_agency?: string;
+  hotline?: string;
+  address_agency?: string;
+  description?: string;
 
-export type CreateAgency = {
-  company_name: string;
-  license_number: string;
-  hotline: string;
-  email_agency: string;
-  address_agency: string;
-  logo?: File;
-  business_license?: File;
+  license_number?: string;
+  legal_representative_name?: string;
+  legal_id_number?: string;
+  tax_code?: string;
+
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_holder?: string;
+
+  license_file?: File | null;
+  legal_id_front?: File | null;
+  legal_id_back?: File | null;
+  avatar?: File | null;
 };
 
-export type UpdateAgency = {
-  agency_name: string;
-  license_number: string;
-  hotline: string;
+// type của form cập nhật
+export type EditAgencyProfileValues = {
+  avatar: File | null;
+
   email_agency: string;
+  hotline: string;
   address_agency: string;
-  description?: string;
+
+  bank_name: string;
+  bank_account_number: string;
+  bank_account_holder: string;
+
+  description: string;
 };

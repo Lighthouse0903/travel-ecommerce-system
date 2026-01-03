@@ -29,14 +29,20 @@ const TourCard: React.FC<TourCardProps> = ({
   onDelete,
   onView,
 }) => {
-  const cleanPrice = Number(tour.adult_price ?? 0);
-  const discount = Number(tour.discount ?? 0);
-  const finalPrice =
-    cleanPrice && !Number.isNaN(cleanPrice)
-      ? cleanPrice * (1 - (discount || 0) / 100)
-      : 0;
+  const rawPrice = Number(tour.adult_price ?? 0);
+  const rawDiscount = Number(tour.discount ?? 0);
+  const rawRating = Number(tour.rating ?? 0);
 
-  const imageSrc = tour.image_url;
+  const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+  const discount = Number.isFinite(rawDiscount) ? rawDiscount : 0;
+  const rating = Number.isFinite(rawRating) ? rawRating : 0;
+
+  const finalPrice = price > 0 ? Math.round(price * (1 - discount / 100)) : 0;
+
+  const imageSrc =
+    typeof tour.thumbnail_url === "string" && tour.thumbnail_url.trim() !== ""
+      ? tour.thumbnail_url
+      : "https://i.pinimg.com/1200x/6a/f1/ec/6af1ec6645410a41d5339508a83b86f9.jpg";
 
   return (
     <Card className="relative bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition cursor-pointer">
@@ -50,14 +56,30 @@ const TourCard: React.FC<TourCardProps> = ({
           sizes="500px"
         />
 
-        {/* Badge giảm giá giống public */}
+        {/* Badge giảm giá */}
         {discount > 0 && (
-          <div className="absolute w-10 h-10 top-3 left-3 rounded-full bg-red-500 text-white flex items-center justify-center">
-            <span className="text-xs font-semibold">-{discount}%</span>
+          <div className="absolute top-3 left-3 z-10">
+            <div className="flex items-center gap-1 rounded-full bg-black/55 text-white px-3 py-1 text-xs font-semibold backdrop-blur">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400" />
+              Giảm {Math.round(discount)}%
+            </div>
           </div>
         )}
 
-        {/* Menu hành động của agency */}
+        {/* Status badge */}
+        <div className="absolute bottom-3 left-3 z-10">
+          {tour.is_active ? (
+            <div className="rounded-full bg-green-600/90 text-white text-xs font-semibold px-3 py-1 backdrop-blur">
+              Đang bán
+            </div>
+          ) : (
+            <div className="rounded-full bg-red-400/40 text-white text-xs font-semibold px-3 py-1 backdrop-blur">
+              Tạm dừng
+            </div>
+          )}
+        </div>
+
+        {/* Menu hành động */}
         <div className="absolute top-2 right-2 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -69,25 +91,34 @@ const TourCard: React.FC<TourCardProps> = ({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
-              <Link href={`/agency/dashboard/tours/${tour.tour_id}`}>
-                <DropdownMenuItem
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/agency/dashboard/tours/${tour.tour_id}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onView?.(tour.tour_id);
                   }}
                 >
-                  <Eye className="w-4 h-4 mr-2 text-green-600" /> Xem chi tiết
-                </DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit?.(tour.tour_id);
-                }}
-              >
-                <Pencil className="w-4 h-4 mr-2 text-blue-600" /> Sửa
+                  <Eye className="w-4 h-4 mr-2 text-green-600" />
+                  Xem chi tiết
+                </Link>
               </DropdownMenuItem>
+
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/agency/dashboard/tours/${tour.tour_id}/edit`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onView?.(tour.tour_id);
+                  }}
+                >
+                  <Pencil className="w-4 h-4 mr-2 text-blue-600" />
+                  Chỉnh sửa
+                </Link>
+              </DropdownMenuItem>
+
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
@@ -95,22 +126,23 @@ const TourCard: React.FC<TourCardProps> = ({
                 }}
                 className="text-red-600 focus:text-red-700"
               >
-                <Trash2 className="w-4 h-4 mr-2" /> Xóa
+                <Trash2 className="w-4 h-4 mr-2" />
+                Xóa
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* Content giống public TourCard */}
-      <CardContent className="p-4">
-        <h3 className="text-lg font-semibold text-slate-800 line-clamp-2 mb-3 truncate">
+      {/* Content */}
+      <CardContent className="p-4 relative flex flex-col">
+        <h3 className="text-lg font-semibold text-slate-800 line-clamp-2 min-h-[56px] mb-3">
           {tour.name}
         </h3>
 
         {/* Rating */}
         <div className="flex items-center text-sm">
-          <StarRating stars={tour.rating} />
+          <StarRating stars={rating} />
           <span className="ml-1 text-xs text-slate-600">
             ({tour.reviews_count} đánh giá)
           </span>
@@ -118,9 +150,12 @@ const TourCard: React.FC<TourCardProps> = ({
 
         <hr className="my-2" />
 
-        <p className="text-xs text-slate-500 mb-1">{tour.destination}</p>
+        <p className="text-xs text-slate-500 mb-2">
+          {tour.departure_location} → {tour.destination} • {tour.duration_days}{" "}
+          ngày
+        </p>
 
-        {/* Categories giống public */}
+        {/* Categories */}
         {tour.categories && tour.categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {tour.categories.map((cat) => (
@@ -134,22 +169,23 @@ const TourCard: React.FC<TourCardProps> = ({
           </div>
         )}
 
-        {/* Bottom: Giá + nút xem chi tiết (link đến trang agency) */}
-        <div className="flex items-center justify-between mt-auto">
-          <div>
+        {/* Bottom */}
+        <div className="mt-auto flex items-end justify-between gap-3">
+          <div className="min-h-[64px]">
             <p className="text-xs text-slate-500">Giá từ</p>
-            <p className="text-lg font-bold text-blue-600">
+            <p className="text-lg font-bold text-blue-600 leading-tight">
               {finalPrice.toLocaleString("vi-VN")} đ
             </p>
-            {cleanPrice > 0 && discount > 0 && (
-              <p className="text-md font-thin text-gray-400 line-through">
-                {cleanPrice.toLocaleString("vi-VN")} đ
-              </p>
-            )}
+
+            <p className="text-sm text-gray-400 line-through h-[20px]">
+              {price > 0 && discount > 0
+                ? `${Math.round(price).toLocaleString("vi-VN")} đ`
+                : ""}
+            </p>
           </div>
 
           <Link href={`/agency/dashboard/tours/${tour.tour_id}`}>
-            <button className="px-4 py-2 rounded-full bg-slate-800 text-white text-xs hover:bg-slate-700 transition">
+            <button className="h-9 px-4 rounded-full bg-slate-600 text-white text-xs hover:bg-slate-700 transition whitespace-nowrap">
               Xem chi tiết
             </button>
           </Link>

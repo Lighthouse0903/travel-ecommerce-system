@@ -1,69 +1,92 @@
 import { useFetchInstance } from "@/hooks/fetchInstance";
 import { ApiResponse } from "@/types/common";
+import { PaginationMeta } from "@/types/pagination";
 import { TourListPageType, TourResponse } from "@/types/tour";
+import { useCallback } from "react";
+
+const buildQS = (query?: Record<string, string | number | undefined>) => {
+  if (!query) return "";
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  });
+  const s = params.toString();
+  return s ? `?${s}` : "";
+};
 
 export const useTourService = () => {
-  const { get, post, put, patch, del } = useFetchInstance();
+  const { get, post, patch, del } = useFetchInstance();
 
-  // ======Các hàm dành cho AGENCy======
-  // hàm gọi API tạo mới tour
+  // Tạo tour (agency)
   const createTour = (
     payload: FormData
   ): Promise<ApiResponse<TourResponse>> => {
-    return post<TourResponse>("/tours/", payload, true);
+    return post<TourResponse>("/tours/create/", payload, true);
   };
 
-  // hàm gọi APi lấy list danh sách tour đã đăng của 1 đại lý
-  const getListTour = (): Promise<ApiResponse<TourListPageType[]>> => {
-    return get<TourListPageType[]>(`/tours/my-tours/`, true);
-  };
+  // List tour của đại lý (có pagination)
+  const getListTour = useCallback(
+    (
+      query?: Record<string, string | number | undefined>
+    ): Promise<ApiResponse<TourListPageType[], PaginationMeta>> => {
+      return get<TourListPageType[], PaginationMeta>(
+        `/tours/my/${buildQS(query)}`,
+        true
+      );
+    },
+    [get]
+  );
 
-  // hàm gọi API lấy thông tin chi tiết 1 tour
+  // Chi tiết tour để quản lý
   const getDetailTour = (id: string): Promise<ApiResponse<TourResponse>> => {
-    return get<TourResponse>(`/tours/manage/${id}/`, true);
+    return get<TourResponse>(`/tours/${id}/manage/`, true);
   };
 
-  // hàm gọi API cập nhật thông tin chi tiết 1 tour
+  // Cập nhật tour
   const updateTour = (
     id: string,
     payload: FormData
   ): Promise<ApiResponse<TourResponse>> => {
-    return patch<TourResponse>(`/tours/manage/${id}/`, payload, true);
+    return patch<TourResponse>(`/tours/${id}/manage/`, payload, true);
   };
 
-  // ======Các hàm dành cho Khách Hàng public ======
+  // Xóa tour
+  const deleteTour = useCallback(
+    (id: string): Promise<ApiResponse<{ message: string }>> => {
+      return del<{ message: string }>(`/tours/${id}/manage/`, true);
+    },
+    [del]
+  );
 
-  // hàm gọi API lấy thông tin list public tour
+  // ===== Public =====
+
+  // List public tour (có pagination)
   const getListPublicTour = (
     query?: Record<string, string | number | undefined>
-  ): Promise<ApiResponse<TourListPageType[]>> => {
-    let qs = "";
-
-    if (query) {
-      const params = new URLSearchParams();
-      Object.entries(query).forEach(([key, value]) => {
-        if (value !== undefined && value !== "") {
-          params.set(key, String(value));
-        }
-      });
-      const s = params.toString();
-      if (s) qs = `?${s}`;
-    }
-
-    return get<TourListPageType[]>(`/tours/public/${qs}`, true);
+  ): Promise<ApiResponse<TourListPageType[], PaginationMeta>> => {
+    return get<TourListPageType[], PaginationMeta>(
+      `/tours/${buildQS(query)}`,
+      false
+    );
   };
 
-  // hàm gọi API lấy thông tin 1 tour Public chi tiết
+  // Detail public tour
   const getDetailPublicTour = (
     id: string
   ): Promise<ApiResponse<TourResponse>> => {
-    return get<TourResponse>(`/tours/public/${id}/`, false);
+    return get<TourResponse>(`/tours/${id}/`, false);
   };
 
-  // hàm gọi API search tour
-  const searchTour = (): Promise<ApiResponse<TourResponse[]>> => {
-    return get<TourResponse[]>(`/tours/public/`, false);
+  // Search tour (thực chất cũng là list + q=..., có thể coi như list)
+  const searchTour = (
+    q: string
+  ): Promise<ApiResponse<TourListPageType[], PaginationMeta>> => {
+    return get<TourListPageType[], PaginationMeta>(
+      `/tours/?q=${encodeURIComponent(q)}`,
+      false
+    );
   };
+
   return {
     createTour,
     getDetailTour,
@@ -72,5 +95,6 @@ export const useTourService = () => {
     getListPublicTour,
     getDetailPublicTour,
     searchTour,
+    deleteTour,
   };
 };

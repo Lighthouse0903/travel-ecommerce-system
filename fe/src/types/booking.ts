@@ -1,72 +1,75 @@
-export interface BookingRequest {
-  tour_id: string;
-  travel_date: string;
-  num_adults: number;
-  num_children: number;
-  pickup_point?: string;
-}
+import { PaymentInfo } from "./payment";
 
-export interface BookingResponse {
+export type BookingStatus =
+  | "pending" // chờ agency xác nhận
+  | "paid_waiting" // chờ thanh toán
+  | "paid" // đã thanh toán
+  | "rejected";
+
+export interface BookingListItem {
   booking_id: string;
+  booking_date: string;
   travel_date: string;
+
   num_adults: number;
   num_children: number;
   total_price: string;
-  status: string;
-  booking_date: string;
+
+  status: BookingStatus;
+
+  // tour
+  tour_id?: string;
+  tour_name: string;
+
+  // customer
+  customer_name?: string;
+  customer_email?: string;
 }
 
-export interface BookingCustomer {
-  full_name: string;
-  email: string;
-  phone: string;
-  address: string;
-}
-export type BookingStatus =
-  | "pending"
-  | "paid_waiting"
-  | "confirmed"
-  | "cancelled";
+// export interface Review {
+//   review_id: string;
+//   rating: number;
+//   comment: string;
+//   user_id: string;
+//   customer_name: string;
+//   created_at: string;
+// }
+
 export interface BookingDetail {
   booking_id: string;
-  status: BookingStatus;
   booking_date: string;
-  customer_name: string;
-  customer_email: string;
-  customer_address: string;
-  customer_phone: string;
   travel_date: string;
   num_adults: number;
+  categories: string[];
   num_children: number;
-  pickup_point: string;
+  note?: string | null;
   total_price: string;
-  review_id: string;
-  review_rating: number;
-  review_comment: string;
-
+  status: BookingStatus;
+  // timeline
+  approved_at?: string | null;
+  paid_at?: string | null;
+  rejected_at?: string | null;
+  rejected_reason?: string | null;
+  // tour
+  thumbnail_url: string;
   tour_id: string;
   tour_name: string;
-  agency_name: string;
-  start_location: string;
-  end_location: string;
-
-  adult_price: string;
-  children_price: string;
-  discount: string | null;
-
-  final_price_per_person: {
-    adult: string;
-    children: string;
-  };
-
-  tour_image: string;
+  departure_location: string;
+  destination: string;
+  // customer
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  review_rating: number | null;
+  review_comment: string;
+  // payment
+  payment?: PaymentInfo | null;
 }
 
-export interface BookingListPage {
-  booking_id: string;
-  customer_name: string;
-  travel_date: string;
-  tour_name: string;
-  status: string;
-  total_price: number;
+export interface CreateBookingRequest {
+  tour: string;
+  travel_date: string; // YYYY-MM-DD
+  num_adults: number;
+  num_children: number;
+  note?: string;
 }

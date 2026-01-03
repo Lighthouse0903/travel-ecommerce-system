@@ -4,3 +4,9 @@ export const formatPrice = (value: number) =>
     currency: "VND",
     maximumFractionDigits: 0,
   }).format(value);
+
+export const formatMoneyVND = (amount: string) => {
+  const n = Number(amount);
+  if (Number.isNaN(n)) return amount;
+  return n.toLocaleString("vi-VN") + "đ";
+};

@@ -2,33 +2,39 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-
 import TourCard from "./TourCard";
 import { useTourService } from "@/services/tourService";
 import { TourListPageType } from "@/types/tour";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationMeta } from "@/types/pagination";
+import PaginationCustom from "@/components/common/pagination/Pagination";
 
 interface TourListProps {
-  initialCategory?: string; // code: "sea" | "mountain" | ...
+  initialCategory?: string;
 }
 
 const TourList: React.FC<TourListProps> = ({ initialCategory }) => {
   const { getListPublicTour } = useTourService();
   const searchParams = useSearchParams();
 
-  const [tours, setTours] = useState<TourListPageType[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // pagination logic
+  const { page, pageSize, setPage } = usePagination({
+    defaultPageSize: 2,
+    maxPageSize: 50,
+  });
 
-  // Lấy filter từ URL (?destination=...&categories=...&...)
+  const [tours, setTours] = useState<TourListPageType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const q = searchParams.get("q") || "";
   const destination = searchParams.get("destination") || "";
-  const durationDays = searchParams.get("duration_days") || "";
+  const departureLocation = searchParams.get("departure_location") || "";
   const minPrice = searchParams.get("min_price") || "";
   const maxPrice = searchParams.get("max_price") || "";
-  const startLocation = searchParams.get("start_location") || "";
-  const endLocation = searchParams.get("end_location") || "";
-  const categoriesFromUrl = searchParams.get("categories") || "";
+  const categoriesFromUrl =
+    searchParams.get("categories") || searchParams.get("category") || "";
   const region = searchParams.get("region") || "";
 
-  // Ưu tiên categories trên URL, nếu không có thì dùng initialCategory (từ slug)
   const effectiveCategories = categoriesFromUrl || initialCategory || "";
 
   useEffect(() => {
@@ -36,30 +42,32 @@ const TourList: React.FC<TourListProps> = ({ initialCategory }) => {
       try {
         setIsLoading(true);
 
-        const query: Record<string, string> = {};
+        const query: Record<string, string | number | undefined> = {
+          page,
+          page_size: pageSize,
+        };
 
+        if (q) query.q = q;
         if (destination) query.destination = destination;
-        if (durationDays) query.duration_days = durationDays;
+        if (departureLocation) query.departure_location = departureLocation;
+
         if (minPrice) query.min_price = minPrice;
         if (maxPrice) query.max_price = maxPrice;
-        if (startLocation) query.start_location = startLocation;
-        if (endLocation) query.end_location = endLocation;
+
         if (effectiveCategories) query.categories = effectiveCategories;
         if (region) query.region = region;
 
-        console.log("Query: ", query);
+        console.log("Query (public tours):", query);
 
         const res = await getListPublicTour(query);
-
+        console.log("API getListTourResponse: ", res);
         if (res.success) {
-          setTours((res.data ?? []) as TourListPageType[]);
+          setTours(res.data ?? []);
+          setMeta((res.meta as PaginationMeta) ?? null);
         } else {
-          console.warn("Lỗi khi lấy danh sách tour Public");
           setTours([]);
+          setMeta(null);
         }
-      } catch (error) {
-        console.error("Lỗi Server khi lấy danh sách tour: ", error);
-        setTours([]);
       } finally {
         setIsLoading(false);
       }
@@ -67,12 +75,13 @@ const TourList: React.FC<TourListProps> = ({ initialCategory }) => {
 
     fetchTours();
   }, [
+    q,
+    page,
+    pageSize,
     destination,
-    durationDays,
+    departureLocation,
     minPrice,
     maxPrice,
-    startLocation,
-    endLocation,
     effectiveCategories,
     region,
   ]);
@@ -104,10 +113,22 @@ const TourList: React.FC<TourListProps> = ({ initialCategory }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-      {tours.map((tour) => (
-        <TourCard key={tour.tour_id} {...tour} />
-      ))}
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {tours.map((tour) => (
+          <TourCard key={tour.tour_id} tour={tour} />
+        ))}
+      </div>
+
+      {meta?.total_pages && meta.total_pages > 1 && (
+        <div className="w-full mt-10 flex justify-center">
+          <PaginationCustom
+            page={page}
+            totalPages={meta.total_pages}
+            onPageChange={setPage}
+          />
+        </div>
+      )}
     </div>
   );
 };

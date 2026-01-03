@@ -3,41 +3,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import * as SliderPrimitive from "@radix-ui/react-slider";
-
-const Slider = ({
-  value,
-  onValueChange,
-}: {
-  value: number[];
-  onValueChange: (v: number[]) => void;
-}) => (
-  <SliderPrimitive.Root
-    className="relative flex w-full items-center"
-    value={value}
-    max={15}
-    min={1}
-    step={1}
-    onValueChange={onValueChange}
-  >
-    <SliderPrimitive.Track className="relative h-1 w-full grow rounded-full bg-slate-300">
-      <SliderPrimitive.Range className="absolute h-full rounded-full bg-blue-500" />
-    </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-blue-500 bg-white shadow" />
-  </SliderPrimitive.Root>
-);
 
 interface FilterData {
   destination: string;
-  region?: number;
-  start_location: string;
-  end_location: string;
+  departure_location: string;
+  region?: number; // 1 | 2 | 3
   min_price?: number;
   max_price?: number;
   categories: string[];
-  duration_days?: number;
 }
 
 const TourFilter = () => {
@@ -45,7 +19,7 @@ const TourFilter = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  /** ------- OPTIONS ------- */
+  // Options
   const BUDGET_OPTIONS = [
     { label: "Tất cả", value: "", min_price: undefined, max_price: undefined },
     {
@@ -84,44 +58,37 @@ const TourFilter = () => {
     { label: "Miền Nam", value: 3 },
   ];
 
-  /** lấy giá rị ban đầu qua searchParams */
+  // Init from URL
   const initialCategories =
-    (searchParams.get("categories") || "").split(",").filter(Boolean) ?? [];
+    (searchParams.get("categories") || "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean) ?? [];
+
+  const initialMin = searchParams.get("min_price")
+    ? Number(searchParams.get("min_price"))
+    : undefined;
+  const initialMax = searchParams.get("max_price")
+    ? Number(searchParams.get("max_price"))
+    : undefined;
 
   const initialBudget =
     BUDGET_OPTIONS.find(
-      (opt) =>
-        opt.min_price ==
-          (searchParams.get("min_price")
-            ? Number(searchParams.get("min_price"))
-            : undefined) &&
-        opt.max_price ==
-          (searchParams.get("max_price")
-            ? Number(searchParams.get("max_price"))
-            : undefined)
+      (opt) => opt.min_price === initialMin && opt.max_price === initialMax
     )?.value || "";
-
-  const initialSlider = Number(searchParams.get("duration_days") || "3");
 
   const [data, setData] = useState<FilterData>({
     destination: searchParams.get("destination") || "",
-    start_location: searchParams.get("start_location") || "",
-    end_location: searchParams.get("end_location") || "",
+    departure_location: searchParams.get("departure_location") || "",
     region: searchParams.get("region")
       ? Number(searchParams.get("region"))
       : undefined,
-    min_price: searchParams.get("min_price")
-      ? Number(searchParams.get("min_price"))
-      : undefined,
-    max_price: searchParams.get("max_price")
-      ? Number(searchParams.get("max_price"))
-      : undefined,
-    duration_days: initialSlider,
+    min_price: initialMin,
+    max_price: initialMax,
     categories: initialCategories,
   });
 
   const [selectedBudget, setSelectedBudget] = useState(initialBudget);
-  const [sliderValue, setSliderValue] = useState<number[]>([initialSlider]);
 
   const updateData = <K extends keyof FilterData>(
     key: K,
@@ -133,17 +100,37 @@ const TourFilter = () => {
   const handleSubmit = () => {
     const params = new URLSearchParams();
 
-    Object.entries(data).forEach(([key, value]) => {
-      if (value === undefined || value === "" || value === null) return;
-      if (Array.isArray(value) && value.length === 0) return;
+    if (data.destination.trim())
+      params.set("destination", data.destination.trim());
+    if (data.departure_location.trim())
+      params.set("departure_location", data.departure_location.trim());
 
-      params.set(
-        key,
-        Array.isArray(value) ? value.join(",") : value.toString()
-      );
+    if (typeof data.min_price === "number")
+      params.set("min_price", String(data.min_price));
+    if (typeof data.max_price === "number")
+      params.set("max_price", String(data.max_price));
+
+    if (data.categories.length)
+      params.set("categories", data.categories.join(","));
+    if (typeof data.region === "number")
+      params.set("region", String(data.region));
+
+    router.push(
+      params.toString() ? `${pathname}?${params.toString()}` : pathname
+    );
+  };
+
+  const handleReset = () => {
+    setSelectedBudget("");
+    setData({
+      destination: "",
+      departure_location: "",
+      region: undefined,
+      min_price: undefined,
+      max_price: undefined,
+      categories: [],
     });
-
-    router.push(params.toString() ? `${pathname}?${params}` : pathname);
+    router.push(pathname);
   };
 
   return (
@@ -152,31 +139,23 @@ const TourFilter = () => {
         Bộ lọc tìm kiếm
       </h2>
 
-      {/* Điểm đến */}
+      {/* Địa điểm */}
       <div className="bg-slate-50 p-4 rounded-xl border mb-4">
         <h3 className="text-sm font-semibold mb-3 text-slate-700">Địa điểm</h3>
 
         <input
-          placeholder="Địa điểm chung..."
+          placeholder="Điểm đến..."
           value={data.destination}
           onChange={(e) => updateData("destination", e.target.value)}
           className="w-full mb-3 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none"
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input
-            placeholder="Điểm khởi hành"
-            value={data.start_location}
-            onChange={(e) => updateData("start_location", e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none"
-          />
-          <input
-            placeholder="Điểm kết thúc"
-            value={data.end_location}
-            onChange={(e) => updateData("end_location", e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none"
-          />
-        </div>
+        <input
+          placeholder="Điểm khởi hành..."
+          value={data.departure_location}
+          onChange={(e) => updateData("departure_location", e.target.value)}
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none"
+        />
       </div>
 
       {/* Ngân sách */}
@@ -227,7 +206,7 @@ const TourFilter = () => {
           ))}
         </div>
 
-        {/* Vùng */}
+        {/* Region */}
         <div className="bg-slate-50 p-3 rounded-xl border">
           <h3 className="text-sm font-semibold mb-3 text-slate-700">
             Vùng miền
@@ -248,29 +227,22 @@ const TourFilter = () => {
         </div>
       </div>
 
-      {/* Số ngày */}
-      <div className="bg-slate-50 mb-4 p-3 rounded-xl border">
-        <h3 className="text-sm font-semibold mb-3 text-slate-700">
-          Số ngày muốn đi
-        </h3>
+      <div className="flex gap-2">
+        <Button
+          className="w-full mt-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold"
+          onClick={handleSubmit}
+        >
+          Áp dụng
+        </Button>
 
-        <Slider
-          value={sliderValue}
-          onValueChange={(v) => {
-            setSliderValue(v);
-            updateData("duration_days", v[0]);
-          }}
-        />
-
-        <p className="text-sm mt-2 text-slate-700">{sliderValue[0]} ngày</p>
+        <Button
+          className="w-full mt-1 rounded-lg font-semibold"
+          variant="outline"
+          onClick={handleReset}
+        >
+          Xoá lọc
+        </Button>
       </div>
-
-      <Button
-        className="w-full mt-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold"
-        onClick={handleSubmit}
-      >
-        Áp dụng
-      </Button>
     </div>
   );
 };

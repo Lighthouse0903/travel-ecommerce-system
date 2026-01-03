@@ -3,15 +3,26 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatDate } from "@/utils/formatDate";
-
+import { formatDateOnly } from "@/utils/formatDate";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useLoginModal } from "@/contexts/LoginModalContext";
+import { toast } from "sonner";
+import { useEffect } from "react";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const { openLoginModal } = useLoginModal();
 
   const fadeUp = {
     initial: { opacity: 0, y: 30 },
@@ -19,7 +30,15 @@ const Profile = () => {
     transition: { duration: 0.4 },
   };
 
-  if (!user) {
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.dismiss();
+      toast.warning("Bạn chưa đăng nhập");
+      openLoginModal();
+    }
+  }, [loading, user, openLoginModal]);
+
+  if (loading) {
     return (
       <div className="w-full overflow-hidden">
         <motion.div {...fadeUp}>
@@ -43,12 +62,22 @@ const Profile = () => {
       </div>
     );
   }
+  if (!user) {
+    return;
+  }
 
   return (
     <div className="w-full overflow-hidden">
       <motion.div {...fadeUp}>
         <div className="p-4 w-full space-y-6">
-          <h1 className="text-2xl font-semibold">Thông tin cá nhân</h1>
+          <Breadcrumb>
+            <BreadcrumbList className="text-base md:text-lg">
+              <BreadcrumbItem>
+                <BreadcrumbPage>Thông tin cá nhân</BreadcrumbPage>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </BreadcrumbList>
+          </Breadcrumb>
 
           <Card className="shadow-sm border">
             <VisuallyHidden>
@@ -58,7 +87,7 @@ const Profile = () => {
             </VisuallyHidden>
 
             <CardContent className="space-y-4 text-sm p-5">
-              <div className="grid grid-cols-1 gap-y-4">
+              <div className="grid grid-cols-1 gap-y-5">
                 <p>
                   <b>Họ tên:</b> {user.full_name || "-"}
                 </p>
@@ -72,7 +101,7 @@ const Profile = () => {
                   <b>Địa chỉ:</b> {user.address || "-"}
                 </p>
                 <p>
-                  <b>Ngày sinh:</b> {formatDate(user.date_of_birth)}
+                  <b>Ngày sinh:</b> {formatDateOnly(user.date_of_birth ?? "")}
                 </p>
                 <p>
                   <b>Số điện thoại:</b> {user.phone || "-"}

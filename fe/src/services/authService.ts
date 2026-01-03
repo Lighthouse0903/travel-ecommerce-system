@@ -4,14 +4,15 @@ import {
   RegisterResponse,
   LoginPayload,
   LoginResponse,
-  ResetPassword,
+  ChangePassword,
+  MessageResponse,
 } from "@/types/auth";
 import { ApiResponse } from "@/types/common";
 import { useAuth } from "@/contexts/AuthContext";
-import { UpdateProfile } from "@/types/user";
+import { UpdateProfile, UserResponse } from "@/types/user";
 
 export const useAuthService = () => {
-  const { post, put } = useFetchInstance();
+  const { get, post, put, patch } = useFetchInstance();
   const { setAccess, setUser } = useAuth();
 
   // Hàm gọi API đăng ký
@@ -34,27 +35,24 @@ export const useAuthService = () => {
     return res;
   };
 
-  // Hàm gọi API đăng xuất
-  const logout = async (): Promise<ApiResponse<any>> => {
-    const res = await post("/users/logout/", {}, true);
-    setAccess(null);
-    setUser(null);
-    return res;
+  // Hàm gọi API get profile
+  const getProfile = async (): Promise<ApiResponse<UserResponse>> => {
+    return get<UserResponse>("/users/profile", true);
   };
 
   // Hàm gọi API cập nhật hồ sơ
   const update = async (
     update: UpdateProfile
-  ): Promise<ApiResponse<UpdateProfile>> => {
-    return put<UpdateProfile>("/users/profile/", update, true);
+  ): Promise<ApiResponse<UserResponse>> => {
+    return patch<UserResponse>("/users/profile/", update, true);
   };
 
   // Hàm gọi API đổi mật khẩu
   const change_password = async (
-    resetPassword: ResetPassword
-  ): Promise<ApiResponse<ResetPassword>> => {
-    return put<ResetPassword>("/users/change-password/", resetPassword, true);
+    resetPassword: ChangePassword
+  ): Promise<ApiResponse<MessageResponse>> => {
+    return put<MessageResponse>("/users/change-password/", resetPassword, true);
   };
 
-  return { register, login, logout, update, change_password };
+  return { register, login, update, change_password, getProfile };
 };

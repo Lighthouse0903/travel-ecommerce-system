@@ -6,6 +6,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+
 import { AuthContextType } from "@/types/auth";
 import { UserResponse } from "@/types/user";
 import { useRouter } from "next/navigation";
@@ -14,13 +15,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL! + "/api";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const clearBookingLocalStorage = () => {
+  const prefixes = ["draft_booking_form_", "pending_booking_"];
+
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+
+    if (prefixes.some((p) => key.startsWith(p))) {
+      localStorage.removeItem(key);
+    }
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const [access, setAccess] = useState<string | null>(null);
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // === Refresh token ===
+  // Refresh token
   const refreshAccessToken = async (): Promise<string | null> => {
     try {
       const res = await fetch(`${API_URL}/users/refresh/`, {
@@ -40,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // === Fetch user profile ===
+  // Fetch user profile
   const fetchUserProfile = async (token: string) => {
     try {
       const res = await fetch(`${API_URL}/users/profile/`, {
@@ -57,7 +71,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // === Logout ===
+  //  Refetch profile (public)
+  const refetchProfile = async () => {
+    if (!access) return;
+    await fetchUserProfile(access);
+  };
+
+  // Logout
   const logout = async () => {
     try {
       await fetch(`${API_URL}/users/logout/`, {
@@ -65,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         credentials: "include",
         headers: access ? { Authorization: `Bearer ${access}` } : {},
       });
+      clearBookingLocalStorage();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
@@ -75,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // === INIT AUTH ===
+  // INIT AUTH
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -97,9 +118,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ access, user, setAccess, setUser, logout, loading }}
+      value={{
+        access,
+        user,
+        setAccess,
+        setUser,
+        logout,
+        loading,
+        refetchProfile,
+        refreshAccessToken,
+      }}
     >
-      {children}
+      {loading ? null : children}
     </AuthContext.Provider>
   );
 };
@@ -107,7 +137,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 // Hook
 export const useAuth = (): AuthContextType => {
   const ctx = useContext(AuthContext);
-  if (!ctx)
-    throw new Error("❌ useAuth phải được dùng bên trong <AuthProvider>");
+  if (!ctx) throw new Error(" useAuth phải được dùng bên trong <AuthProvider>");
   return ctx;
 };

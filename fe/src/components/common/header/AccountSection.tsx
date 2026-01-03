@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/popover";
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import LoginForm from "@/components/auth/customer/LoginForm";
-import RegisterForm from "@/components/auth/customer/RegisterForm";
+import LoginForm from "@/components/auth/LoginForm";
+import RegisterForm from "@/components/auth/RegisterForm";
 import { useAuth } from "@/contexts/AuthContext";
 
 import AccountPopoverContent from "../popover/AccountPopoverContent";

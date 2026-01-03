@@ -49,7 +49,7 @@ const SidebarClient = () => {
       icon: ShoppingBag,
     },
     {
-      href: "/agency/dashboard/statistics",
+      href: "/agency/dashboard/revenue",
       label: "Doanh thu & Báo cáo",
       icon: BarChart3,
     },

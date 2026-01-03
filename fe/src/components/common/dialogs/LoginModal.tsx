@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useLoginModal } from "@/contexts/LoginModalContext";
-import LoginForm from "../../auth/customer/LoginForm";
+import LoginForm from "../../auth/LoginForm";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const LoginModal = () => {

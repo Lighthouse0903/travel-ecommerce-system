@@ -14,10 +14,8 @@ export interface UserResponse {
 export type User = UserResponse;
 
 export type UpdateProfile = Partial<{
-  user_id: string;
   username: string;
   full_name: string;
-  email: string;
   phone: string;
   address: string;
   date_of_birth: string;

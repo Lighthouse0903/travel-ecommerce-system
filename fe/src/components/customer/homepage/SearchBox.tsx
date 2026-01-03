@@ -44,31 +44,29 @@ const SearchBox = () => {
     <div className="w-full flex justify-center">
       <form
         onSubmit={handleSubmit}
-        className="w-full sm:w-[85%] flex flex-col gap-2"
+        className="w-full max-w-2xl flex flex-col gap-2"
       >
-        <div className="flex flex-col sm:flex-row items-stretch bg-white/80 backdrop-blur rounded-3xl shadow-lg border border-white/60 px-3 py-2 sm:px-4 sm:py-3 gap-2 sm:gap-3">
-          <div className="flex flex-1 items-center gap-2">
-            <SlLocationPin className="text-gray-700 shrink-0" />
-            <input
-              type="text"
-              placeholder="Bạn muốn đi đâu?"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              className="w-full bg-transparent outline-none text-sm sm:text-base text-gray-900 placeholder-gray-500"
-            />
-          </div>
+        <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xl border border-white/60 rounded-full shadow-xl px-4 py-2 sm:px-6 sm:py-3">
+          <SlLocationPin className="text-gray-600 text-lg shrink-0" />
+
+          <input
+            type="text"
+            placeholder="Bạn muốn đi đâu?"
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            className="flex-1 bg-transparent outline-none text-sm sm:text-base text-gray-900 placeholder-gray-500"
+          />
 
           <Button
             type="submit"
-            className="flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm sm:text-base font-medium"
+            className="rounded-full p-2 sm:p-3 min-w-[40px] min-h-[40px] flex items-center justify-center shadow-md hover:shadow-lg transition-all"
           >
-            <GoSearch className="text-base sm:text-lg" />
-            <span>Tìm kiếm</span>
+            <GoSearch className="text-lg sm:text-xl" />
           </Button>
         </div>
 
         {errors.destination && (
-          <p className="text-red-500 text-xs sm:text-sm mt-1">
+          <p className="text-red-500 text-xs sm:text-sm mt-1 pl-2">
             {errors.destination}
           </p>
         )}

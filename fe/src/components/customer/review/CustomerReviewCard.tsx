@@ -6,42 +6,74 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { ReviewPayload } from "@/types/review";
+import { useReviewAction } from "@/hooks/useReviewAction";
 
 interface CustomerReviewCardProps {
+  canReview: boolean;
   review_rating: number | null;
-  review_comment: string | null;
+  review_comment: string;
   booking_id: string;
-  onSubmitReview: (payload: ReviewPayload) => Promise<void>;
 }
 
 const CustomerReviewCard: React.FC<CustomerReviewCardProps> = ({
+  canReview,
   review_rating,
   review_comment,
   booking_id,
-  onSubmitReview,
 }) => {
-  // kiểm tra booking đã có review chưa
-  const isReviewed = useMemo(() => {
-    return review_rating !== null && review_comment !== null;
-  }, [review_comment, review_rating]);
-
+  const isReviewed = useMemo(() => review_rating !== null, [review_rating]);
+  const { submitCreateReview } = useReviewAction();
   const [rating, setRating] = useState<number>(review_rating ?? 0);
   const [hovered, setHovered] = useState<number>(0);
   const [comment, setComment] = useState<string>(review_comment ?? "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleReview = async () => {
-    if (isReviewed) return;
-    console.log("Thông tin đánh giá: ", {
-      "số sao ": { rating },
-      "nội dung cmt: ": { comment },
-    });
+  if (!canReview && !isReviewed) {
+    return (
+      <Card className="shadow-sm border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-md font-semibold">
+            Đánh giá của tôi
+          </CardTitle>
+          <span className="text-xs text-slate-500">
+            Bạn sẽ có thể đánh giá sau khi đơn được thanh toán (và/hoặc sau khi
+            hoàn thành tour).
+          </span>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const disabled = isReviewed || submitting;
+
+  const handleSubmit = async () => {
+    if (disabled) return;
+
+    const trimmed = comment.trim();
+    if (rating <= 0) {
+      setError("Vui lòng chọn số sao đánh giá.");
+      return;
+    }
+    if (!trimmed) {
+      setError("Vui lòng nhập bình luận.");
+      return;
+    }
+
+    setError(null);
+    setSubmitting(true);
+
     const payload: ReviewPayload = {
       booking_id: booking_id,
       rating: rating,
-      comment: comment,
+      comment: trimmed,
     };
+
     console.log("Payload: ", payload);
-    await onSubmitReview(payload);
+    await submitCreateReview(payload);
+
+    setSubmitting(false);
+    setHovered(0);
   };
 
   return (
@@ -68,13 +100,14 @@ const CustomerReviewCard: React.FC<CustomerReviewCardProps> = ({
                 <Star
                   key={star}
                   onClick={() => {
-                    if (isReviewed) return;
+                    if (disabled) return;
                     setRating(star);
                   }}
-                  onMouseEnter={() => !isReviewed && setHovered(star)}
-                  onMouseLeave={() => !isReviewed && setHovered(0)}
+                  onMouseEnter={() => !disabled && setHovered(star)}
+                  onMouseLeave={() => !disabled && setHovered(0)}
                   className={
-                    "w-7 h-7 cursor-pointer transition " +
+                    "w-7 h-7 transition " +
+                    (disabled ? "cursor-default " : "cursor-pointer ") +
                     (active
                       ? "fill-yellow-400 stroke-yellow-400"
                       : "stroke-slate-300")
@@ -99,19 +132,25 @@ const CustomerReviewCard: React.FC<CustomerReviewCardProps> = ({
             placeholder="Hãy kể cho mọi người nghe về trải nghiệm của bạn..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            disabled={isReviewed}
-            className={isReviewed ? "bg-slate-50" : ""}
+            disabled={disabled}
+            className={disabled ? "bg-slate-50" : ""}
           />
         </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         {/* button gửi đánh giá */}
         <div className="pt-2">
           <Button
-            onClick={handleReview}
+            onClick={handleSubmit}
             className="w-full"
-            disabled={isReviewed || rating === 0 || !comment.trim()}
+            disabled={disabled || rating === 0 || !comment.trim()}
           >
-            {isReviewed ? "Bạn đã gửi đánh giá" : "Gửi đánh giá"}
+            {isReviewed
+              ? "Bạn đã gửi đánh giá"
+              : submitting
+              ? "Đang gửi..."
+              : "Gửi đánh giá"}
           </Button>
         </div>
       </CardContent>

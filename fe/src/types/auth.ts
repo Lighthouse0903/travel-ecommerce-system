@@ -9,7 +9,7 @@ export interface RegisterPayload {
   address?: string;
   date_of_birth?: string;
 }
-
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RegisterResponse extends UserResponse {}
 
 export interface LoginPayload {
@@ -24,14 +24,20 @@ export interface LoginResponse {
 
 export interface AuthContextType {
   access: string | null;
-  user: any | null;
+  user: UserResponse | null;
   setAccess: (token: string | null) => void;
-  setUser: (user: UserResponse | null | any) => void;
+  setUser: (user: UserResponse | null) => void;
   logout: () => void;
   loading: boolean;
+  refreshAccessToken: () => Promise<string | null>;
+  refetchProfile: () => Promise<void>;
 }
 
-export interface ResetPassword {
+export type ChangePassword = {
   current_password: string;
   new_password: string;
-}
+};
+
+export type MessageResponse = {
+  message: string;
+};

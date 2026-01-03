@@ -1,26 +1,30 @@
-export interface SendMessageRequest {
-  receiver_id: string;
-  content: string;
+export interface UserSummary {
+  user_id: string;
+  full_name: string | null;
+  is_online: boolean;
+  username: string;
 }
 
-export interface SendMessageResponse {
+export interface MessageSummary {
   message_id: string;
-  sender_id: string;
-  receiver_id: string;
-  sender_name?: string;
-  receiver_name?: string;
-  content: string;
+  sender: UserSummary;
+  content: string | null;
+  is_read?: boolean;
   created_at: string;
 }
 
 export interface ConversationSummary {
-  partner_id: string;
-  partner_name: string;
-  partner_avatar?: string;
+  conversation_id: string;
+  partner: UserSummary | null;
+  last_message: MessageSummary | null;
+  updated_at: string;
+  unread_count: number;
+}
 
-  last_message?: string;
-  last_time?: string;
-  unread_count?: number;
-
-  isOnline?: boolean; // optional
+export interface ConversationDetai {
+  conversation: string;
+  user1: UserSummary;
+  user2: UserSummary;
+  created_at: string;
+  updated_at: string;
 }
