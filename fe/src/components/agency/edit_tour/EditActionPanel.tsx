@@ -3,12 +3,10 @@
 import React, { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { AlertTriangle, Save, X } from "lucide-react";
-
-import type { EditTourFormValues } from "@/app/agency/dashboard/tours/[id]/edit/formSchema";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { EditTourFormValues } from "@/types/tour";
 
 type Props = {
   formId: string;

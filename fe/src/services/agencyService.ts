@@ -1,5 +1,5 @@
 import { useFetchInstance } from "@/hooks/fetchInstance";
-import { AgencyProfile, RegisterAgencyFormValues } from "@/types/agency";
+import { AgencyProfile } from "@/types/agency";
 import { ApiResponse } from "@/types/common";
 
 export const useAgencyService = () => {

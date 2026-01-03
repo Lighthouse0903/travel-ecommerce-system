@@ -23,7 +23,7 @@ import { PaginationMeta } from "@/types/pagination";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationCustom from "@/components/common/pagination/Pagination";
 
-export const STATUS_CONFIG: Record<
+const STATUS_CONFIG: Record<
   BookingStatus,
   {
     label: string;

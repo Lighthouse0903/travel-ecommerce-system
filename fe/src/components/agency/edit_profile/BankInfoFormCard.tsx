@@ -13,7 +13,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { EditAgencyFormValues } from "@/app/agency/dashboard/edit_profile/formSchema";
+import { EditAgencyFormValues } from "@/types/agency";
 
 interface Props {
   isSubmitting: boolean;

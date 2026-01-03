@@ -7,8 +7,8 @@ import Section from "./Section";
 import { Button } from "@/components/ui/button";
 import { Trash2, UploadCloud } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { EditTourFormValues } from "@/app/agency/dashboard/tours/[id]/edit/formSchema";
 import FileUpload from "@/components/common/Upload/FileUpload";
+import { EditTourFormValues } from "@/types/tour";
 
 type PreviewTour = {
   thumbnail_url?: string | null;

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus } from "lucide-react";
-import { EditTourFormValues } from "@/app/agency/dashboard/tours/[id]/edit/formSchema";
+import { EditTourFormValues } from "@/types/tour";
 
 type Props = {
   dayIndex: number;

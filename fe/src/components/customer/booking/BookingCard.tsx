@@ -1,16 +1,14 @@
 "use client";
 
 import React, { useMemo, useEffect, useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CalendarDays, Minus, Plus, Tag } from "lucide-react";
 import ConfirmDialog from "@/components/common/dialogs/ConfirmDialog";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/utils/formatPrice";
-import { useBookingService } from "@/services/bookingService";
 import { CreateBookingRequest } from "@/types/booking";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLoginModal } from "@/contexts/LoginModalContext";
+import { useBookingAction } from "@/hooks/useBookingAction";
 
 interface BookingCardViewProps {
   tourId: string;
@@ -22,8 +20,8 @@ interface BookingCardViewProps {
   hasDiscount?: boolean;
 }
 
+// --- draft helpers (UI vẫn có thể load draft để đổ lại form) ---
 const DRAFT_BOOKING_KEY = (userId: string) => `draft_booking_form_${userId}`;
-const PENDING_BOOKING_KEY = (userId: string) => `pending_booking_${userId}`;
 
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
@@ -42,24 +40,6 @@ const loadDraftBooking = (tourId: string, userId: string) => {
   }
 };
 
-const saveDraftBooking = (userId: string, payload: CreateBookingRequest) => {
-  const key = DRAFT_BOOKING_KEY(userId);
-  localStorage.setItem(key, JSON.stringify(payload));
-};
-
-const clearDraftBooking = (userId: string) => {
-  const key = DRAFT_BOOKING_KEY(userId);
-  localStorage.removeItem(key);
-};
-
-const getPendingBookingId = (userId: string) => {
-  return localStorage.getItem(PENDING_BOOKING_KEY(userId));
-};
-
-const setPendingBookingId = (userId: string, bookingId: string) => {
-  localStorage.setItem(PENDING_BOOKING_KEY(userId), bookingId);
-};
-
 const BookingCardView: React.FC<BookingCardViewProps> = ({
   tourId,
   departure_location,
@@ -69,53 +49,49 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
   finalChildPrice,
   hasDiscount = false,
 }) => {
-  const router = useRouter();
-  const { createBooking } = useBookingService();
-
   const { user } = useAuth();
   const userId = user?.user_id;
 
-  const { openLoginModal } = useLoginModal();
+  const { submitCreateBooking } = useBookingAction();
+
   const [travelDate, setTravelDate] = useState("");
   const [numAdults, setNumAdults] = useState(2);
   const [numChildren, setNumChildren] = useState(0);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
   const adultUnitPrice = hasDiscount ? finalPrice : price;
-  console.log(adultUnitPrice);
   const childUnitPrice = hasDiscount ? finalChildPrice : childPrice;
-  console.log(childUnitPrice);
-  // Tính tổng tiền
+
+  const isBusy = isSubmitting || showConfirm;
+
   const total = useMemo(() => {
     const adults = Number(numAdults);
     const children = Number(numChildren);
-
     return adults * Number(adultUnitPrice) + children * Number(childUnitPrice);
   }, [numAdults, numChildren, adultUnitPrice, childUnitPrice]);
-  console.log(total);
 
   const departureText =
     (departure_location ?? "").trim() || "Chưa có thông tin";
 
-  // loadDraft
+  // loadDraft (nếu có)
   useEffect(() => {
     if (!userId) return;
     const draft = loadDraftBooking(tourId, userId);
     if (!draft) return;
+
     setTravelDate(draft.travel_date || "");
     setNumAdults(draft.num_adults ?? 2);
     setNumChildren(draft.num_children ?? 0);
     setNote(draft.note || "");
   }, [tourId, userId]);
 
-  // Validate trước khi tạo booking
   const validateBeforeBooking = useCallback(() => {
     if (!travelDate) {
       toast.warning("Vui lòng chọn ngày khởi hành");
       return false;
     }
-
     if (numAdults < 1) {
       toast.warning("Số người lớn phải >= 1");
       return false;
@@ -123,35 +99,17 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
     return true;
   }, [travelDate, numAdults]);
 
-  // hàm xử lý nút đặt tour
   const handleBookingClick = () => {
-    if (isSubmitting) return;
-    if (!user || !userId) {
-      toast.warning("Bạn cần đăng nhập để đặt tour");
-      openLoginModal();
-      return;
-    }
-
-    const pendingBookingId = getPendingBookingId(userId);
-    if (pendingBookingId) {
-      toast("Bạn đang có đơn chưa hoàn tất. Chuyển đến trang thanh toán");
-      router.push(`/dashboard/orders/${pendingBookingId}`);
-      return;
-    }
-
+    if (isBusy) return;
     if (!validateBeforeBooking()) return;
     setShowConfirm(true);
   };
 
-  // hàm xử lý confirm Booking
   const handleConfirmBooking = async () => {
-    setShowConfirm(false);
+    if (isSubmitting) return;
 
-    if (!userId) {
-      toast.warning("Bạn cần đăng nhập để đặt tour");
-      openLoginModal();
-      return;
-    }
+    setIsSubmitting(true);
+    setShowConfirm(false);
 
     const payload: CreateBookingRequest = {
       tour: tourId,
@@ -161,30 +119,14 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
       note: note?.trim() || undefined,
     };
 
-    // Lưu draft trước khi gọi API
-    saveDraftBooking(userId, payload);
-    setIsSubmitting(true);
-
     try {
-      const res = await createBooking(payload);
-      console.log("API create Booking response: ", res);
+      const result = await submitCreateBooking(payload);
 
-      if (!res.success) {
-        toast.error(res.error?.message || "Không thể tạo booking");
+      if (!result.ok) {
+        setIsSubmitting(false);
         return;
       }
-
-      const bookingId = res.data?.booking_id;
-      if (!bookingId) {
-        toast.error("Có lỗi xảy ra, thiếu mã booking");
-        return;
-      }
-
-      // Có booking thành công không cần giữ draft form nữa
-      clearDraftBooking(userId);
-      setPendingBookingId(userId, bookingId);
-      router.push(`/dashboard/orders/${bookingId}`);
-    } finally {
+    } catch {
       setIsSubmitting(false);
     }
   };
@@ -356,7 +298,7 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
           <Button
             className="w-full rounded-lg bg-black text-white py-2.5 text-[13px] font-medium hover:opacity-90"
             onClick={handleBookingClick}
-            disabled={isSubmitting}
+            disabled={isBusy}
           >
             {isSubmitting ? "Đang xử lý..." : "Đặt tour ngay"}
           </Button>

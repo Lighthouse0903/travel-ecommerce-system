@@ -14,8 +14,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-
-import type { EditTourFormValues } from "@/app/agency/dashboard/tours/[id]/edit/formSchema";
+import { EditTourFormValues } from "@/types/tour";
 
 const PolicySection: React.FC = () => {
   const { control } = useFormContext<EditTourFormValues>();

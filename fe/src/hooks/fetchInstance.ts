@@ -1,8 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL! + "/api";
-
 import { ApiResponse, ApiError, ApiFieldErrors } from "@/types/common";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCallback, useMemo } from "react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL! + "/api";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -33,7 +33,11 @@ export const useFetchInstance = () => {
       body?: unknown,
       requireAuth = false
     ): Promise<ApiResponse<T, M>> => {
-      const token = access;
+      let token = access;
+      // refresh trước nếu cần auth mà chưa có access (vừa reload)
+      if (requireAuth && !token) {
+        token = await doRefreshAccessToken();
+      }
       const headers = new Headers();
 
       if (!(body instanceof FormData)) {

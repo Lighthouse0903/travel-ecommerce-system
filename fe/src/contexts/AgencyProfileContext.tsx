@@ -1,10 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import { AgencyProfile } from "@/types/agency";
 import { useAgencyService } from "@/services/agencyService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DRAFT_KEY = "agency_register_draft_v1";
+
 type AgencyProfileState = {
   loading: boolean;
   profile: AgencyProfile | null;
@@ -28,45 +37,46 @@ export const AgencyProfileProvider = ({
   children: React.ReactNode;
 }) => {
   const { getAgencyProfile } = useAgencyService();
+  const { user, access, loading: authLoading } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<AgencyProfile | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
+    // Nếu chưa auth xong hoặc chưa login -> không gọi
+    if (authLoading || !access || !user) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const res = await getAgencyProfile();
 
     if (res.success) {
       setProfile(res.data);
-      // Nếu status == approved mới cho phép xóa draft
       if (res.data.status === "approved") {
         localStorage.removeItem(DRAFT_KEY);
       }
     } else {
+      // không có hồ sơ đại lý / 401 / 404 -> coi như chưa đăng ký
       setProfile(null);
     }
+
     setLoading(false);
-  };
+  }, [authLoading, access, user]);
 
   useEffect(() => {
-    let mounted = true;
-
-    const run = async () => {
-      await refresh();
-      if (!mounted) return;
-    };
-
-    run();
-
-    return () => {
-      mounted = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setLoading(true);
+    setProfile(null);
+    refresh();
+  }, [refresh, user?.user_id, access]);
 
   const value = useMemo(
     () => ({ loading, profile, refresh }),
-    [loading, profile]
+    [loading, profile, refresh]
   );
+
   return (
     <AgencyProfileContext.Provider value={value}>
       {children}

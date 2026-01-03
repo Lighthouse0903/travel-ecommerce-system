@@ -1,12 +1,13 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAgencyService } from "@/services/agencyService";
-import { RegisterAgencyFormValues } from "@/types/agency";
-import { buildRegisterAgencyFormData } from "@/app/(customer)/dashboard/register_agency/apply/formData";
+import { EditAgencyFormValues, RegisterAgencyFormValues } from "@/types/agency";
+import {
+  buildRegisterAgencyFormData,
+  buildUpdateAgencyFormData,
+} from "@/lib/agency/formData";
 import { useAgencyProfile } from "@/contexts/AgencyProfileContext";
 import { useCallback } from "react";
-import { buildUpdateAgencyFormData } from "@/app/agency/dashboard/edit_profile/formData";
-import { EditAgencyFormValues } from "@/app/agency/dashboard/edit_profile/formSchema";
 
 export const useAgencyAction = () => {
   const router = useRouter();

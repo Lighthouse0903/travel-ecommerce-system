@@ -16,9 +16,10 @@ import AboutFormCard from "@/components/agency/edit_profile/AboutFormCard";
 import LegalReadonlyCard from "@/components/agency/edit_profile/LegalReadonlyCard";
 import EditProfileHeader from "@/components/agency/edit_profile/EditProfileHeader";
 import { useAgencyAction } from "@/hooks/useAgencyAction";
-import { EditAgencyFormValues, EditAgencySchema } from "./formSchema";
+
 import MotionFlow, { MotionItem } from "@/components/common/motion/MotionFlow";
 import EditAgencyProfileSkeleton from "./EditProlileSkeleton";
+import { EditAgencyFormValues, EditAgencySchema } from "@/types/agency";
 
 const EditAgencyProfilePage = () => {
   const router = useRouter();

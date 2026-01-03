@@ -24,6 +24,7 @@ export const getListPublicTourService = async (
 
   const res = await fetch(`${API_URL}/tours/${qs}`, {
     next: { tags: ["tours"] },
+    cache: "no-store",
   });
 
   if (!res.ok) return { data: [], meta: null };
@@ -44,6 +45,7 @@ export const getDetailPublicTourServer = async (
 ): Promise<TourResponse | null> => {
   const res = await fetch(`${API_URL}/tours/${id}/`, {
     next: { tags: [`tour-${id}`] },
+    cache: "no-store",
   });
 
   if (!res.ok) return null;

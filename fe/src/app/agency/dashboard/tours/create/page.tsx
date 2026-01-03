@@ -9,8 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import type { TourRequest } from "@/types/tour";
-import { schemasByStep } from "@/app/agency/dashboard/tours/create/formSchema";
+import { schemasByStep, type TourRequest } from "@/types/tour";
 import { useTourAction } from "@/hooks/useTourAction";
 
 const BasicInfor = dynamic(

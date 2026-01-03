@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form";
 
 import FileUpload from "@/components/common/Upload/FileUpload";
-import { EditAgencyFormValues } from "@/app/agency/dashboard/edit_profile/formSchema";
+import { EditAgencyFormValues } from "@/types/agency";
 
 interface Props {
   isSubmitting: boolean;

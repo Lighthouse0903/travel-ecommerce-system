@@ -37,7 +37,7 @@ import {
 
 import type { UpdateProfile, UserResponse } from "@/types/user";
 
-export const editProfileSchema = z.object({
+const editProfileSchema = z.object({
   username: z
     .string()
     .min(2, "Tên đăng nhập phải có ít nhất 2 kí tự")

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { CATEGORY_CHOICES } from "@/types/tour";
+import { CATEGORY_CHOICES, EditTourFormValues } from "@/types/tour";
 import {
   FormField,
   FormItem,
@@ -24,8 +24,6 @@ import {
   FormMessage,
   FormLabel,
 } from "@/components/ui/form";
-
-import type { EditTourFormValues } from "@/app/agency/dashboard/tours/[id]/edit/formSchema";
 
 const regionOptions = [
   { value: 1, label: "Miền Bắc" },

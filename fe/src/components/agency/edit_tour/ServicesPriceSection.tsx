@@ -15,8 +15,7 @@ import {
   FormMessage,
   FormLabel,
 } from "@/components/ui/form";
-
-import type { EditTourFormValues } from "@/app/agency/dashboard/tours/[id]/edit/formSchema";
+import { EditTourFormValues } from "@/types/tour";
 
 const ServicesPriceSection: React.FC = () => {
   const { control } = useFormContext<EditTourFormValues>();

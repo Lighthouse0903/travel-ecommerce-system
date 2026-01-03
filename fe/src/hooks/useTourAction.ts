@@ -2,7 +2,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTourService } from "@/services/tourService";
 import { TourRequest } from "@/types/tour";
-import { buildTourFormData } from "@/app/agency/dashboard/tours/create/formData";
+import { buildTourFormData } from "@/lib/tours/formData";
 
 export const useTourAction = () => {
   const router = useRouter();

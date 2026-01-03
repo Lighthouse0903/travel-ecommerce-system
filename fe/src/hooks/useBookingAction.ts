@@ -1,0 +1,86 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useBookingService } from "@/services/bookingService";
+import { CreateBookingRequest } from "@/types/booking";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLoginModal } from "@/contexts/LoginModalContext";
+
+const DRAFT_BOOKING_KEY = (userId: string) => `draft_booking_form_${userId}`;
+const PENDING_BOOKING_KEY = (userId: string) => `pending_booking_${userId}`;
+
+const saveDraftBooking = (userId: string, payload: CreateBookingRequest) => {
+  localStorage.setItem(DRAFT_BOOKING_KEY(userId), JSON.stringify(payload));
+};
+
+const clearDraftBooking = (userId: string) => {
+  localStorage.removeItem(DRAFT_BOOKING_KEY(userId));
+};
+
+const getPendingBookingId = (userId: string) => {
+  return localStorage.getItem(PENDING_BOOKING_KEY(userId));
+};
+
+const setPendingBookingId = (userId: string, bookingId: string) => {
+  localStorage.setItem(PENDING_BOOKING_KEY(userId), bookingId);
+};
+
+export const useBookingAction = () => {
+  const router = useRouter();
+  const { createBooking } = useBookingService();
+  const { user } = useAuth();
+  const { openLoginModal } = useLoginModal();
+
+  const submitCreateBooking = async (payload: CreateBookingRequest) => {
+    const userId = user?.user_id;
+
+    if (!userId) {
+      toast.warning("Bạn cần đăng nhập để đặt tour");
+      openLoginModal();
+      return { ok: false as const };
+    }
+
+    const pendingId = getPendingBookingId(userId);
+    if (pendingId) {
+      toast("Bạn đang có đơn chưa hoàn tất. Chuyển đến trang thanh toán");
+      router.push(`/dashboard/orders/${pendingId}`);
+      return { ok: false as const, redirected: true as const };
+    }
+
+    // Lưu draft trước khi gọi API
+    saveDraftBooking(userId, payload);
+
+    const res = await createBooking(payload);
+
+    if (res.success) {
+      const bookingId = res.data?.booking_id;
+      if (!bookingId) {
+        toast.error("Có lỗi xảy ra, thiếu mã booking");
+        return { ok: false as const };
+      }
+
+      clearDraftBooking(userId);
+      setPendingBookingId(userId, bookingId);
+
+      toast.success(res.message || "Tạo booking thành công");
+      router.push(`/dashboard/orders/${bookingId}`);
+      return { ok: true as const, bookingId };
+    }
+
+    const errors = res.error?.errors;
+    const firstKey = errors ? Object.keys(errors)[0] : null;
+
+    const msg =
+      errors?.non_field_errors?.[0] ||
+      (firstKey && errors?.[firstKey]?.[0]) ||
+      res.error?.message ||
+      res.message ||
+      "Không thể tạo booking";
+
+    toast.error(msg);
+    return { ok: false as const };
+  };
+
+  return { submitCreateBooking };
+};

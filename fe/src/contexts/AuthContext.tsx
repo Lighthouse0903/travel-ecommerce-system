@@ -42,11 +42,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         credentials: "include",
       });
       if (!res.ok) return null;
-      const data = await res.json();
-      if (data?.access) {
-        setAccess(data.access);
-        return data.access;
+
+      const json = await res.json();
+      const newAccess: unknown = json?.access ?? json?.data?.access;
+      if (typeof newAccess === "string" && newAccess) {
+        setAccess(newAccess);
+        return newAccess;
       }
+
       return null;
     } catch (err) {
       console.error("Lỗi khi refresh token:", err);
@@ -63,15 +66,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Get profile failed");
-      const data = await res.json();
-      setUser(data.data ?? data);
+      const json = await res.json();
+      setUser((json?.data ?? null) as UserResponse | null);
     } catch (err) {
       console.error("Lỗi khi lấy profile:", err);
       setUser(null);
     }
   };
 
-  //  Refetch profile (public)
+  //  Refetch profile
   const refetchProfile = async () => {
     if (!access) return;
     await fetchUserProfile(access);

@@ -3,18 +3,16 @@ import { revalidateTag } from "next/cache";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const formData = await req.formData();
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/tours/${params.id}`,
-    {
-      method: "PATCH",
-      body: formData,
-      cache: "no-store",
-    }
-  );
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tours/${id}`, {
+    method: "PATCH",
+    body: formData,
+    cache: "no-store",
+  });
 
   const data = await res.json();
 
@@ -23,7 +21,7 @@ export async function PATCH(
   }
 
   revalidateTag("tours"); // Home / list
-  revalidateTag(`tour-${params.id}`); // Detail
+  revalidateTag(`tour-${id}`); // Detail
 
   return NextResponse.json(data);
 }

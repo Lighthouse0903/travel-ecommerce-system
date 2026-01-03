@@ -5,17 +5,19 @@ import { useParams, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
 import { useTourService } from "@/services/tourService";
-import type { BEItineraryDay, TourResponse } from "@/types/tour";
+import {
+  editTourSchema,
+  type BEItineraryDay,
+  type EditTourFormValues,
+  type TourResponse,
+} from "@/types/tour";
 
-import { editTourSchema, type EditTourFormValues } from "./formSchema";
-import { buildTourFormDataForEdit } from "./formData";
-import { parseActivityString } from "./activityMapper";
+import { parseActivityString } from "../../../../../../utils/activityMapper";
 
 import BasicSection from "@/components/agency/edit_tour/BasicSection";
 import ItinerarySection from "@/components/agency/edit_tour/ItinerarySection";
@@ -26,6 +28,7 @@ import EditTourSkeleton from "./EditTourSkeleton";
 import EditActionsPanel from "@/components/agency/edit_tour/EditActionPanel";
 import TourDetailMotion from "@/components/common/tours/TourDetailMotion";
 import { MotionItem } from "@/components/common/motion/MotionFlow";
+import { buildTourFormDataForEdit } from "@/lib/tours/formData";
 
 const Card = ({
   children,
@@ -184,8 +187,6 @@ const EditTourPage = () => {
       </div>
     );
   }
-
-  const currentName = form.watch("name") || tourPreview?.name || "Tour";
 
   return (
     <div className="mx-auto max-w-6xl px-3 md:px-6 py-6">

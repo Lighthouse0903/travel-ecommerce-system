@@ -4,9 +4,9 @@ import React from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { EditTourFormValues } from "@/app/agency/dashboard/tours/[id]/edit/formSchema";
 import Section from "./Section";
 import ItineraryDayCard from "./ItineraryDayCard";
+import { EditTourFormValues } from "@/types/tour";
 
 const ItinerarySection: React.FC = () => {
   const {

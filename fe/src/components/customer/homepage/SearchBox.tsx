@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { z } from "zod";
 import { SlLocationPin } from "react-icons/sl";
 import { GoSearch } from "react-icons/go";
@@ -8,37 +8,32 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 const searchSchema = z.object({
-  destination: z.string().min(1, "Vui lòng nhập địa điểm bạn muốn đi"),
+  destination: z.string().trim().min(1, "Vui lòng nhập địa điểm bạn muốn đi"),
 });
 
-const SearchBox = () => {
+export default function SearchBox() {
   const [destination, setDestination] = useState("");
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
 
-    const result = searchSchema.safeParse({ destination });
+      const result = searchSchema.safeParse({ destination });
+      if (!result.success) {
+        setError(result.error.issues[0]?.message ?? "Dữ liệu không hợp lệ");
+        return;
+      }
 
-    if (!result.success) {
-      const fieldErrors: { [key: string]: string } = {};
-      result.error.issues.forEach((issue) => {
-        const field = issue.path?.[0] as string;
-        fieldErrors[field] = issue.message;
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setErrors({});
-
-    const query = new URLSearchParams({
-      destination: destination.trim(),
-    }).toString();
-
-    router.push(`/tours?${query}`);
-  };
+      setError(null);
+      const query = new URLSearchParams({
+        destination: destination.trim(),
+      }).toString();
+      router.push(`/tours?${query}`);
+    },
+    [destination, router]
+  );
 
   return (
     <div className="w-full flex justify-center">
@@ -53,7 +48,10 @@ const SearchBox = () => {
             type="text"
             placeholder="Bạn muốn đi đâu?"
             value={destination}
-            onChange={(e) => setDestination(e.target.value)}
+            onChange={(e) => {
+              setDestination(e.target.value);
+              if (error) setError(null);
+            }}
             className="flex-1 bg-transparent outline-none text-sm sm:text-base text-gray-900 placeholder-gray-500"
           />
 
@@ -65,14 +63,10 @@ const SearchBox = () => {
           </Button>
         </div>
 
-        {errors.destination && (
-          <p className="text-red-500 text-xs sm:text-sm mt-1 pl-2">
-            {errors.destination}
-          </p>
+        {error && (
+          <p className="text-red-500 text-xs sm:text-sm mt-1 pl-2">{error}</p>
         )}
       </form>
     </div>
   );
-};
-
-export default SearchBox;
+}
