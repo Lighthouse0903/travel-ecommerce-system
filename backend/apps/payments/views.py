@@ -52,51 +52,14 @@ class InitPaymentView(generics.CreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# API Xác nhận thanh toán
-@method_decorator(csrf_exempt, name='dispatch')
-class PaymentCallbackView(APIView):
-    authentication_classes = []
-    permission_classes = []
-
-    def post(self, request):
-        payment_id = request.data.get("payment_id")
-        raw_success = request.data.get("success")
-
-        if not payment_id:
-            return Response({"error": "Thiếu payment_id."}, status=status.HTTP_400_BAD_REQUEST)
-
-        success = str(raw_success).lower() in ["1", "true", "success", "ok"]
-
-        try:
-            payment = Payment.objects.select_related("booking").get(payment_id=payment_id)
-        except Payment.DoesNotExist:
-            return Response({"error": "Payment không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
-
-        # nếu đã thành công rồi mà callback lại
-        if payment.status == Payment.SUCCESS and success:
-            return Response({"message": "Payment đã được xác nhận trước đó."}, status=status.HTTP_200_OK)
-
-        if success:
-            payment.status = Payment.SUCCESS
-            payment.paid_at = timezone.now()
-            payment.save(update_fields=["status", "paid_at"])
-
-            booking = payment.booking
-            booking.status = Booking.PAID_WAITING
-            booking.save(update_fields=["status"])
-
-            return Response({"message": "Thanh toán thành công."}, status=status.HTTP_200_OK)
-        else:
-            payment.status = Payment.FAILED
-            payment.save(update_fields=["status"])
-            return Response({"message": "Thanh toán thất bại."}, status=status.HTTP_200_OK)
-
-
 class MomoIPNView(APIView):
     authentication_classes = []
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
+        print("🔥 MOMO IPN HIT", request.data)
+        logger.warning("🔥 MOMO IPN HIT: %s", json.dumps(request.data, ensure_ascii=False))
+
         data = request.data
         try:
             required_fields = [
@@ -113,19 +76,19 @@ class MomoIPNView(APIView):
             received_signature = data["signature"]
 
             raw_signature = (
-                    "accessKey=" + str(MOMO_ACCESS_KEY) +
-                    "&amount=" + str(data["amount"]) +
-                    "&extraData=" + str(data["extraData"]) +
-                    "&message=" + str(data["message"]) +
-                    "&orderId=" + str(data["orderId"]) +
-                    "&orderInfo=" + str(data["orderInfo"]) +
-                    "&orderType=" + str(data["orderType"]) +
-                    "&partnerCode=" + str(data["partnerCode"]) +
-                    "&payType=" + str(data["payType"]) +
-                    "&requestId=" + str(data["requestId"]) +
-                    "&responseTime=" + str(data["responseTime"]) +
-                    "&resultCode=" + str(data["resultCode"]) +
-                    "&transId=" + str(data["transId"])
+                "accessKey=" + str(MOMO_ACCESS_KEY) +
+                "&amount=" + str(data["amount"]) +
+                "&extraData=" + str(data["extraData"]) +
+                "&message=" + str(data["message"]) +
+                "&orderId=" + str(data["orderId"]) +
+                "&orderInfo=" + str(data["orderInfo"]) +
+                "&orderType=" + str(data["orderType"]) +
+                "&partnerCode=" + str(data["partnerCode"]) +
+                "&payType=" + str(data["payType"]) +
+                "&requestId=" + str(data["requestId"]) +
+                "&responseTime=" + str(data["responseTime"]) +
+                "&resultCode=" + str(data["resultCode"]) +
+                "&transId=" + str(data["transId"])
             )
 
             cal_signature = hmac.new(
@@ -145,17 +108,18 @@ class MomoIPNView(APIView):
                 return Response({"message": "Payment không tồn tại"}, status=404)
 
             booking = payment.booking
-
             result_code = int(data["resultCode"])
 
             if result_code == 0:
                 payment.status = Payment.SUCCESS
                 payment.paid_at = timezone.now()
                 payment.extra_data = data
-                payment.save(update_fields=["status", "paid_at", "extra_data"])
+                payment.provider_txn = str(data.get("transId"))  # lưu mã giao dịch MoMo
+                payment.save(update_fields=["status", "paid_at", "extra_data", "provider_txn"])
 
-                booking.status = Booking.PAID_WAITING
-                booking.save(update_fields=["status"])
+                booking.status = Booking.PAID
+                booking.paid_at = timezone.now()  
+                booking.save(update_fields=["status", "paid_at"]) 
 
                 return Response({
                     "partnerCode": data["partnerCode"],
@@ -168,9 +132,11 @@ class MomoIPNView(APIView):
             else:
                 payment.status = Payment.FAILED
                 payment.extra_data = data
-                payment.save(update_fields=["status", "extra_data"])
+                payment.provider_txn = str(data.get("transId"))
+                payment.save(update_fields=["status", "extra_data", "provider_txn"])
 
-                booking.status = Booking.CANCELLED
+                # cho thanh toán lại
+                booking.status = Booking.PAID_WAITING
                 booking.save(update_fields=["status"])
 
                 return Response({
@@ -180,7 +146,8 @@ class MomoIPNView(APIView):
                     "resultCode": result_code,
                     "message": "Thất bại"
                 })
-        except Exception as e:
+
+        except Exception:
             print("\nLỖI IPN MoMo:")
             traceback.print_exc()
             return Response(

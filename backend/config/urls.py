@@ -30,4 +30,5 @@ urlpatterns = [
 
     # api dành cho chat
     path("api/chat/", include("chat.urls")),
+    path("api/", include("chatAi.urls")),
 ]

@@ -2,25 +2,22 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
-from rest_framework import status, generics
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Conversation, Message
+from .models import Conversation
 from .serializers import (
+    ConversationDetailSerializer,
     ConversationListSerializer,
     MessageListSerializer,
-    ConversationDetailSerializer,
 )
 
 User = get_user_model()
 
-
-# =====================================
-# 1) LẤY DANH SÁCH CONVERSATION
-# =====================================
+# LẤY DANH SÁCH CONVERSATION
 class ConversationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ConversationListSerializer
@@ -29,7 +26,8 @@ class ConversationListView(generics.ListAPIView):
         user = self.request.user
         return (
             Conversation.objects.filter(Q(user1=user) | Q(user2=user))
-            .select_related("user1", "user2", "last_message")
+            # quan trọng: last_message__sender để list inbox khỏi N+1
+            .select_related("user1", "user2", "last_message", "last_message__sender")
             .order_by("-updated_at")
         )
 
@@ -55,9 +53,7 @@ class ConversationListView(generics.ListAPIView):
         )
 
 
-# =====================================
-# 2) LẤY + GỬI TIN NHẮN TRONG 1 CONVERSATION
-# =====================================
+# LẤY + GỬI TIN NHẮN TRONG 1 CONVERSATION
 class ConversationMessagesView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = MessageListSerializer
@@ -76,10 +72,8 @@ class ConversationMessagesView(generics.ListCreateAPIView):
         conversation = self.get_conversation()
         user = self.request.user
 
-        # Auto mark read
-        conversation.messages.filter(
-            is_read=False
-        ).exclude(sender=user).update(is_read=True)
+        # Auto mark read khi mở phòng 
+        conversation.messages.filter(is_read=False).exclude(sender=user).update(is_read=True)
 
         return conversation.messages.select_related("sender").order_by("created_at")
 
@@ -109,16 +103,13 @@ class ConversationMessagesView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        message = serializer.save(
-            conversation=conversation,
-            sender=user,
-        )
+        message = serializer.save(conversation=conversation, sender=user)
 
         # cập nhật last_message
         conversation.last_message = message
         conversation.save(update_fields=["last_message", "updated_at"])
 
-        # serialize lại message sau khi save (để có sender)
+        # serialize lại message sau khi save
         response_serializer = self.get_serializer(message)
 
         return Response(
@@ -129,10 +120,7 @@ class ConversationMessagesView(generics.ListCreateAPIView):
             status=status.HTTP_201_CREATED,
         )
 
-
-# =====================================
-# 3) BẮT ĐẦU HOẶC LẤY CONVERSATION
-# =====================================
+# BẮT ĐẦU HOẶC LẤY CONVERSATION
 class StartConversationView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -142,51 +130,34 @@ class StartConversationView(APIView):
 
         if not partner_id:
             return Response(
-                {
-                    "message": "Thiếu partner_id.",
-                    "data": None,
-                },
+                {"message": "Thiếu partner_id.", "data": None},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if str(user.user_id) == str(partner_id):
             return Response(
-                {
-                    "message": "Không thể nhắn với chính mình.",
-                    "data": None,
-                },
+                {"message": "Không thể nhắn với chính mình.", "data": None},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         partner = get_object_or_404(User, user_id=partner_id)
 
-        # Sắp xếp user1, user2 để tránh trùng cặp
+        # Sắp xếp user1, user2 để tránh trùng cặp (quan trọng)
         if user.user_id < partner.user_id:
             u1, u2 = user, partner
         else:
             u1, u2 = partner, user
 
-        conversation, created = Conversation.objects.get_or_create(
-            user1=u1,
-            user2=u2,
-        )
+        conversation, _created = Conversation.objects.get_or_create(user1=u1, user2=u2)
 
-        data = ConversationListSerializer(
-            conversation, context={"request": request}
-        ).data
+        data = ConversationListSerializer(conversation, context={"request": request}).data
 
         return Response(
-            {
-                "message": "Tạo hoặc lấy cuộc trò chuyện thành công.",
-                "data": data,
-            },
+            {"message": "Tạo hoặc lấy cuộc trò chuyện thành công.", "data": data},
             status=status.HTTP_200_OK,
         )
 
-
-# =====================================
-# 4) CHI TIẾT CONVERSATION
-# =====================================
+#  CHI TIẾT CONVERSATION
 class ConversationDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ConversationDetailSerializer

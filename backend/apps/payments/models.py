@@ -16,19 +16,29 @@ class Payment(models.Model):
     payment_id   = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking      = models.OneToOneField('bookings.Booking', on_delete=models.CASCADE, related_name='payment')
     amount       = models.DecimalField(max_digits=12, decimal_places=2)
-    provider     = models.CharField(max_length=50, default='sandbox')  # sau này: 'zalopay'
-    provider_txn = models.CharField(max_length=100, blank=True, null=True)  # mã giao dịch cổng
+    provider     = models.CharField(max_length=50, default='momo') 
+
+    provider_txn = models.CharField(max_length=100, blank=True, null=True)  # transId/requestId từ cổng
     status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     paid_at      = models.DateTimeField(blank=True, null=True)
+
     created_at   = models.DateTimeField(auto_now_add=True)
     updated_at   = models.DateTimeField(auto_now=True)
-    transaction_id = models.CharField(max_length=255, blank=True, null=True)
+
+    # orderId do hệ thống tạo để IPN lookup
+    transaction_id = models.CharField(
+        max_length=255,
+        blank=True, null=True,
+        unique=True,
+        db_index=True
+    )
+
     extra_data = models.JSONField(blank=True, null=True)
     pay_url = models.URLField(max_length=500, blank=True, null=True)
+
     class Meta:
         db_table = 'payments_payment'
         ordering = ['-created_at']
 
     def __str__(self):
         return f'{self.payment_id} - {self.status}'
-

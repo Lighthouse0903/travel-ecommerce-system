@@ -9,6 +9,7 @@ import traceback, logging
 from botocore.exceptions import ClientError
 from django.db import IntegrityError
 from django.db.models import Q
+from ..core.pagination import  MetaPageNumberPagination
 
 
 # API Lấy danh sách tất cả tour (public) + tạo tour (agency)
@@ -19,7 +20,6 @@ class TourListCreateView(generics.ListCreateAPIView):
     """
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = TourSerializer
-    permission_classes = [IsAgencyOwnerOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = [
         "name",
@@ -188,6 +188,7 @@ logger = logging.getLogger(__name__)
 class MyToursView(generics.ListAPIView):
     serializer_class = TourListItemSerializer
     permission_classes = [permissions.IsAuthenticated, IsAgencyUser]
+    pagination_class = MetaPageNumberPagination
 
     def get_queryset(self):
         try:
@@ -203,24 +204,40 @@ class MyToursView(generics.ListAPIView):
         )
 
     def list(self, request, *args, **kwargs):
-        qs = self.get_queryset()  # nếu PermissionDenied -> DRF trả 403, không 500
-        data = self.get_serializer(qs, many=True).data
-        return Response(
-            {
-                "data": data,
-                "message": (
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.paginator.get_paginated_response(
+                serializer.data,
+                message=(
                     "Bạn chưa có tour nào được tạo."
-                    if not qs.exists()
+                    if queryset.count() == 0
                     else "Lấy danh sách tour của bạn thành công."
                 ),
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "data": serializer.data,
+                "message": (
+                    "Bạn chưa có tour nào được tạo."
+                    if not queryset.exists()
+                    else "Lấy danh sách tour của bạn thành công."
+                ),
+                "meta": None,
             },
             status=status.HTTP_200_OK,
         )
+
 
 # API Lấy, tìm kiếm danh sách public tour
 class PublicTourListView(generics.ListAPIView):
     serializer_class = TourPublicListSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = MetaPageNumberPagination
 
     def get_queryset(self):
         qs = (
@@ -295,13 +312,25 @@ class PublicTourListView(generics.ListAPIView):
         return qs
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            #  gọi paginator để dùng message=
+            return self.paginator.get_paginated_response(
+                serializer.data,
+                message="Lấy danh sách tour thành công"
+            )
+
+        
         serializer = self.get_serializer(queryset, many=True)
 
         return Response(
             {
                 "message": "Lấy danh sách tour thành công",
                 "data": serializer.data,
+                "meta": None,
             },
             status=status.HTTP_200_OK,
         )

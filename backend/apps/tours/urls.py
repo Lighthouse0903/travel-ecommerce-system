@@ -2,9 +2,19 @@ from django.urls import path
 from .views import TourListCreateView, TourDetailAgencyView, MyToursView, PublicTourListView, TourDetailCustomerView
 
 urlpatterns = [
-    path('', TourListCreateView.as_view(), name='tour_list_create'),
-    path('my-tours/', MyToursView.as_view(), name='my_tours'),
-    path('manage/<uuid:tour_id>/', TourDetailAgencyView.as_view(), name='tour_detail_agency'),
-    path('public/', PublicTourListView.as_view(), name='tour_public_list'),
-    path('public/<uuid:tour_id>/', TourDetailCustomerView.as_view(), name='tour_detail_customer'),
+    # Public 
+    # GET: list public (filter + pagination)
+    path("", PublicTourListView.as_view(), name="tour_public_list"),
+    # GET: detail public
+    path("<uuid:tour_id>/", TourDetailCustomerView.as_view(), name="tour_public_detail"),
+
+    # Agency
+    # GET: list tour của agency
+    path("my/", MyToursView.as_view(), name="tour_my_list"),
+
+    # POST: tạo tour
+    path("create/", TourListCreateView.as_view(), name="tour_create"),
+
+    # GET/PATCH/DELETE: quản lý tour
+    path("<uuid:tour_id>/manage/", TourDetailAgencyView.as_view(), name="tour_manage"),
 ]

@@ -16,8 +16,8 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
     def validate_rating(self, value):
         if value is None:
             raise serializers.ValidationError("rating là bắt buộc.")
-        if not (0 <= value <= 5):
-            raise serializers.ValidationError("rating phải trong khoảng 0–5.")
+        if not (1 <= value <= 5):
+            raise serializers.ValidationError("rating phải trong khoảng 1–5.")
         return value
 
     def validate(self, attrs):
@@ -37,13 +37,14 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"booking_id": "Không tìm thấy booking của bạn."})
 
         # Chỉ đánh giá sau ngày đi
-        if booking.travel_date > timezone.localdate():
-            raise serializers.ValidationError({"booking_id": "Bạn chỉ được đánh giá sau khi đã đi tour."})
+        if booking.travel_date >= timezone.localdate():
+            raise serializers.ValidationError({"booking_id": "Bạn chỉ được đánh giá sau khi đã kết thúc chuyến đi."})
 
         # Phải đã xác nhận
-        if booking.status != Booking.CONFIRMED:
-            raise serializers.ValidationError({"booking_id": "Booking chưa được xác nhận, không thể đánh giá."})
-
+        if booking.status != Booking.PAID:
+            raise serializers.ValidationError({
+                "booking_id": "Bạn chỉ có thể đánh giá khi booking đã thanh toán."
+            })
         # Mỗi booking chỉ 1 review
         if Review.objects.filter(booking=booking).exists():
             raise serializers.ValidationError({"booking_id": "Booking này đã được đánh giá rồi."})
@@ -85,7 +86,8 @@ class ReviewListItemSerializer(serializers.ModelSerializer):
 
         return data
 # API Sửa comment
+
 class ReviewUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = ["comment"]
+        fields = ["comment","rating","review_id","updated_at"]

@@ -71,17 +71,4 @@ class Booking(models.Model):
     def __str__(self):
         return f'{self.booking_id} | {self.customer.user.username} -> {self.tour.name}'
 
-    # def save(self, *args, **kwargs):
-    #     if self.tour_id:
-    #         adults = self.num_adults or 0
-    #         children = self.num_children or 0
 
-    #         adult_price = self.tour.adult_price or Decimal("0")
-    #         children_price = self.tour.children_price or Decimal("0")
-
-    #         self.total_price = (
-    #             adult_price * Decimal(adults)
-    #             + children_price * Decimal(children)
-    #         )
-
-    #     super().save(*args, **kwargs)

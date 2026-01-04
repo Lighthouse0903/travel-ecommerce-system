@@ -4,7 +4,23 @@ from django.utils import timezone
 from .models import Booking
 from ..tours.models import Tour
 from ..customers.models import Customer
+from rest_framework.exceptions import PermissionDenied
+from ..payments.models import Payment
 
+
+class PaymentPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            "payment_id",
+            "provider",
+            "status",
+            "amount",
+            "transaction_id",  # orderId
+            "provider_txn",    # transId 
+            "paid_at",
+        ]
+        read_only_fields = fields
 class BookingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
@@ -38,9 +54,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         
         # Ko được đặt tour của chính mình
         if tour.agency and tour.agency.user_id == request.user.user_id:
-            raise serializers.ValidationError({
-                "tour": "Bạn không thể đặt tour của chính mình."
-            })
+           raise PermissionDenied("Bạn không thể đặt tour của chính mình.")
         
 
         #  Validate ngày khởi hành
@@ -120,7 +134,13 @@ class CustomerBookingDetailSerializer(serializers.ModelSerializer):
     customer_email = serializers.EmailField(source="customer.user.email", read_only=True)
     customer_phone = serializers.CharField(source="customer.user.phone", read_only=True)
     
+    # review
+    review_rating = serializers.SerializerMethodField()
+    review_comment = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    payment = PaymentPublicSerializer(read_only=True)
+
+
     class Meta:
         model=Booking
         fields = [
@@ -137,6 +157,7 @@ class CustomerBookingDetailSerializer(serializers.ModelSerializer):
             "paid_at",
             "rejected_at",
             "rejected_reason",
+            "payment",
             "tour_id",
             "tour_name",
             "thumbnail_url",
@@ -144,8 +165,18 @@ class CustomerBookingDetailSerializer(serializers.ModelSerializer):
             "destination",
             "customer_name",
             "customer_email",
-            "customer_phone"
+            "customer_phone",
+            "review_rating",
+            "review_comment",
         ]
+    def get_review_rating(self, obj):
+        rv = getattr(obj, "review", None)  # nếu related_name = "review"
+        return rv.rating if rv else None
+
+    def get_review_comment(self, obj):
+        rv = getattr(obj, "review", None)
+        return rv.comment if rv else ""
+    
     def get_thumbnail_url(self, obj):
         """
         TourThumbnail related_name='thumbnail'
@@ -195,7 +226,7 @@ class AgencyBookingListSerializer(serializers.ModelSerializer):
 
 # Chi tiêt 1 booking bên đại lý
 class AgencyBookingDetailSerializer(serializers.ModelSerializer):
-    # tour snapshot
+    payment = PaymentPublicSerializer(read_only=True)
     tour_id = serializers.UUIDField(source="tour.tour_id", read_only=True)
     tour_name = serializers.CharField(source="tour.name", read_only=True)
     departure_location = serializers.CharField(
@@ -245,6 +276,9 @@ class AgencyBookingDetailSerializer(serializers.ModelSerializer):
             "customer_name",
             "customer_email",
             "customer_phone",
+
+            # payment
+            "payment"
         ]
 
     def get_customer_phone(self, obj):
@@ -339,3 +373,25 @@ class BookingStatusUpdateSerializer(serializers.ModelSerializer):
             "rejected_reason",
         ])
         return instance
+    
+class AgencyBookingSearchSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(
+        source = "customer.user.username", read_only=True
+    )
+    tour_name = serializers.CharField(
+        source = "tour.name", read_only=True
+    )
+
+    class Meta:
+        model = Booking
+        fields = [
+            "booking_id",
+            "customer_name",
+            "tour_name",
+            "travel_date",
+            "num_adults",
+            "num_children",
+            "total_price",
+            "status",
+            "booking_date"
+        ]

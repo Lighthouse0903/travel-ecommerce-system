@@ -4,6 +4,7 @@ from .serializers import ReviewCreateSerializer, ReviewListItemSerializer, Revie
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
+
 class CreateReviewView(generics.CreateAPIView):
     serializer_class = ReviewCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -20,7 +21,7 @@ class CreateReviewView(generics.CreateAPIView):
                 "customer_id": str(review.booking.customer.customer_id),   # <--- THÊM
                 "rating": review.rating,
                 "comment": review.comment,
-                "created_at": review.created_at,
+                "created_at": review.created_at.isoformat(),
             }
 
             return Response(
@@ -61,18 +62,19 @@ class TourReviewsListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
 
-        if not queryset.exists():
+        if not serializer.data:
             return Response(
                 {"message": "Tour này chưa có đánh giá.", "data": []},
                 status=status.HTTP_200_OK,
             )
 
-        serializer = self.get_serializer(queryset, many=True)
         return Response(
             {"data": serializer.data, "message": "Lấy danh sách đánh giá thành công."},
             status=status.HTTP_200_OK,
         )
+    
 class MyReviewUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.select_related("booking__customer__user")
     serializer_class = ReviewUpdateSerializer
@@ -123,6 +125,7 @@ class MyReviewUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
                     "review_id": str(instance.review_id),
                     "rating": instance.rating,
                     "comment": None,
+                    "is_deleted": True,
                 },
             },
             status=status.HTTP_200_OK,
