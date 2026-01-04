@@ -2,12 +2,13 @@ from http.client import responses
 from django.utils import timezone
 from django.core.serializers import serialize
 from rest_framework import generics, permissions, status, serializers
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, PermissionDenied
-
+import logging
 from .models import Booking
 from django.db.models import Count, Sum, Q
-from .serializers import BookingCreateSerializer, AgencyBookingListSerializer,  AgencyBookingDetailSerializer, BookingStatusUpdateSerializer,CustomerBookingListSerializer,CustomerBookingDetailSerializer
+from .serializers import BookingCreateSerializer, AgencyBookingListSerializer,  AgencyBookingDetailSerializer, BookingStatusUpdateSerializer,CustomerBookingListSerializer,CustomerBookingDetailSerializer, AgencyBookingSearchSerializer
 from ..agencies.models import Agency
 from ..customers.models import Customer
 from ..payments.models import Payment
@@ -61,7 +62,7 @@ class CreateBookingView(generics.CreateAPIView):
 
         # lỗi hệ thống thật (500)
         except Exception:
-            logger.exception("Create booking failed")
+            logging.exception("Create booking failed")
             return Response(
                 {
                     "message": "Đã xảy ra lỗi hệ thống.",
@@ -842,3 +843,32 @@ class AgencyAnalyticsBreakdownView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+class AgencyBookingSearchView(generics.ListAPIView):
+    serializer_class = AgencyBookingSearchSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        agency = getattr(user, "agency_profile", None)
+
+        if not agency:
+            return Booking.objects.none()
+
+        qs = Booking.objects.filter(tour__agency=agency)
+
+        booking_code = self.request.query_params.get("booking_code")
+        customer_name = self.request.query_params.get("customer_name")
+        status = self.request.query_params.get("status")
+        if booking_code:
+            qs = qs.filter(booking_id__startswith=booking_code)
+        elif customer_name:
+            qs = qs.filter(
+                Q(customer__user__username__icontains=customer_name) |
+                Q(customer__user__first_name__icontains=customer_name) |
+                Q(customer__user__last_name__icontains=customer_name)
+            )
+        elif status:
+            qs = qs.filter(
+                status=status
+            )
+        return qs.order_by("-booking_date")

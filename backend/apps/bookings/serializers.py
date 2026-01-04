@@ -374,3 +374,24 @@ class BookingStatusUpdateSerializer(serializers.ModelSerializer):
         ])
         return instance
     
+class AgencyBookingSearchSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(
+        source = "customer.user.username", read_only=True
+    )
+    tour_name = serializers.CharField(
+        source = "tour.name", read_only=True
+    )
+
+    class Meta:
+        model = Booking
+        fields = [
+            "booking_id",
+            "customer_name",
+            "tour_name",
+            "travel_date",
+            "num_adults",
+            "num_children",
+            "total_price",
+            "status",
+            "booking_date"
+        ]

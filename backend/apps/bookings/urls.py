@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CreateBookingView, MyBookingListView, MyBookingDetailView, AgencyBookingListView, AgencyUpdateBookingStatusView, AgencyBookingDetailView,AgencyAnalyticsOverviewView,AgencyAnalyticsOverviewTimeseriesView, AgencyAnalyticsTimeseriesView,AgencyAnalyticsTopToursView,AgencyAnalyticsBreakdownView
+from .views import CreateBookingView, MyBookingListView, MyBookingDetailView, AgencyBookingListView, AgencyUpdateBookingStatusView, AgencyBookingDetailView,AgencyAnalyticsOverviewView,AgencyAnalyticsOverviewTimeseriesView, AgencyAnalyticsTimeseriesView,AgencyAnalyticsTopToursView,AgencyAnalyticsBreakdownView, AgencyBookingSearchView
 
 
 urlpatterns = [
@@ -14,4 +14,5 @@ urlpatterns = [
     path('analytics/timeseries/', AgencyAnalyticsTimeseriesView.as_view()),
     path('analytics/top-tours/', AgencyAnalyticsTopToursView.as_view()),
     path('analytics/breakdown/', AgencyAnalyticsBreakdownView.as_view()),
+    path('agency/bookings/search/', AgencyBookingSearchView.as_view(), name='agency-booking-search')
 ]
