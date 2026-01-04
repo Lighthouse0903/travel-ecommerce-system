@@ -27,4 +27,7 @@ urlpatterns = [
     path('api/reviews/', include('apps.reviews.urls')),
     path('api/messages/', include('apps.chat_messages.urls')),
     path('api/payments/', include('apps.payments.urls')),
+
+    # api dành cho chat
+    path("api/chat/", include("chat.urls")),
 ]

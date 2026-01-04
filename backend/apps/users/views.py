@@ -6,6 +6,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from .models import User
 from .serializers import (
     UserRegisterSerializer,
@@ -23,18 +24,27 @@ class RegisterView(generics.CreateAPIView):
 
         try:
             serializer.is_valid(raise_exception=True)
-        except ValidationError as e:
-            # Chuyển tất cả lỗi dạng list -> string đơn
-            error_detail = {}
-            for key, value in e.detail.items():
-                if isinstance(value, list) and len(value) > 0:
-                    error_detail[key] = value[0]
+        except DRFValidationError as e:
+            # e.detail dạng: {"username": ["..."], "email": ["..."], ...}
+            errors = e.detail
+
+            # Lấy message tổng quát (msg đầu tiên)
+            if isinstance(errors, dict) and errors:
+                first_field = next(iter(errors))
+                first_val = errors[first_field]
+                if isinstance(first_val, list) and first_val:
+                    message = str(first_val[0])
                 else:
-                    error_detail[key] = value
+                    message = str(first_val)
+            else:
+                message = "Đăng ký tài khoản thất bại."
 
             return Response(
-                {"message": error_detail},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "message": message,
+                    "errors": errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         user = serializer.save()
@@ -46,21 +56,47 @@ class RegisterView(generics.CreateAPIView):
         }
 
         return Response(
-            {"data": data, "message": "Đăng ký tài khoản thành công!"},
-            status=status.HTTP_201_CREATED
+            {
+                "data": data,
+                "message": "Đăng ký tài khoản thành công!",
+            },
+            status=status.HTTP_201_CREATED,
         )
-
 
 class LoginView(APIView):
     def post(self, request):
-        ser = LoginSerializer(data=request.data)
-        ser.is_valid(raise_exception=True)
+        serializer = LoginSerializer(data=request.data)
 
-        user = ser.validated_data["user"]
-        access_token = ser.validated_data["access"]
-        refresh_token = ser.validated_data["refresh"]
+        try:
+            serializer.is_valid(raise_exception=True)
+
+        except DRFValidationError as e:
+            # e.detail dạng: {"login": ["..."]} hoặc {"password": ["..."]}
+            errors = e.detail
+
+            # message tổng quát = lỗi đầu tiên
+            first_field = next(iter(errors))
+            first_error = errors[first_field]
+            if isinstance(first_error, list):
+                message = first_error[0]
+            else:
+                message = str(first_error)
+
+            return Response(
+                {
+                    "message": message,
+                    "errors": errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # -------- SUCCESS ----------
+        user = serializer.validated_data["user"]
+        access = serializer.validated_data["access"]
+        refresh = serializer.validated_data["refresh"]
+
         data = {
-            "access": access_token,
+            "access": access,
             "user": {
                 "user_id": str(user.user_id),
                 "username": user.username,
@@ -68,19 +104,21 @@ class LoginView(APIView):
                 "full_name": user.full_name,
                 "roles": user.roles,
             }
-
         }
+
+        # Response thành công chuẩn: { data, message }
         resp = Response(
             {
                 "data": data,
-                "message": "Đăng nhập thành công.",
+                "message": "Đăng nhập thành công."
             },
-            status=status.HTTP_200_OK,
+            status=status.HTTP_200_OK
         )
 
+        # Set cookie giữ nguyên
         resp.set_cookie(
             key="access_token",
-            value=access_token,
+            value=access,
             httponly=True,
             secure=False,
             samesite="Lax",
@@ -90,16 +128,15 @@ class LoginView(APIView):
 
         resp.set_cookie(
             key="refresh_token",
-            value=refresh_token,
+            value=refresh,
             httponly=True,
             secure=False,
             samesite="Lax",
-            path="/",
             max_age=7 * 24 * 60 * 60,
+            path="/",
         )
 
         return resp
-
 
 
 class RefreshTokenView(APIView):
@@ -151,28 +188,28 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-    def get(self, request, *args, **kwargs):
-        serializer = self.get_serializer(request.user)
+    def retrieve(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_object())
         return Response(
-            {
-                "data": serializer.data,
-                "message": "Trả data về thành công."
-            },
-            status=status.HTTP_200_OK
+            {"data": serializer.data, "message": "Trả data về thành công."},
+            status=status.HTTP_200_OK,
         )
+
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        partial = kwargs.pop("partial", False)  # PATCH => True, PUT => False
+        serializer = self.get_serializer(
+            self.get_object(),
+            data=request.data,
+            partial=partial,
+        )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        return Response (
-            {
-                "data":serializer.data,
-                "message":"Cập nhật hồ sơ thành công."
-            },
-            status = status.HTTP_200_OK
+        return Response(
+            {"data": serializer.data, "message": "Cập nhật hồ sơ thành công."},
+            status=status.HTTP_200_OK,
         )
+    
+    
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 

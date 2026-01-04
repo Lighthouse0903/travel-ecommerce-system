@@ -16,7 +16,7 @@ from datetime import timedelta
 load_dotenv()
 import os
 from django.conf.global_settings import AUTH_USER_MODEL, AUTHENTICATION_BACKENDS, LOGOUT_REDIRECT_URL
-
+from channels.layers import get_channel_layer 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-!2_7c79dmt65%b7bbn3g*scm2navewd+r^5^k%ez^5qqt4-!ny
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost","enthetic-darell-uncalculating.ngrok-free.dev"]
 
 
 # Application definition
@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    "channels",
+    'chat',
     'apps.users',
     'apps.agencies',
     'apps.customers',
@@ -91,6 +93,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    "apps.users.middleware.UpdateLastSeenMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
@@ -185,6 +188,7 @@ REST_FRAMEWORK = {
     ),
     'EXCEPTION_HANDLER': 'utils.custom_exception_handler.custom_exception_handler',
 }
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
