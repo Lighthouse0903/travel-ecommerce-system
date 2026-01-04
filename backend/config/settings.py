@@ -33,7 +33,13 @@ SECRET_KEY = 'django-insecure-!2_7c79dmt65%b7bbn3g*scm2navewd+r^5^k%ez^5qqt4-!ny
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost","unthrobbing-tosha-nonruminatingly.ngrok-free.dev"]
+ALLOWED_HOSTS = [
+    "travel-ecommerce-system-production.up.railway.app",
+    ".up.railway.app",
+    "localhost",
+    "127.0.0.1",
+]
+
 
 
 # Application definition
