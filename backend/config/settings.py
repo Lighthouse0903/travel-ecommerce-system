@@ -19,29 +19,22 @@ load_dotenv()
 import os
 from django.conf.global_settings import AUTH_USER_MODEL, AUTHENTICATION_BACKENDS, LOGOUT_REDIRECT_URL
 from channels.layers import get_channel_layer 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!2_7c79dmt65%b7bbn3g*scm2navewd+r^5^k%ez^5qqt4-!ny'
+# SECRET_KEY = 'django-insecure-!2_7c79dmt65%b7bbn3g*scm2navewd+r^5^k%ez^5qqt4-!ny'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [
-    "travel-ecommerce-system-production.up.railway.app",
-    ".up.railway.app",
-    "localhost",
-    "127.0.0.1",
-]
-
+# ALLOWED_HOSTS = ["127.0.0.1", "localhost","unthrobbing-tosha-nonruminatingly.ngrok-free.dev"]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 
 # Application definition
