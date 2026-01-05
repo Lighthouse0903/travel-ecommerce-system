@@ -115,9 +115,9 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
 ]
 
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = None
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = None
 
 ROOT_URLCONF = 'config.urls'
@@ -259,3 +259,8 @@ MOMO_IPN_URL = os.getenv("MOMO_IPN_URL")
 # AI service
 CHATBOT_API_URL = "https://lampe2112-chatbot.hf.space/"
 CHATBOT_TIMEOUT = 120
+
+# Trust Railway proxy
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+USE_X_FORWARDED_HOST = True
