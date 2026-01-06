@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,30 +13,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
-import { FaFacebook, FaGoogle } from "react-icons/fa";
 import { useState } from "react";
-import { useAuthActions, LoginFormValues } from "@/hooks/useAuthActions";
+import { useAuthActions } from "@/hooks/useAuthActions";
 import PasswordInput from "@/components/common/PasswordInput";
-
-const formSchema = z.object({
-  usernameOrEmail: z
-    .string()
-    .min(1, "Vui lòng nhập email hoặc tên đăng nhập")
-    .refine(
-      (value) =>
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ||
-        /^[a-zA-Z0-9_]+$/.test(value),
-      "Vui lòng nhập tên đăng nhập hoặc email hợp lệ"
-    ),
-  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
-});
+import { LoginFormValues, loginSchema } from "@/schemas/auth";
 
 const LoginForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { loginAction } = useAuthActions();
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(loginSchema),
     mode: "onChange",
     defaultValues: {
       usernameOrEmail: "",

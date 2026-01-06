@@ -17,17 +17,21 @@ interface Props {
 const PaymentSummaryCard = ({ booking, onPay }: Props) => {
   return (
     <Card className="p-5 space-y-4">
-      <div className="font-semibold">Tổng thanh toán</div>
+      <div className="font-semibold text-slate-900">Tổng thanh toán</div>
 
       <div className="flex items-end justify-between">
-        <div className="text-sm text-muted-foreground">Tổng cộng</div>
-        <div className="text-2xl font-semibold">
+        <div className="text-sm text-slate-500">Tổng cộng</div>
+        <div className="text-2xl font-semibold text-slate-900">
           {formatMoneyVND(booking.total_price)}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Button asChild variant="outline" className="w-full rounded-xl">
+        <Button
+          asChild
+          variant="outline"
+          className="w-full rounded-xl border-slate-200 bg-card text-slate-700 hover:bg-slate-50"
+        >
           <Link href={`/tour/${booking.tour_id}`}>
             <Eye className="mr-2 h-4 w-4" />
             Xem Tour gốc
@@ -41,8 +45,6 @@ const PaymentSummaryCard = ({ booking, onPay }: Props) => {
 };
 
 export default PaymentSummaryCard;
-
-/* ================= Helpers ================= */
 
 function PaymentStateBlock({
   booking,
@@ -68,7 +70,7 @@ function PaymentStateBlock({
           </InfoBox>
 
           <Button
-            className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 text-white"
+            className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => onPay?.(booking.booking_id)}
           >
             Thanh toán ngay
@@ -107,12 +109,12 @@ function InfoBox({
 }) {
   const toneClass =
     tone === "amber"
-      ? "border-amber-200 bg-amber-50 text-amber-800"
+      ? "border-amber-200 bg-amber-50 text-slate-700"
       : tone === "sky"
-      ? "border-sky-200 bg-sky-50 text-sky-800"
+      ? "border-sky-200 bg-sky-50 text-slate-700"
       : tone === "emerald"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-      : "border-rose-200 bg-rose-50 text-rose-800";
+      ? "border-emerald-200 bg-emerald-50 text-slate-700"
+      : "border-rose-200 bg-rose-50 text-slate-700";
 
   return (
     <div className={`rounded-xl border p-3 text-sm ${toneClass}`}>

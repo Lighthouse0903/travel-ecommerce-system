@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { X } from "lucide-react";
 
 import CustomerChatRoom from "../chat/CustomerChatRoom";
 
@@ -28,15 +29,15 @@ const FloatingChatWindow: React.FC<Props> = ({
 }) => {
   if (!open) return null;
 
+  const initial = partnerName?.charAt(0)?.toUpperCase() || "U";
+  const shortId = conversationId
+    ? conversationId.slice(0, 8).toUpperCase()
+    : null;
+
   return (
-    <div
-      className="
-        w-[380px] h-[560px]
-        bg-white rounded-xl shadow-2xl
-        border overflow-hidden
-      "
-    >
-      <div className="px-4 py-3 border-b flex items-center justify-between bg-white">
+    <div className="h-[560px] w-[380px] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 border-b border-primary/20 bg-primary px-4 py-3 text-primary-foreground">
         <div className="flex items-center gap-3">
           {partnerAvatarUrl ? (
             <Image
@@ -44,36 +45,35 @@ const FloatingChatWindow: React.FC<Props> = ({
               alt={partnerName}
               width={40}
               height={40}
-              className="rounded-full object-cover"
+              className="h-10 w-10 rounded-full object-cover ring-2 ring-primary-foreground/20"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-slate-400 flex items-center justify-center text-white font-semibold">
-              {partnerName.charAt(0).toUpperCase()}
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground/20 text-sm font-semibold">
+              {initial}
             </div>
           )}
 
           <div className="flex flex-col leading-tight">
-            <span className="font-semibold text-slate-900">{partnerName}</span>
-            {conversationId && (
-              <span className="text-xs text-slate-400">
-                #{conversationId.slice(0, 8).toUpperCase()}
-              </span>
-            )}
+            <span className="font-semibold">{partnerName}</span>
+            {shortId ? (
+              <span className="text-xs opacity-80">#{shortId}</span>
+            ) : null}
           </div>
         </div>
 
         <button
           onClick={onClose}
-          className="text-slate-500 hover:text-slate-700 text-xl leading-none"
           aria-label="Đóng chat"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-primary-foreground transition hover:bg-primary-foreground/10"
         >
-          ×
+          <X className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="h-[calc(560px-57px)]">
+      {/* Body */}
+      <div className="h-[calc(560px-57px)] bg-background">
         {loadingStart ? (
-          <div className="h-full flex items-center justify-center text-sm text-slate-500">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             Đang mở cuộc trò chuyện…
           </div>
         ) : conversationId ? (
@@ -83,7 +83,7 @@ const FloatingChatWindow: React.FC<Props> = ({
             convId={conversationId}
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-sm text-slate-500">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             Không thể mở cuộc trò chuyện
           </div>
         )}

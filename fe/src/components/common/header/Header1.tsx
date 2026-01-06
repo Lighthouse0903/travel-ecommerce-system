@@ -3,17 +3,21 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAgencyProfile } from "@/contexts/AgencyProfileContext";
+import { cn } from "@/lib/utils";
 
 const Header1 = () => {
   const { user } = useAuth();
   const { loading, profile } = useAgencyProfile();
+
+  const linkClass =
+    "text-muted-foreground transition-colors hover:text-primary hover:underline underline-offset-4";
 
   const renderAgencyLink = () => {
     if (!user) return null;
 
     if (loading) {
       return (
-        <span className="text-gray-400 cursor-not-allowed">
+        <span className="text-muted-foreground cursor-not-allowed">
           Đang kiểm tra đại lý...
         </span>
       );
@@ -21,10 +25,7 @@ const Header1 = () => {
 
     if (!profile) {
       return (
-        <Link
-          href="/dashboard/register_agency/terms"
-          className="hover:underline"
-        >
+        <Link href="/dashboard/register_agency/terms" className={linkClass}>
           Đăng ký đại lý
         </Link>
       );
@@ -32,17 +33,14 @@ const Header1 = () => {
 
     if (profile.status === "approved") {
       return (
-        <Link href="/agency/dashboard" className="hover:underline">
+        <Link href="/agency/dashboard" className={linkClass}>
           Đại lý của bạn
         </Link>
       );
     }
 
     return (
-      <Link
-        href="/dashboard/register_agency/status"
-        className="hover:underline"
-      >
+      <Link href="/dashboard/register_agency/status" className={linkClass}>
         Trạng thái đăng ký đại lý
       </Link>
     );
@@ -51,24 +49,40 @@ const Header1 = () => {
   const agencyLink = renderAgencyLink();
 
   return (
-    <div className="flex flex-wrap items-center justify-between bg-transparent text-sm px-4 py-2 h-[5vh]">
+    <div
+      className={cn(
+        "w-full",
+        "bg-card border-b border-border",
+        "h-10 px-4",
+        "flex flex-wrap items-center justify-between gap-2",
+        "text-sm text-muted-foreground"
+      )}
+    >
       <div className="flex flex-wrap items-center gap-3">
-        <span>Hotline: 1900 9999</span>
-        <span className="hidden sm:inline">Email: support@viettravel.vn</span>
+        <span>
+          Hotline:{" "}
+          <span className="text-foreground/90 font-medium">1900 9999</span>
+        </span>
+        <span className="hidden sm:inline">
+          Email:{" "}
+          <span className="text-foreground/80">support@viettravel.vn</span>
+        </span>
       </div>
 
       <div className="flex items-center gap-3">
         {agencyLink}
 
-        {agencyLink && <span className="hidden sm:inline-block">|</span>}
+        {agencyLink && (
+          <span className="hidden sm:inline-block text-border">|</span>
+        )}
 
-        <Link href="#" className="hover:underline">
+        <Link href="#" className={linkClass}>
           Hỗ trợ
         </Link>
 
-        <span className="hidden sm:inline-block">|</span>
+        <span className="hidden sm:inline-block text-border">|</span>
 
-        <Link href="#" className="hover:underline">
+        <Link href="#" className={linkClass}>
           FAQ
         </Link>
       </div>

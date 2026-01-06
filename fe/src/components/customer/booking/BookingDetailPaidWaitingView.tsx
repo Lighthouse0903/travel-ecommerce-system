@@ -13,8 +13,6 @@ import PaymentSummaryCard from "@/components/common/booking/PaymentSummaryCard";
 import BookingTimelineCard from "@/components/common/booking/BookingTimelineCard";
 import { shortCode } from "@/utils/formatID";
 
-import MotionFlow, { MotionItem } from "@/components/common/motion/MotionFlow";
-
 interface Props {
   booking: BookingDetail;
 }
@@ -23,55 +21,33 @@ const BookingDetailPaidWaitingView = ({ booking }: Props) => {
   const router = useRouter();
 
   return (
-    <MotionFlow>
-      <div className="space-y-5">
-        <MotionItem>
-          <BookingDetailHeader
-            title={`Chi tiết Đơn hàng #${shortCode(booking.booking_id)}`}
-            onBack={() => router.back()}
-          />
-        </MotionItem>
+    <div className="space-y-5">
+      <BookingDetailHeader
+        title={`Chi tiết Đơn hàng #${shortCode(booking.booking_id)}`}
+        onBack={() => router.back()}
+      />
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-          {/* LEFT */}
-          <div className="space-y-5 lg:col-span-8">
-            <MotionItem>
-              <BookingStatusBanner booking={booking} />
-            </MotionItem>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="space-y-5 lg:col-span-8">
+          <BookingStatusBanner booking={booking} />
+          <BookingInforTourCard booking={booking} />
+          <BookingMetaInforCard booking={booking} />
+          <BookingInforCustomerCard booking={booking} />
+        </div>
 
-            <MotionItem>
-              <BookingInforTourCard booking={booking} />
-            </MotionItem>
-
-            <MotionItem>
-              <BookingMetaInforCard booking={booking} />
-            </MotionItem>
-
-            <MotionItem>
-              <BookingInforCustomerCard booking={booking} />
-            </MotionItem>
-          </div>
-
-          {/* RIGHT */}
-          <div className="space-y-5 lg:col-span-4">
-            <div className="lg:sticky lg:top-24 space-y-5">
-              <MotionItem>
-                <PaymentSummaryCard
-                  booking={booking}
-                  onPay={(bookingId) => {
-                    router.push(`/checkout/${bookingId}`);
-                  }}
-                />
-              </MotionItem>
-
-              <MotionItem>
-                <BookingTimelineCard booking={booking} />
-              </MotionItem>
-            </div>
+        <div className="space-y-5 lg:col-span-4">
+          <div className="lg:sticky lg:top-24 space-y-5">
+            <PaymentSummaryCard
+              booking={booking}
+              onPay={(bookingId) => {
+                router.push(`/checkout/${bookingId}`);
+              }}
+            />
+            <BookingTimelineCard booking={booking} />
           </div>
         </div>
       </div>
-    </MotionFlow>
+    </div>
   );
 };
 

@@ -65,11 +65,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Get profile failed");
+
+      // Expected case: chưa đăng nhập / token invalid
+      if (res.status === 401 || res.status === 403) {
+        setUser(null);
+        return;
+      }
+
+      // Unexpected cases mới coi là lỗi
+      if (!res.ok) {
+        // nếu muốn vẫn log thì dùng console.warn cho nhẹ
+        console.warn("Get profile failed:", res.status);
+        setUser(null);
+        return;
+      }
+
       const json = await res.json();
       setUser((json?.data ?? null) as UserResponse | null);
     } catch (err) {
-      console.error("Lỗi khi lấy profile:", err);
+      // network error / server down
+      console.warn("Fetch profile network error:", err);
       setUser(null);
     }
   };

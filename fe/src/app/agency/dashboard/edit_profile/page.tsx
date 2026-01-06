@@ -17,7 +17,6 @@ import LegalReadonlyCard from "@/components/agency/edit_profile/LegalReadonlyCar
 import EditProfileHeader from "@/components/agency/edit_profile/EditProfileHeader";
 import { useAgencyAction } from "@/hooks/useAgencyAction";
 
-import MotionFlow, { MotionItem } from "@/components/common/motion/MotionFlow";
 import EditAgencyProfileSkeleton from "./EditProlileSkeleton";
 import { EditAgencyFormValues, EditAgencySchema } from "@/types/agency";
 
@@ -43,7 +42,6 @@ const EditAgencyProfilePage = () => {
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  // đồng bộ form với Profile - fill data vào form
   useEffect(() => {
     if (!profile) return;
 
@@ -62,7 +60,6 @@ const EditAgencyProfilePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
-  // cleanup blob url
   useEffect(() => {
     return () => {
       if (avatarPreview?.startsWith("blob:"))
@@ -82,55 +79,60 @@ const EditAgencyProfilePage = () => {
 
   if (!profile) {
     return (
-      <Card className="m-6 rounded-xl">
-        <CardHeader>
-          <CardTitle>Không tìm thấy hồ sơ</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={() => router.push("/agency/dashboard/profile")}>
-            Quay lại
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="w-full p-4">
+        <div className="w-full ">
+          <Card className="rounded-2xl border border-slate-200 bg-card shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-slate-900">
+                Không tìm thấy hồ sơ
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => router.push("/agency/dashboard/profile")}
+              >
+                Quay lại
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex-1 bg-white w-full rounded-xl">
-      <MotionFlow>
-        <MotionItem>
-          <EditProfileHeader
-            profile={profile}
-            isSubmitting={isSubmitting}
-            onCancel={() => router.back()}
-            formId="edit-agency-form"
-          />
-        </MotionItem>
+    <div className="flex-1 w-full p-4">
+      <div className="w-full space-y-6">
+        <EditProfileHeader
+          profile={profile}
+          isSubmitting={isSubmitting}
+          onCancel={() => router.back()}
+          formId="edit-agency-form"
+        />
 
-        <MotionItem>
-          <Form {...form}>
-            <form
-              id="edit-agency-form"
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6"
-            >
-              <div className="grid gap-5 md:grid-cols-2">
-                <AvatarCard isSubmitting={isSubmitting} />
-                <ContactInfoCard isSubmitting={isSubmitting} />
-              </div>
+        <Form {...form}>
+          <form
+            id="edit-agency-form"
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6"
+          >
+            <div className="grid gap-5 md:grid-cols-2">
+              <AvatarCard isSubmitting={isSubmitting} />
+              <ContactInfoCard isSubmitting={isSubmitting} />
+            </div>
 
-              <div className="grid gap-5 md:grid-cols-2">
-                <BankInfoFormCard isSubmitting={isSubmitting} />
-                <AboutFormCard isSubmitting={isSubmitting} />
-              </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <BankInfoFormCard isSubmitting={isSubmitting} />
+              <AboutFormCard isSubmitting={isSubmitting} />
+            </div>
 
-              <div>
-                <LegalReadonlyCard profile={profile} />
-              </div>
-            </form>
-          </Form>
-        </MotionItem>
-      </MotionFlow>
+            <div>
+              <LegalReadonlyCard profile={profile} />
+            </div>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 };

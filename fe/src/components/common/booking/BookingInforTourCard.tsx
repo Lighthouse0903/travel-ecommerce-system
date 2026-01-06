@@ -12,15 +12,24 @@ import { Badge } from "@/components/ui/badge";
 interface Props {
   booking: BookingDetail;
 }
+
+const CATEGORY_LABEL: Record<string, string> = {
+  sea: "Biển",
+  mountain: "Núi",
+  resort: "Nghỉ dưỡng",
+  adventure: "Khám phá",
+  cultural: "Văn hoá",
+  history: "Lịch sử",
+};
 const BookingInforTourCard = ({ booking }: Props) => {
   return (
-    <Card className="p-5">
+    <Card className="bg-card border border-border rounded-2xl shadow-sm p-5">
       <div className="mb-4 flex items-center gap-2">
-        <div className="font-semibold">Thông tin Tour</div>
+        <div className="font-semibold text-foreground">Thông tin tour</div>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative h-[120px] w-full overflow-hidden rounded-xl sm:h-[120px] sm:w-[180px]">
+        <div className="relative h-[120px] w-full overflow-hidden rounded-xl sm:h-[120px] sm:w-[180px] border border-border">
           <Image
             src={booking.thumbnail_url || "/images/placeholder.jpg"}
             alt={booking.tour_name}
@@ -35,7 +44,7 @@ const BookingInforTourCard = ({ booking }: Props) => {
           <div className="flex flex-wrap gap-2">
             {(booking.categories || []).slice(0, 3).map((c) => (
               <Badge key={c} variant="secondary">
-                {c}
+                {CATEGORY_LABEL[c]}
               </Badge>
             ))}
           </div>

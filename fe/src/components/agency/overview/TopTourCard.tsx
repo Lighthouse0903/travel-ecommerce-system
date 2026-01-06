@@ -22,7 +22,7 @@ const TopToursCard: React.FC<TopToursCardProps> = ({
 }) => {
   console.log("Top tour bán chạy: ", items);
   return (
-    <Card className="p-5 bg-slate-50 shadow-md">
+    <Card className="p-5 bg-card shadow-md">
       <div className="flex items-center justify-between gap-2 mb-4">
         <h2 className="text-lg font-semibold">{title}</h2>
       </div>

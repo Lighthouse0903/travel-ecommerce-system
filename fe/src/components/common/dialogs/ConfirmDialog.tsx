@@ -40,7 +40,7 @@ const ConfirmDialog = ({
           <AlertDialogCancel>Hủy</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-black text-white hover:bg-black/80"
+            className="bg-blue-600 text-white hover:bg-blue-700"
           >
             Xác nhận
           </AlertDialogAction>

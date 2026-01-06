@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useBookingAnalyticsService } from "@/services/bookingAnalyticsService";
-import { formatMoneyVND } from "@/utils/formatPrice";
+import { formatMoney } from "@/utils/formatPrice";
 import OverviewHeader, {
   RangePreset,
 } from "@/components/agency/overview/OverviewHeader";
@@ -118,8 +118,8 @@ const DashboardPage: React.FC = () => {
           destination: t.destination ?? null,
           valueFormatted:
             typeof t.value === "string"
-              ? formatMoneyVND(t.value)
-              : formatMoneyVND(String(t.value)),
+              ? formatMoney(t.value)
+              : formatMoney(String(t.value)),
         }));
         setTopTours(topUI);
         const mapBreakdown = (items: BreakdownItem[] = []): BreakdownUIItem[] =>
@@ -154,7 +154,7 @@ const DashboardPage: React.FC = () => {
 
   const revenueTotalFormatted = useMemo(() => {
     const total = overview?.revenue?.total ?? "0";
-    return formatMoneyVND(total);
+    return formatMoney(total);
   }, [overview]);
 
   const paidOrders = overview?.revenue?.paid_orders ?? 0;
@@ -162,50 +162,43 @@ const DashboardPage: React.FC = () => {
   const paidWaiting = overview?.orders?.paid_waiting ?? 0;
 
   return (
-    <MotionFlow>
-      <div className="space-y-4 bg-white">
-        {/* header */}
-        <MotionItem>
-          <OverviewHeader preset={preset} onChangePreset={setPreset} />
-        </MotionItem>
+    <div className="space-y-4 bg-white border border-border rounded-xl p-4">
+      {/* header */}
 
-        {/* Kpi */}
-        <MotionItem>
-          <OverviewKpiGrid
+      <OverviewHeader preset={preset} onChangePreset={setPreset} />
+
+      {/* Kpi */}
+
+      <OverviewKpiGrid
+        loading={loading}
+        totalOrders={totalOrders}
+        revenueTotalFormatted={revenueTotalFormatted}
+        paidOrders={paidOrders}
+        pending={pending}
+        paidWaiting={paidWaiting}
+      />
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2">
+          <OverviewRevenueChartCard
             loading={loading}
-            totalOrders={totalOrders}
-            revenueTotalFormatted={revenueTotalFormatted}
-            paidOrders={paidOrders}
-            pending={pending}
-            paidWaiting={paidWaiting}
+            points={revenue7dPoints}
+            valueFormatter={(v) => formatMoney(String(v))}
           />
-        </MotionItem>
+        </div>
 
-        <MotionItem>
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-            <div className="xl:col-span-2">
-              <OverviewRevenueChartCard
-                loading={loading}
-                points={revenue7dPoints}
-                valueFormatter={(v) => formatMoneyVND(String(v))}
-              />
-            </div>
-
-            <div className="xl:col-span-1">
-              <OverviewBreakdownCard
-                loading={loading}
-                statusItems={statusItems}
-                providerItems={providerItems}
-                destinationItems={destinationItems}
-              />
-            </div>
-          </div>
-        </MotionItem>
-        <MotionItem>
-          <TopToursCard loading={loading} items={topTours} />
-        </MotionItem>
+        <div className="xl:col-span-1">
+          <OverviewBreakdownCard
+            loading={loading}
+            statusItems={statusItems}
+            providerItems={providerItems}
+            destinationItems={destinationItems}
+          />
+        </div>
       </div>
-    </MotionFlow>
+
+      <TopToursCard loading={loading} items={topTours} />
+    </div>
   );
 };
 

@@ -87,7 +87,7 @@ const OverviewBreakdownCard: React.FC<OverviewBreakdownCardProps> = ({
   );
 
   return (
-    <Card className="p-5 bg-slate-50 shadow-md">
+    <Card className="p-5 bg-card shadow-md">
       <div className="mb-4">
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="text-xs text-muted-foreground">

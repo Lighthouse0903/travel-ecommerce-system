@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 
 import StarRating from "@/components/common/rating/StarRating";
 import { TourListPageType, CATEGORY_MAP } from "@/types/tour";
+import { formatMoney } from "@/utils/formatPrice";
 
 interface TourCardProps {
   tour: TourListPageType;
@@ -22,6 +23,9 @@ interface TourCardProps {
   onDelete?: (id: string) => void;
   onView?: (id: string) => void;
 }
+
+const FALLBACK_IMG =
+  "https://i.pinimg.com/1200x/6a/f1/ec/6af1ec6645410a41d5339508a83b86f9.jpg";
 
 const TourCard: React.FC<TourCardProps> = ({
   tour,
@@ -34,59 +38,67 @@ const TourCard: React.FC<TourCardProps> = ({
   const rawRating = Number(tour.rating ?? 0);
 
   const price = Number.isFinite(rawPrice) ? rawPrice : 0;
-  const discount = Number.isFinite(rawDiscount) ? rawDiscount : 0;
+  const discountRaw = Number.isFinite(rawDiscount) ? rawDiscount : 0;
+  const discount = Math.min(Math.max(discountRaw, 0), 100);
   const rating = Number.isFinite(rawRating) ? rawRating : 0;
+  const reviewsCount = Number(tour.reviews_count ?? 0);
 
   const finalPrice = price > 0 ? Math.round(price * (1 - discount / 100)) : 0;
 
   const imageSrc =
     typeof tour.thumbnail_url === "string" && tour.thumbnail_url.trim() !== ""
       ? tour.thumbnail_url
-      : "https://i.pinimg.com/1200x/6a/f1/ec/6af1ec6645410a41d5339508a83b86f9.jpg";
+      : FALLBACK_IMG;
+
+  const days = Math.max(1, Number(tour.duration_days ?? 1));
+  const nights = Math.max(0, days - 1);
 
   return (
-    <Card className="relative bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition cursor-pointer">
-      {/* Thumbnail */}
-      <div className="relative h-44 sm:h-48">
+    <Card className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative aspect-[16/9]">
         <Image
           src={imageSrc}
-          alt={tour.name}
+          alt={tour.name ?? "Tour"}
           fill
-          className="object-cover"
+          className="object-cover transition duration-300 group-hover:scale-[1.03]"
           sizes="500px"
         />
 
-        {/* Badge giảm giá */}
         {discount > 0 && (
           <div className="absolute top-3 left-3 z-10">
-            <div className="flex items-center gap-1 rounded-full bg-black/55 text-white px-3 py-1 text-xs font-semibold backdrop-blur">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400" />
+            <div className="flex items-center gap-1 rounded-full bg-foreground/60 text-white px-3 py-1 text-xs font-semibold backdrop-blur">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive" />
               Giảm {Math.round(discount)}%
             </div>
           </div>
         )}
 
-        {/* Status badge */}
         <div className="absolute bottom-3 left-3 z-10">
+          <div className="rounded-md bg-foreground/60 text-white text-xs px-2.5 py-1 backdrop-blur">
+            {days} ngày {nights} đêm
+          </div>
+        </div>
+
+        <div className="absolute bottom-3 right-3 z-10">
           {tour.is_active ? (
-            <div className="rounded-full bg-green-600/90 text-white text-xs font-semibold px-3 py-1 backdrop-blur">
+            <div className="rounded-full bg-emerald-500/90 text-white text-xs font-semibold px-3 py-1 backdrop-blur">
               Đang bán
             </div>
           ) : (
-            <div className="rounded-full bg-red-400/40 text-white text-xs font-semibold px-3 py-1 backdrop-blur">
+            <div className="rounded-full bg-destructive/70 text-white text-xs font-semibold px-3 py-1 backdrop-blur">
               Tạm dừng
             </div>
           )}
         </div>
 
-        {/* Menu hành động */}
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute top-2 right-2 z-20">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-gray-100 bg-black/40 hover:bg-black/60"
+                className="h-8 w-8 text-white bg-foreground/40 hover:bg-foreground/60"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -101,7 +113,7 @@ const TourCard: React.FC<TourCardProps> = ({
                     onView?.(tour.tour_id);
                   }}
                 >
-                  <Eye className="w-4 h-4 mr-2 text-green-600" />
+                  <Eye className="w-4 h-4 mr-2 text-emerald-600" />
                   Xem chi tiết
                 </Link>
               </DropdownMenuItem>
@@ -111,7 +123,7 @@ const TourCard: React.FC<TourCardProps> = ({
                   href={`/agency/dashboard/tours/${tour.tour_id}/edit`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onView?.(tour.tour_id);
+                    onEdit?.(tour.tour_id);
                   }}
                 >
                   <Pencil className="w-4 h-4 mr-2 text-blue-600" />
@@ -134,60 +146,73 @@ const TourCard: React.FC<TourCardProps> = ({
         </div>
       </div>
 
-      {/* Content */}
-      <CardContent className="p-4 relative flex flex-col">
-        <h3 className="text-lg font-semibold text-slate-800 line-clamp-2 min-h-[56px] mb-3">
-          {tour.name}
-        </h3>
+      <CardContent className="p-4 relative flex flex-col min-h-[220px]">
+        <Link
+          href={`/agency/dashboard/tours/${tour.tour_id}`}
+          onClick={() => onView?.(tour.tour_id)}
+          className="block"
+        >
+          <h3 className="text-base font-semibold text-foreground line-clamp-2 min-h-[48px] mb-2">
+            {tour.name}
+          </h3>
+        </Link>
 
-        {/* Rating */}
-        <div className="flex items-center text-sm">
+        <div className="flex items-center text-sm mb-2">
           <StarRating stars={rating} />
-          <span className="ml-1 text-xs text-slate-600">
-            ({tour.reviews_count} đánh giá)
+          <span className="ml-1 text-xs text-muted-foreground">
+            ({reviewsCount} đánh giá)
           </span>
         </div>
 
-        <hr className="my-2" />
-
-        <p className="text-xs text-slate-500 mb-2">
-          {tour.departure_location} → {tour.destination} • {tour.duration_days}{" "}
-          ngày
+        <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
+          {tour.departure_location ? `${tour.departure_location} → ` : ""}
+          {tour.destination}
         </p>
 
-        {/* Categories */}
-        {tour.categories && tour.categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {tour.categories.map((cat) => (
+        {tour.categories?.length ? (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {tour.categories.slice(0, 6).map((cat) => (
               <span
                 key={cat}
-                className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200"
+                className="text-xs px-2 py-1 rounded-full bg-secondary text-muted-foreground border border-border"
               >
                 {CATEGORY_MAP[cat] ?? cat}
               </span>
             ))}
-          </div>
-        )}
 
-        {/* Bottom */}
+            {tour.categories.length > 6 && (
+              <span className="text-xs px-2 py-1 rounded-full bg-secondary/60 text-muted-foreground border border-border">
+                +{tour.categories.length - 6}
+              </span>
+            )}
+          </div>
+        ) : null}
+
         <div className="mt-auto flex items-end justify-between gap-3">
           <div className="min-h-[64px]">
-            <p className="text-xs text-slate-500">Giá từ</p>
-            <p className="text-lg font-bold text-blue-600 leading-tight">
-              {finalPrice.toLocaleString("vi-VN")} đ
-            </p>
+            <p className="text-xs text-muted-foreground">Giá từ</p>
 
-            <p className="text-sm text-gray-400 line-through h-[20px]">
-              {price > 0 && discount > 0
-                ? `${Math.round(price).toLocaleString("vi-VN")} đ`
-                : ""}
-            </p>
+            {finalPrice > 0 ? (
+              <>
+                <p className="text-lg font-bold text-primary leading-tight">
+                  {formatMoney(finalPrice)}
+                </p>
+
+                <p className="text-sm text-muted-foreground/70 line-through h-[20px]">
+                  {price > 0 && discount > 0 ? formatMoney(price) : ""}
+                </p>
+              </>
+            ) : (
+              <p className="text-lg font-bold text-foreground">Liên hệ</p>
+            )}
           </div>
 
-          <Link href={`/agency/dashboard/tours/${tour.tour_id}`}>
-            <button className="h-9 px-4 rounded-full bg-slate-600 text-white text-xs hover:bg-slate-700 transition whitespace-nowrap">
-              Xem chi tiết
-            </button>
+          <Link
+            href={`/agency/dashboard/tours/${tour.tour_id}`}
+            onClick={() => onView?.(tour.tour_id)}
+            className="h-9 px-4 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center transition-colors group-hover:bg-primary-hover whitespace-nowrap"
+          >
+            Xem chi tiết
           </Link>
         </div>
       </CardContent>

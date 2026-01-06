@@ -15,12 +15,7 @@ import BookingTimelineCard from "@/components/common/booking/BookingTimelineCard
 import CustomerReviewCard from "../review/CustomerReviewCard";
 import { shortCode } from "@/utils/formatID";
 
-import MotionFlow, { MotionItem } from "@/components/common/motion/MotionFlow";
 import BookingPaymentInfoCard from "./BookingPaymentInforCard";
-
-import { useReviewService } from "@/services/reviewService";
-import { toast } from "sonner";
-import { ReviewPayload } from "@/types/review";
 
 interface Props {
   booking: BookingDetail;
@@ -33,65 +28,39 @@ const BookingDetailPaidView = ({ booking }: Props) => {
   const review_comment = booking.review_comment ?? "";
 
   return (
-    <MotionFlow>
-      <div className="space-y-5">
-        <MotionItem>
-          <BookingDetailHeader
-            title={`Chi tiết Đơn hàng #${shortCode(booking.booking_id)}`}
-            onBack={() => router.back()}
+    <div className="space-y-5">
+      <BookingDetailHeader
+        title={`Chi tiết Đơn hàng #${shortCode(booking.booking_id)}`}
+        onBack={() => router.back()}
+      />
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="space-y-5 lg:col-span-8">
+          <BookingStatusBanner booking={booking} />
+          <BookingInforTourCard booking={booking} />
+          <BookingMetaInforCard booking={booking} />
+          <BookingInforCustomerCard booking={booking} />
+
+          <CustomerReviewCard
+            canReview={canReview}
+            booking_id={booking.booking_id}
+            review_rating={review_rating}
+            review_comment={review_comment}
           />
-        </MotionItem>
+        </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-          {/* cột trái */}
-          <div className="space-y-5 lg:col-span-8">
-            <MotionItem>
-              <BookingStatusBanner booking={booking} />
-            </MotionItem>
+        <div className="space-y-5 lg:col-span-4">
+          <div className="lg:sticky lg:top-24 space-y-5">
+            <PaymentSummaryCard booking={booking} />
+            <BookingTimelineCard booking={booking} />
 
-            <MotionItem>
-              <BookingInforTourCard booking={booking} />
-            </MotionItem>
-
-            <MotionItem>
-              <BookingMetaInforCard booking={booking} />
-            </MotionItem>
-
-            <MotionItem>
-              <BookingInforCustomerCard booking={booking} />
-            </MotionItem>
-
-            <MotionItem>
-              <CustomerReviewCard
-                canReview={canReview}
-                booking_id={booking.booking_id}
-                review_rating={review_rating}
-                review_comment={review_comment}
-              />
-            </MotionItem>
-          </div>
-
-          {/* cột phải */}
-          <div className="space-y-5 lg:col-span-4">
-            <div className="lg:sticky lg:top-24 space-y-5">
-              <MotionItem>
-                <PaymentSummaryCard booking={booking} />
-              </MotionItem>
-
-              <MotionItem>
-                <BookingTimelineCard booking={booking} />
-              </MotionItem>
-              <MotionItem>
-                {" "}
-                {booking.status === "paid" && (
-                  <BookingPaymentInfoCard payment={booking.payment} />
-                )}
-              </MotionItem>
-            </div>
+            {booking.status === "paid" && (
+              <BookingPaymentInfoCard payment={booking.payment} />
+            )}
           </div>
         </div>
       </div>
-    </MotionFlow>
+    </div>
   );
 };
 

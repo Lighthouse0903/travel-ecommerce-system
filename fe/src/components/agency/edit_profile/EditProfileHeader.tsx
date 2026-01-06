@@ -34,7 +34,7 @@ const EditProfileHeader: React.FC<Props> = ({
   formId,
 }) => {
   return (
-    <Card className="rounded-xl bg-slate-50 shadow-md mb-6">
+    <Card className="rounded-xl bg-white shadow-md mb-6">
       <CardContent className="p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">

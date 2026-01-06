@@ -3,23 +3,23 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TourCard from "./TourCard";
-import { useTourService } from "@/services/tourService";
 import { TourListPageType } from "@/types/tour";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationMeta } from "@/types/pagination";
 import PaginationCustom from "@/components/common/pagination/Pagination";
+import { getListPublicTourService } from "@/services/serverTourService";
+import TourCardSkeleton from "./TourCardSkeleton";
 
 interface TourListProps {
   initialCategory?: string;
 }
 
 const TourList: React.FC<TourListProps> = ({ initialCategory }) => {
-  const { getListPublicTour } = useTourService();
   const searchParams = useSearchParams();
 
   // pagination logic
   const { page, pageSize, setPage } = usePagination({
-    defaultPageSize: 2,
+    defaultPageSize: 9,
     maxPageSize: 50,
   });
 
@@ -59,9 +59,9 @@ const TourList: React.FC<TourListProps> = ({ initialCategory }) => {
 
         console.log("Query (public tours):", query);
 
-        const res = await getListPublicTour(query);
+        const res = await getListPublicTourService(query);
         console.log("API getListTourResponse: ", res);
-        if (res.success) {
+        if (res.data) {
           setTours(res.data ?? []);
           setMeta((res.meta as PaginationMeta) ?? null);
         } else {
@@ -90,10 +90,7 @@ const TourList: React.FC<TourListProps> = ({ initialCategory }) => {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-56 rounded-xl bg-slate-200 animate-pulse"
-          />
+          <TourCardSkeleton key={index} />
         ))}
       </div>
     );

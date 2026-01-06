@@ -15,7 +15,7 @@ interface AgencyPolicyViewProps {
 
 const AgencyPolicyView = ({ policy }: AgencyPolicyViewProps) => {
   return (
-    <section className="bg-slate-50 border shadow-md rounded-xl p-5 md:p-6">
+    <section className="bg-section border shadow-md rounded-xl p-5 md:p-6">
       <h2 className="text-lg md:text-xl font-semibold mb-4">Chính sách</h2>
 
       <div className="bg-white border-0 rounded-2xl p-4">

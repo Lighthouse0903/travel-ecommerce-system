@@ -5,7 +5,7 @@ import { CalendarDays, Minus, Plus, Tag } from "lucide-react";
 import ConfirmDialog from "@/components/common/dialogs/ConfirmDialog";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/utils/formatPrice";
+import { formatMoney } from "@/utils/formatPrice";
 import { CreateBookingRequest } from "@/types/booking";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBookingAction } from "@/hooks/useBookingAction";
@@ -20,7 +20,7 @@ interface BookingCardViewProps {
   hasDiscount?: boolean;
 }
 
-// --- draft helpers (UI vẫn có thể load draft để đổ lại form) ---
+// draft helpers
 const DRAFT_BOOKING_KEY = (userId: string) => `draft_booking_form_${userId}`;
 
 const clamp = (v: number, min: number, max: number) =>
@@ -75,7 +75,7 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
   const departureText =
     (departure_location ?? "").trim() || "Chưa có thông tin";
 
-  // loadDraft (nếu có)
+  // loadDraft
   useEffect(() => {
     if (!userId) return;
     const draft = loadDraftBooking(tourId, userId);
@@ -138,31 +138,33 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
           {/* Header giá */}
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] text-gray-500">Giá từ</div>
+              <div className="text-[11px] text-slate-500">Giá từ</div>
 
               <div className="mt-1 space-y-0.5">
                 <div className="flex items-baseline gap-2">
                   {hasDiscount && (
-                    <span className="text-xs text-gray-400 line-through">
-                      {formatPrice(price)}
+                    <span className="text-xs text-slate-400 line-through">
+                      {formatMoney(price)}
                     </span>
                   )}
-                  <span className="text-2xl font-extrabold text-gray-900">
-                    {formatPrice(adultUnitPrice)}
+                  <span className="text-2xl font-extrabold text-slate-900">
+                    {formatMoney(adultUnitPrice)}
                   </span>
-                  <span className="text-[11px] text-gray-500">/ người lớn</span>
+                  <span className="text-[11px] text-slate-500">
+                    / người lớn
+                  </span>
                 </div>
 
                 <div className="flex items-baseline gap-2">
                   {hasDiscount && (
-                    <span className="text-[11px] text-gray-400 line-through">
-                      {formatPrice(childPrice)}
+                    <span className="text-[11px] text-slate-400 line-through">
+                      {formatMoney(childPrice)}
                     </span>
                   )}
-                  <span className="text-base font-semibold text-gray-900">
-                    {formatPrice(childUnitPrice)}
+                  <span className="text-base font-semibold text-slate-900">
+                    {formatMoney(childUnitPrice)}
                   </span>
-                  <span className="text-[11px] text-gray-500">/ trẻ em</span>
+                  <span className="text-[11px] text-slate-500">/ trẻ em</span>
                 </div>
               </div>
             </div>
@@ -176,12 +178,12 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
           </div>
 
           {/* Điểm khởi hành */}
-          <div className="rounded-xl border p-3 bg-slate-50">
-            <div className="text-[11px] text-gray-500">Điểm khởi hành</div>
-            <div className="text-sm font-semibold text-gray-900">
+          <div className="rounded-xl border p-3 bg-muted">
+            <div className="text-[11px] text-slate-500">Điểm khởi hành</div>
+            <div className="text-sm font-semibold text-slate-900">
               {departureText}
             </div>
-            <p className="mt-1 text-[11px] text-gray-500 leading-relaxed">
+            <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
               Tự túc đến điểm khởi hành. Đại lý sẽ liên hệ xác nhận sau khi đặt.
             </p>
           </div>
@@ -190,16 +192,16 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
           <div className="space-y-3">
             {/* Ngày khởi hành */}
             <div className="space-y-1">
-              <label className="block text-[12px] text-gray-600">
+              <label className="block text-[12px] text-slate-600">
                 Ngày khởi hành
               </label>
               <div className="relative">
-                <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="date"
                   value={travelDate}
                   onChange={(e) => setTravelDate(e.target.value)}
-                  className="w-full rounded-lg border pl-9 pr-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-black/20"
+                  className="w-full rounded-lg border pl-9 pr-3 py-2 text-[13px] outline-none focus:ring-blue-200 focus:ring-black/20"
                 />
               </div>
             </div>
@@ -207,16 +209,16 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
             {/* Người lớn + Trẻ em  */}
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-xl border p-3">
-                <div className="text-[12px] text-gray-600">
+                <div className="text-[12px] text-slate-600">
                   Người lớn{" "}
-                  <span className="text-[10px] text-gray-400">(≥ 12)</span>
+                  <span className="text-[10px] text-slate-400">(≥ 12)</span>
                 </div>
 
                 <div className="mt-2 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => setNumAdults((v) => clamp(v - 1, 1, 50))}
-                    className="h-8 w-8 rounded-lg border hover:bg-slate-50"
+                    className="h-8 w-8 rounded-lg border hover:bg-muted"
                     aria-label="Giảm người lớn"
                   >
                     <Minus className="w-4 h-4 mx-auto" />
@@ -227,7 +229,7 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setNumAdults((v) => clamp(v + 1, 1, 50))}
-                    className="h-8 w-8 rounded-lg border hover:bg-slate-50"
+                    className="h-8 w-8 rounded-lg border hover:bg-muted"
                     aria-label="Tăng người lớn"
                   >
                     <Plus className="w-4 h-4 mx-auto" />
@@ -236,16 +238,16 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
               </div>
 
               <div className="rounded-xl border p-3">
-                <div className="text-[12px] text-gray-600">
+                <div className="text-[12px] text-slate-600">
                   Trẻ em{" "}
-                  <span className="text-[10px] text-gray-400">(2–11)</span>
+                  <span className="text-[10px] text-slate-400">(2–11)</span>
                 </div>
 
                 <div className="mt-2 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => setNumChildren((v) => clamp(v - 1, 0, 50))}
-                    className="h-8 w-8 rounded-lg border hover:bg-slate-50"
+                    className="h-8 w-8 rounded-lg border hover:bg-muted"
                     aria-label="Giảm trẻ em"
                   >
                     <Minus className="w-4 h-4 mx-auto" />
@@ -256,7 +258,7 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setNumChildren((v) => clamp(v + 1, 0, 50))}
-                    className="h-8 w-8 rounded-lg border hover:bg-slate-50"
+                    className="h-8 w-8 rounded-lg border hover:bg-muted"
                     aria-label="Tăng trẻ em"
                   >
                     <Plus className="w-4 h-4 mx-auto" />
@@ -268,7 +270,7 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
 
           {/* Ghi chú  */}
           <div className="space-y-1">
-            <label className="block text-[12px] text-gray-600">
+            <label className="block text-[12px] text-slate-600">
               Ghi chú (tuỳ chọn)
             </label>
             <textarea
@@ -280,30 +282,30 @@ const BookingCardView: React.FC<BookingCardViewProps> = ({
           </div>
 
           {/* Tổng tiền */}
-          <div className="rounded-xl border bg-slate-50 p-3">
+          <div className="rounded-xl border bg-muted p-3">
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-[12px] text-gray-600">Tạm tính</div>
-                <div className="text-[11px] text-gray-500">
+                <div className="text-[12px] text-slate-600">Tạm tính</div>
+                <div className="text-[11px] text-slate-500">
                   {numAdults} người lớn • {numChildren} trẻ em
                 </div>
               </div>
 
-              <div className="text-base font-extrabold text-gray-900">
-                {formatPrice(total)}
+              <div className="text-base font-extrabold text-slate-900">
+                {formatMoney(total)}
               </div>
             </div>
           </div>
 
           <Button
-            className="w-full rounded-lg bg-black text-white py-2.5 text-[13px] font-medium hover:opacity-90"
+            className="w-full rounded-lg bg-blue-600 text-white py-2.5 text-[13px] font-medium hover:bg-blue-700"
             onClick={handleBookingClick}
             disabled={isBusy}
           >
             {isSubmitting ? "Đang xử lý..." : "Đặt tour ngay"}
           </Button>
 
-          <p className="text-[11px] text-gray-500 leading-relaxed">
+          <p className="text-[11px] text-slate-500 leading-relaxed">
             Chưa trừ tiền ngay. Đại lý sẽ liên hệ xác nhận và hướng dẫn thanh
             toán.
           </p>

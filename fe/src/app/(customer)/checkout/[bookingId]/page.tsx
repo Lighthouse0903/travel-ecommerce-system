@@ -31,7 +31,7 @@ export default function CustomerCheckoutPage() {
       setLoading(true);
       try {
         const res = await getDetailBookingCustomer(bookingId);
-        console.log("API get detail booking response: ", res);
+        // console.log("API get detail booking response: ", res);
 
         if (!mounted) return;
 

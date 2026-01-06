@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-
 import { FaRegUser } from "react-icons/fa";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -27,48 +26,66 @@ const AccountSection = () => {
     <>
       <Popover open={openPopover} onOpenChange={setOpenPopover}>
         <PopoverTrigger>
-          <div className="flex items-center gap-x-1 cursor-pointer">
+          <div className="flex items-center gap-x-2 cursor-pointer">
             {user ? (
               <>
-                <div className="rounded-full w-10 h-10 flex justify-center items-center bg-slate-300">
-                  <span className="text-sm font-medium text-slate-600">
+                <div className="rounded-full w-8 h-8 flex justify-center items-center bg-secondary border border-border ring-2 ring-ring/25 ring-offset-2 ring-offset-background transition-colors">
+                  <span className="text-sm font-semibold text-foreground/80">
                     {user?.username?.[0]?.toUpperCase()}
                   </span>
                 </div>
-                <span className="hidden sm:inline">{user.username}</span>
+
+                <span className="hidden sm:inline text-foreground/90">
+                  {user.username}
+                </span>
               </>
             ) : (
               <>
-                <FaRegUser size={23} className="text-gray-700 shrink-0" />
-                <span className="hidden sm:inline">Tài khoản</span>
+                <FaRegUser
+                  size={23}
+                  className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                />
+                <span className="hidden sm:inline text-muted-foreground hover:text-primary transition-colors">
+                  Tài khoản
+                </span>
               </>
             )}
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-0 z-[150] space-y-2">
+        <PopoverContent
+          align="end"
+          sideOffset={10}
+          collisionPadding={12}
+          className="z-[150] w-[280px] p-0 bg-card border border-slate-200 shadow-lg rounded-xl"
+        >
           {user ? (
             <AccountPopoverContent />
           ) : (
-            <div className="p-4">
-              <p className="text-sm text-gray-600 mb-2">Bạn chưa đăng nhập</p>
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Bạn chưa đăng nhập
+              </p>
+
+              <div className="h-px bg-border" />
+
               <button
                 onClick={() => {
                   setOpenPopover(false);
                   setOpenLogin(true);
                 }}
-                className="w-full font-medium bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
+                className="w-full font-medium bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors"
               >
                 Đăng nhập
               </button>
-              <p className="text-sm text-gray-700">
+
+              <p className="text-sm text-muted-foreground">
                 Bạn chưa có tài khoản?{" "}
                 <button
                   onClick={() => {
                     setOpenPopover(false);
                     setOpenRegister(true);
                   }}
-                  className="text-blue-600 hover:underline"
+                  className="text-primary hover:underline underline-offset-4"
                 >
                   Đăng ký ngay
                 </button>
@@ -78,9 +95,9 @@ const AccountSection = () => {
         </PopoverContent>
       </Popover>
 
-      {/* Dialog đăng nhập*/}
+      {/* Dialog đăng nhập */}
       <Dialog open={openLogin} onOpenChange={setOpenLogin}>
-        <DialogContent className="max-w-[700px] bg-white z-[9999]">
+        <DialogContent className="max-w-[700px] bg-card text-card-foreground border-border z-[9999]">
           <VisuallyHidden>
             <DialogTitle>Đăng nhập</DialogTitle>
           </VisuallyHidden>
@@ -88,9 +105,9 @@ const AccountSection = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog đăng kí*/}
+      {/* Dialog đăng kí */}
       <Dialog open={openRegister} onOpenChange={setOpenRegister}>
-        <DialogContent className="max-w-[700px] bg-white z-[9999]">
+        <DialogContent className="max-w-[700px] bg-card text-card-foreground border-border z-[9999]">
           <VisuallyHidden>
             <DialogTitle>Đăng ký</DialogTitle>
           </VisuallyHidden>
@@ -100,4 +117,5 @@ const AccountSection = () => {
     </>
   );
 };
+
 export default AccountSection;

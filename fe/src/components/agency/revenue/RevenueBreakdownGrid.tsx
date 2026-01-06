@@ -29,7 +29,7 @@ const BarBlock: React.FC<{
   items: BreakdownPoint[];
 }> = ({ title, subtitle, loading, items }) => {
   return (
-    <Card className="p-5 bg-slate-50 shadow-md">
+    <Card className="p-5 bg-card shadow-md">
       <div className="mb-4">
         <h3 className="text-base font-semibold">{title}</h3>
         {subtitle && (

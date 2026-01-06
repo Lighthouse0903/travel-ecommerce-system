@@ -2,11 +2,12 @@
 
 import React from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { Trash2, Plus } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Trash2, Plus } from "lucide-react";
 import { EditTourFormValues } from "@/types/tour";
 
 type Props = {
@@ -14,6 +15,9 @@ type Props = {
   onRemove: () => void;
   disableRemove?: boolean;
 };
+
+const inputClass =
+  "bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0";
 
 const ItineraryDayCard: React.FC<Props> = ({
   dayIndex,
@@ -53,7 +57,6 @@ const ItineraryDayCard: React.FC<Props> = ({
     }
   };
 
-  // errors
   const titleErr = errors.itinerary?.[dayIndex]?.title?.message
     ? String(errors.itinerary?.[dayIndex]?.title?.message)
     : null;
@@ -63,9 +66,15 @@ const ItineraryDayCard: React.FC<Props> = ({
     : null;
 
   return (
-    <div className="rounded-2xl border p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Ngày {dayValue}</h3>
+    <div className="rounded-2xl border border-border bg-card p-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">
+            Ngày {dayValue}
+          </span>
+        </div>
+
         <Button
           type="button"
           variant="ghost"
@@ -73,184 +82,202 @@ const ItineraryDayCard: React.FC<Props> = ({
           onClick={onRemove}
           disabled={disableRemove}
           aria-label="Xóa ngày"
+          className="h-9 w-9"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Title */}
-      <div className="space-y-2">
-        <Label>Tiêu đề ngày</Label>
-        <Input
-          placeholder="VD: Khởi hành - tham quan..."
-          {...register(`itinerary.${dayIndex}.title` as const)}
-        />
-        {titleErr ? (
-          <p className="text-sm text-destructive">{titleErr}</p>
-        ) : null}
-      </div>
-
-      <Separator />
-
-      {/* Activities */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="font-medium">Hoạt động</h4>
-            <p className="text-sm text-muted-foreground">Giờ HH:mm + mô tả</p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addActivity}
-          >
-            <Plus className="w-4 h-4 mr-1" /> Thêm hoạt động
-          </Button>
-        </div>
-
-        {activitiesErr ? (
-          <p className="text-sm text-destructive">{activitiesErr}</p>
-        ) : null}
-
+      <div className="mt-4 space-y-4">
+        {/* Title */}
         <div className="space-y-2">
-          {actFA.fields.map((f, idx) => {
-            const timeErr = errors.itinerary?.[dayIndex]?.activities?.[idx]
-              ?.time?.message
-              ? String(
-                  errors.itinerary?.[dayIndex]?.activities?.[idx]?.time?.message
-                )
-              : null;
+          <Label className="text-sm font-medium">Tiêu đề ngày</Label>
+          <Input
+            className={inputClass}
+            placeholder="VD: Khởi hành - tham quan..."
+            {...register(`itinerary.${dayIndex}.title` as const)}
+          />
+          {titleErr ? (
+            <p className="text-sm text-destructive">{titleErr}</p>
+          ) : null}
+        </div>
 
-            const textErr = errors.itinerary?.[dayIndex]?.activities?.[idx]
-              ?.text?.message
-              ? String(
-                  errors.itinerary?.[dayIndex]?.activities?.[idx]?.text?.message
-                )
-              : null;
+        <Separator className="bg-border/60" />
 
-            return (
-              <div
-                key={f.id}
-                className="grid grid-cols-1 md:grid-cols-12 gap-2"
-              >
-                <div className="md:col-span-3 space-y-1">
-                  <Input
-                    placeholder="07:00"
-                    {...register(
-                      `itinerary.${dayIndex}.activities.${idx}.time` as const
-                    )}
-                  />
-                  {timeErr ? (
-                    <p className="text-xs text-destructive">{timeErr}</p>
-                  ) : null}
+        {/* Activities */}
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <h4 className="text-sm font-semibold text-foreground">
+                Hoạt động
+              </h4>
+              <p className="text-sm text-muted-foreground">Giờ HH:mm + mô tả</p>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addActivity}
+              className="shrink-0"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Thêm hoạt động
+            </Button>
+          </div>
+
+          {activitiesErr ? (
+            <p className="text-sm text-destructive">{activitiesErr}</p>
+          ) : null}
+
+          <div className="space-y-2">
+            {actFA.fields.map((f, idx) => {
+              const timeErr = errors.itinerary?.[dayIndex]?.activities?.[idx]
+                ?.time?.message
+                ? String(
+                    errors.itinerary?.[dayIndex]?.activities?.[idx]?.time
+                      ?.message
+                  )
+                : null;
+
+              const textErr = errors.itinerary?.[dayIndex]?.activities?.[idx]
+                ?.text?.message
+                ? String(
+                    errors.itinerary?.[dayIndex]?.activities?.[idx]?.text
+                      ?.message
+                  )
+                : null;
+
+              return (
+                <div
+                  key={f.id}
+                  className="grid grid-cols-1 gap-2 md:grid-cols-12 md:items-start"
+                >
+                  <div className="space-y-1 md:col-span-3">
+                    <Input
+                      className={inputClass}
+                      placeholder="07:00"
+                      {...register(
+                        `itinerary.${dayIndex}.activities.${idx}.time` as const
+                      )}
+                    />
+                    {timeErr ? (
+                      <p className="text-xs text-destructive">{timeErr}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1 md:col-span-8">
+                    <Input
+                      className={inputClass}
+                      placeholder="Nội dung hoạt động..."
+                      {...register(
+                        `itinerary.${dayIndex}.activities.${idx}.text` as const
+                      )}
+                    />
+                    {textErr ? (
+                      <p className="text-xs text-destructive">{textErr}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex md:col-span-1 md:justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeActivity(idx)}
+                      disabled={actFA.fields.length <= 1}
+                      aria-label="Xóa hoạt động"
+                      className="h-9 w-9"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
 
-                <div className="md:col-span-8 space-y-1">
-                  <Input
-                    placeholder="Nội dung hoạt động..."
-                    {...register(
-                      `itinerary.${dayIndex}.activities.${idx}.text` as const
-                    )}
-                  />
-                  {textErr ? (
-                    <p className="text-xs text-destructive">{textErr}</p>
-                  ) : null}
-                </div>
+        <Separator className="bg-border/60" />
 
-                <div className="md:col-span-1 flex md:justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeActivity(idx)}
-                    disabled={actFA.fields.length <= 1}
-                    aria-label="Xóa hoạt động"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+        {/* Accommodation */}
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <h4 className="text-sm font-semibold text-foreground">
+                Lưu trú (tuỳ chọn)
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Khách sạn / địa chỉ ngủ lại
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={toggleAccommodation}
+              className="shrink-0"
+            >
+              {acc ? "Bỏ lưu trú" : "Thêm lưu trú"}
+            </Button>
+          </div>
+
+          {acc ? (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tên khách sạn</Label>
+                <Input
+                  className={inputClass}
+                  {...register(
+                    `itinerary.${dayIndex}.accommodation.hotel_name` as const
+                  )}
+                />
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      <Separator />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Số sao</Label>
+                <Input
+                  className={inputClass}
+                  type="number"
+                  min={1}
+                  max={5}
+                  {...register(
+                    `itinerary.${dayIndex}.accommodation.stars` as const,
+                    { valueAsNumber: true }
+                  )}
+                />
+              </div>
 
-      {/* Accommodation */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="font-medium">Lưu trú (tuỳ chọn)</h4>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Số đêm</Label>
+                <Input
+                  className={inputClass}
+                  type="number"
+                  min={1}
+                  {...register(
+                    `itinerary.${dayIndex}.accommodation.nights` as const,
+                    { valueAsNumber: true }
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-sm font-medium">Địa chỉ</Label>
+                <Input
+                  className={inputClass}
+                  {...register(
+                    `itinerary.${dayIndex}.accommodation.address` as const
+                  )}
+                />
+              </div>
+            </div>
+          ) : (
             <p className="text-sm text-muted-foreground">
-              Khách sạn / địa chỉ ngủ lại
+              Không có thông tin lưu trú.
             </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={toggleAccommodation}
-          >
-            {acc ? "Bỏ lưu trú" : "Thêm lưu trú"}
-          </Button>
+          )}
         </div>
-
-        {acc ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Tên khách sạn</Label>
-              <Input
-                {...register(
-                  `itinerary.${dayIndex}.accommodation.hotel_name` as const
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Số sao</Label>
-              <Input
-                type="number"
-                min={1}
-                max={5}
-                {...register(
-                  `itinerary.${dayIndex}.accommodation.stars` as const,
-                  {
-                    valueAsNumber: true,
-                  }
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Số đêm</Label>
-              <Input
-                type="number"
-                min={1}
-                {...register(
-                  `itinerary.${dayIndex}.accommodation.nights` as const,
-                  {
-                    valueAsNumber: true,
-                  }
-                )}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label>Địa chỉ</Label>
-              <Input
-                {...register(
-                  `itinerary.${dayIndex}.accommodation.address` as const
-                )}
-              />
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Không có thông tin lưu trú.
-          </p>
-        )}
       </div>
     </div>
   );

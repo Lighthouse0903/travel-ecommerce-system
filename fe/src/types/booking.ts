@@ -26,15 +26,6 @@ export interface BookingListItem {
   customer_email?: string;
 }
 
-// export interface Review {
-//   review_id: string;
-//   rating: number;
-//   comment: string;
-//   user_id: string;
-//   customer_name: string;
-//   created_at: string;
-// }
-
 export interface BookingDetail {
   booking_id: string;
   booking_date: string;

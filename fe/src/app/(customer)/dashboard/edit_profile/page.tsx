@@ -1,21 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-
-import { useAuth } from "@/contexts/AuthContext";
-import { useAuthService } from "@/services/authService";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
 import {
   Form,
@@ -26,42 +20,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAuthService } from "@/services/authService";
 
 import type { UpdateProfile, UserResponse } from "@/types/user";
+import { EditProfileFormValues, editProfileSchema } from "@/schemas/user";
 
-const editProfileSchema = z.object({
-  username: z
-    .string()
-    .min(2, "Tên đăng nhập phải có ít nhất 2 kí tự")
-    .regex(/^[a-zA-Z0-9_]+$/, "Username không được chứa ký tự đặc biệt"),
-  full_name: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
-  phone: z
-    .string()
-    .optional()
-    .refine((val) => !val || /^(0|\+84)[0-9]{9}$/.test(val), {
-      message: "Số điện thoại không hợp lệ",
-    }),
-  address: z
-    .string()
-    .optional()
-    .refine((val) => !val || val.length >= 5, {
-      message: "Địa chỉ phải có ít nhất 5 ký tự",
-    }),
-  date_of_birth: z
-    .string()
-    .optional()
-    .refine((val) => !val || !isNaN(Date.parse(val)), {
-      message: "Ngày sinh không hợp lệ",
-    }),
-});
+const inputClass =
+  "bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0";
 
 const EditProfile = () => {
   const router = useRouter();
@@ -69,9 +35,9 @@ const EditProfile = () => {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Định nghĩa form
-  const form = useForm<z.infer<typeof editProfileSchema>>({
+  const form = useForm<EditProfileFormValues>({
     resolver: zodResolver(editProfileSchema),
+    mode: "onChange",
     defaultValues: {
       username: "",
       full_name: "",
@@ -94,19 +60,13 @@ const EditProfile = () => {
 
   useEffect(() => {
     const errors = form.formState.errors;
-    if (Object.keys(errors).length === 0) return;
+    if (!errors || Object.keys(errors).length === 0) return;
 
     const firstError = Object.values(errors)[0];
     if (firstError?.message) toast.error(String(firstError.message));
   }, [form.formState.errors]);
 
-  const fadeUp = {
-    initial: { opacity: 0, y: 30 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.4 },
-  };
-
-  const onSubmit = async (values: z.infer<typeof editProfileSchema>) => {
+  const onSubmit = async (values: EditProfileFormValues) => {
     toast.dismiss();
     if (!user) return;
 
@@ -158,140 +118,149 @@ const EditProfile = () => {
 
   if (!user) {
     return (
-      <div className="p-4 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Card>
-          <CardContent className="space-y-4 p-5">
+      <div className="bg-background p-4 md:p-6">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-64" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-9 w-full" />
             ))}
-          </CardContent>
-        </Card>
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <Skeleton className="h-11 w-full" />
+              <Skeleton className="h-11 w-full" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full overflow-hidden">
-      <motion.div {...fadeUp}>
-        <div className="p-4 space-y-6">
-          <Breadcrumb>
-            <BreadcrumbList className="text-base md:text-lg">
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard/profile">
-                  Thông tin cá nhân
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Cập nhật thông tin cá nhân</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+    <div className="bg-card p-4 md:p-6 border border-border rounded-xl">
+      {/* Header */}
+      <div className="mb-4">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          Cập nhật thông tin cá nhân
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Chỉnh sửa thông tin tài khoản của bạn
+        </p>
+      </div>
 
-          <Card className="border shadow-sm">
-            <VisuallyHidden>
-              <CardHeader>
-                <CardTitle>Cập nhật hồ sơ</CardTitle>
-              </CardHeader>
-            </VisuallyHidden>
+      {/* Form Card */}
+      <Card className="rounded-2xl border border-border bg-card shadow-sm">
+        <CardContent className="p-5">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">
+                        Tên đăng nhập
+                      </FormLabel>
+                      <FormControl>
+                        <Input className={inputClass} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <CardContent className="p-5">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
+                <FormField
+                  control={form.control}
+                  name="full_name"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">
+                        Họ và tên
+                      </FormLabel>
+                      <FormControl>
+                        <Input className={inputClass} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">
+                        Số điện thoại
+                      </FormLabel>
+                      <FormControl>
+                        <Input className={inputClass} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date_of_birth"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">
+                        Ngày sinh
+                      </FormLabel>
+                      <FormControl>
+                        <Input className={inputClass} type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2 md:col-span-2">
+                      <FormLabel className="text-sm font-medium">
+                        Địa chỉ
+                      </FormLabel>
+                      <FormControl>
+                        <Input className={inputClass} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2 sm:flex-row">
+                <Button
+                  type="submit"
+                  className="h-11 flex-1"
+                  disabled={loading}
                 >
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tên đăng nhập</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                </Button>
 
-                  <FormField
-                    control={form.control}
-                    name="full_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Họ và tên</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Số điện thoại</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Địa chỉ</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="date_of_birth"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ngày sinh</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex gap-2 pt-2">
-                    <Button type="submit" className="flex-1" disabled={loading}>
-                      {loading ? "Đang lưu..." : "Lưu thay đổi"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={handleCancel}
-                      disabled={loading}
-                    >
-                      Hủy
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-      </motion.div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 flex-1"
+                  onClick={handleCancel}
+                  disabled={loading}
+                >
+                  Hủy
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

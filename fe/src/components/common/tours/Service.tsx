@@ -41,7 +41,7 @@ const Service: React.FC<ServiceProps> = ({
       setInc(included);
       setExc(excluded);
     }
-  }, [isEditing]); // 
+  }, [isEditing]); //
 
   const hasIncluded = useMemo(() => inc.length > 0, [inc]);
   const hasExcluded = useMemo(() => exc.length > 0, [exc]);
@@ -86,7 +86,7 @@ const Service: React.FC<ServiceProps> = ({
       : setExc((arr) => arr.filter((_, idx) => idx !== i));
 
   return (
-    <section className="relative bg-white p-6 rounded-2xl shadow-md">
+    <section className="relative bg-section p-6 rounded-2xl shadow-md">
       {/* Action buttons */}
       {canEdit && !isEditing && (
         <button

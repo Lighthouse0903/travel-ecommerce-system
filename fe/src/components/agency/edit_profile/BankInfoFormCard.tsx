@@ -23,7 +23,7 @@ const BankInfoFormCard: React.FC<Props> = ({ isSubmitting }) => {
   const { control } = useFormContext<EditAgencyFormValues>();
 
   return (
-    <Card className="rounded-xl bg-slate-50 shadow-md">
+    <Card className="rounded-xl bg-white shadow-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Landmark className="h-5 w-5" />

@@ -95,7 +95,7 @@ const ListReviewCard: React.FC<ListReviewCardProps> = ({ tourId }) => {
   };
 
   return (
-    <section className="bg-slate-50 p-5 rounded-xl border shadow-md space-y-5">
+    <section className="p-5 rounded-xl border shadow-md space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-xl font-semibold">Bình luận & Đánh giá</h3>
@@ -125,7 +125,7 @@ const ListReviewCard: React.FC<ListReviewCardProps> = ({ tourId }) => {
               className="relative flex gap-3 border rounded-lg p-3 bg-white w-full"
             >
               {/* Avatar */}
-              <div className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700 flex-shrink-0">
+              <div className="h-10 w-10 flex items-center justify-center rounded-full bg-sky-200 ring-1 text-sm font-bold text-slate-700 flex-shrink-0">
                 {review.customer_name?.charAt(0).toUpperCase()}
               </div>
 

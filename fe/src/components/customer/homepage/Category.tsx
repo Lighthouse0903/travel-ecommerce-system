@@ -54,12 +54,12 @@ const Category = () => {
   ];
 
   return (
-    <div className="bg-slate-100 py-10">
+    <div className="bg-transparent py-10">
       <Carousel
         className="w-full max-w-7xl mx-auto"
         opts={{
           align: "start",
-          loop: true, // cho phép loop vô hạn
+          loop: true,
         }}
       >
         <CarouselContent className="-ml-2">
@@ -69,7 +69,7 @@ const Category = () => {
               className="pl-2 basis-1/2 md:basis-1/3 lg:basis-1/4 transition-transform"
             >
               <Link href={`/tours/${item.slug}`}>
-                <Card className="rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <Card className="rounded-xl border-border bg-card shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
                   <CardContent className="relative w-full p-0 aspect-[4/3] rounded-xl overflow-hidden group">
                     <Image
                       src={item.image}
@@ -78,7 +78,7 @@ const Category = () => {
                       className="object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-all"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent transition-all" />
 
                     <div className="absolute bottom-4 left-4">
                       <h2 className="text-white text-xl font-semibold drop-shadow-lg">
@@ -92,8 +92,8 @@ const Category = () => {
           ))}
         </CarouselContent>
 
-        <CarouselPrevious className="opacity-70 hover:opacity-100 transition" />
-        <CarouselNext className="opacity-70 hover:opacity-100 transition" />
+        <CarouselPrevious className="bg-card border-border text-foreground opacity-80 hover:opacity-100 transition" />
+        <CarouselNext className="bg-card border-border text-foreground opacity-80 hover:opacity-100 transition" />
       </Carousel>
     </div>
   );

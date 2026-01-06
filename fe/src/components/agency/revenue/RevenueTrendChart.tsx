@@ -40,7 +40,7 @@ const RevenueTrendChart: React.FC<Props> = ({
   points,
 }) => {
   return (
-    <Card className="p-5 bg-slate-50 shadow-md">
+    <Card className="p-5 bg-card shadow-md">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
           <LineIcon className="w-5 h-5 text-slate-700" />

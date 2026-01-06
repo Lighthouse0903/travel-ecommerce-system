@@ -47,7 +47,7 @@ const GalleryView: React.FC<GalleryProps> = ({ thumbnail, images }) => {
   const cover = galleryImages[activeIndex]?.image ?? null;
 
   return (
-    <section className="rounded-xl overflow-hidden bg-slate-50 border shadow-md">
+    <section className="rounded-xl overflow-hidden bg-section border shadow-md">
       <div className="relative aspect-[16/9] bg-muted">
         {cover ? (
           <Image

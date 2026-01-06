@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import LoginModal from "@/components/common/dialogs/LoginModal";
 import { LoginModalProvider } from "@/contexts/LoginModalContext";
 import { AgencyProfileProvider } from "@/contexts/AgencyProfileContext";
+import NextTopLoader from "nextjs-toploader";
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
@@ -41,6 +42,14 @@ export default function RootLayout({
             <LoginModalProvider>
               <LoginModal />
               <Header />
+              <NextTopLoader
+                color="#0ea5e9" // xanh du lịch (sky-500)
+                height={3}
+                showSpinner={false}
+                crawlSpeed={200}
+                easing="ease"
+                speed={200}
+              />
               {children}
               <Toaster position="top-center" />
               <Footer />

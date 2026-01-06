@@ -2,8 +2,9 @@
 
 import React from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import Section from "./Section";
 import ItineraryDayCard from "./ItineraryDayCard";
 import { EditTourFormValues } from "@/types/tour";
@@ -30,6 +31,7 @@ const ItinerarySection: React.FC = () => {
 
   const removeDay = (idx: number) => {
     dayFA.remove(idx);
+
     // renumber day 1..n
     const cur = watch("itinerary") ?? [];
     cur.forEach((_, i) => {
@@ -46,19 +48,21 @@ const ItinerarySection: React.FC = () => {
     <Section
       title="Lịch trình"
       description="Thêm ngày, tiêu đề ngày và các hoạt động theo khung giờ."
+      rightSlot={
+        <Button type="button" variant="outline" onClick={addDay}>
+          <Plus className="mr-2 h-4 w-4" />
+          Thêm ngày
+        </Button>
+      }
     >
-      <div className="space-y-4">
-        <div className="flex justify-end">
-          <Button type="button" variant="outline" onClick={addDay}>
-            <Plus className="w-4 h-4 mr-1" /> Thêm ngày
-          </Button>
-        </div>
-
+      <div className="space-y-3">
         {itineraryError ? (
-          <p className="text-sm text-destructive">{itineraryError}</p>
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+            {itineraryError}
+          </div>
         ) : null}
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {dayFA.fields.map((f, dayIndex) => (
             <ItineraryDayCard
               key={f.id}

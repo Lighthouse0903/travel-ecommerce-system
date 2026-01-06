@@ -28,3 +28,7 @@ export interface ConversationDetai {
   created_at: string;
   updated_at: string;
 }
+
+export type WsMessageEvent =
+  | { type: "message"; conversation_id: string; data: MessageSummary }
+  | { type: "read"; conversation_id: string; reader_id: string };

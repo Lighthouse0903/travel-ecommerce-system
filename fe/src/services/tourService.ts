@@ -58,18 +58,6 @@ export const useTourService = () => {
     [del]
   );
 
-  // ===== Public =====
-
-  // List public tour (có pagination)
-  const getListPublicTour = (
-    query?: Record<string, string | number | undefined>
-  ): Promise<ApiResponse<TourListPageType[], PaginationMeta>> => {
-    return get<TourListPageType[], PaginationMeta>(
-      `/tours/${buildQS(query)}`,
-      false
-    );
-  };
-
   // Detail public tour
   const getDetailPublicTour = (
     id: string
@@ -92,7 +80,6 @@ export const useTourService = () => {
     getDetailTour,
     getListTour,
     updateTour,
-    getListPublicTour,
     getDetailPublicTour,
     searchTour,
     deleteTour,

@@ -11,7 +11,6 @@ import BookingInforCustomerCard from "@/components/common/booking/BookingInforCu
 import AgencyBookingActionsCard from "./AgencyBookingActionsCard";
 import AgencyBookingTimelineCard from "./AgencyBookingTimelineCard";
 import { shortCode } from "@/utils/formatID";
-import MotionFlow, { MotionItem } from "@/components/common/motion/MotionFlow";
 import BookingPaymentInfoCard from "@/components/customer/booking/BookingPaymentInforCard";
 import BookingDetailHeaderAgency from "./BookingDetailHeaderAgency";
 
@@ -23,53 +22,32 @@ const AgencyBookingDetailView = ({ booking }: Props) => {
   const router = useRouter();
 
   return (
-    <MotionFlow>
-      <div className="space-y-5">
-        <MotionItem>
-          <BookingDetailHeaderAgency
-            title={`Chi tiết Booking #${shortCode(booking.booking_id)}`}
-            onBack={() => router.back()}
-          />
-        </MotionItem>
+    <div className="space-y-5 p-5">
+      <BookingDetailHeaderAgency
+        title={`Chi tiết Booking #${shortCode(booking.booking_id)}`}
+        onBack={() => router.back()}
+      />
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-          {/* cột trái */}
-          <div className="space-y-5 lg:col-span-8">
-            <MotionItem>
-              <BookingInforTourCard booking={booking} />
-            </MotionItem>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="space-y-5 lg:col-span-8">
+          <BookingInforTourCard booking={booking} />
+          <BookingMetaInforCard booking={booking} />
 
-            <MotionItem>
-              <BookingMetaInforCard booking={booking} />
-            </MotionItem>
+          {booking.status === "paid" && (
+            <BookingPaymentInfoCard payment={booking.payment} />
+          )}
 
-            {/* chỉ hiện khi đã thanh toán */}
-            {booking.status === "paid" && (
-              <MotionItem>
-                <BookingPaymentInfoCard payment={booking.payment} />
-              </MotionItem>
-            )}
+          <BookingInforCustomerCard booking={booking} />
+        </div>
 
-            <MotionItem>
-              <BookingInforCustomerCard booking={booking} />
-            </MotionItem>
-          </div>
-
-          {/* cột phải */}
-          <div className="space-y-5 lg:col-span-4">
-            <div className="lg:sticky lg:top-24 space-y-5">
-              <MotionItem>
-                <AgencyBookingActionsCard booking={booking} />
-              </MotionItem>
-
-              <MotionItem>
-                <AgencyBookingTimelineCard booking={booking} />
-              </MotionItem>
-            </div>
+        <div className="space-y-5 lg:col-span-4">
+          <div className="lg:sticky lg:top-24 space-y-5">
+            <AgencyBookingActionsCard booking={booking} />
+            <AgencyBookingTimelineCard booking={booking} />
           </div>
         </div>
       </div>
-    </MotionFlow>
+    </div>
   );
 };
 

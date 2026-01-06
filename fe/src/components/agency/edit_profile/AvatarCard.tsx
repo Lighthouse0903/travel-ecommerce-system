@@ -24,7 +24,7 @@ const AvatarCard: React.FC<Props> = ({ isSubmitting }) => {
   const { control } = useFormContext<EditAgencyFormValues>();
 
   return (
-    <Card className="rounded-xl bg-slate-50">
+    <Card className="rounded-xl bg-white">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Upload className="h-5 w-5" />

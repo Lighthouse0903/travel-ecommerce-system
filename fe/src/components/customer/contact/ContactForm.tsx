@@ -32,21 +32,24 @@ export default function ContactForm() {
   };
 
   return (
-    <div className="bg-slate-100 flex flex-col justify-center items-start p-4 sm:p-7 rounded-xl shadow-xl">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-7">
+    <div className="bg-card border border-border flex flex-col justify-center items-start p-5 sm:p-7 rounded-2xl shadow-sm">
+      <h2 className="text-2xl font-semibold text-foreground mb-6">
         Gửi tin nhắn cho chúng tôi
       </h2>
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-2 w-full"
+          className="space-y-3 w-full"
         >
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Họ và tên</FormLabel>
+                <FormLabel className="text-sm text-foreground/90">
+                  Họ và tên
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="Nhập họ tên của bạn" {...field} />
                 </FormControl>
@@ -59,7 +62,9 @@ export default function ContactForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Địa chỉ email</FormLabel>
+                <FormLabel className="text-sm text-foreground/90">
+                  Địa chỉ email
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="viettravel@gmail.com" {...field} />
                 </FormControl>
@@ -72,7 +77,9 @@ export default function ContactForm() {
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Số điện thoại</FormLabel>
+                <FormLabel className="text-sm text-foreground/90">
+                  Số điện thoại
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="(+84)" {...field} />
                 </FormControl>
@@ -85,10 +92,13 @@ export default function ContactForm() {
             name="message"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nội dung tin nhắn</FormLabel>
+                <FormLabel className="text-sm text-foreground/90">
+                  Nội dung tin nhắn
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Bạn muốn gửi điều gì tới chúng tôi?"
+                    className="min-h-[120px]"
                     {...field}
                   />
                 </FormControl>
@@ -99,6 +109,10 @@ export default function ContactForm() {
           <Button type="submit" className="w-full">
             Gửi tin nhắn
           </Button>
+
+          <p className="text-xs text-muted-foreground">
+            VietTravel sẽ phản hồi trong thời gian sớm nhất trong giờ làm việc.
+          </p>
         </form>
       </Form>
     </div>

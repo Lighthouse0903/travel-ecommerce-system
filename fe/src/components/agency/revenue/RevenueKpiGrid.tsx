@@ -18,7 +18,7 @@ const KpiCard: React.FC<{
   helper?: string;
 }> = ({ loading, title, value, icon, helper }) => {
   return (
-    <Card className="p-4 bg-slate-50 shadow-md">
+    <Card className="p-4 bg-card shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm text-muted-foreground">{title}</div>

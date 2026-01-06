@@ -60,12 +60,7 @@ const AgencyBookingDetailPage = () => {
     };
   }, [bookingId]);
 
-  if (loading)
-    return (
-      <div className="p-6">
-        <BookingDetailSkeleton />
-      </div>
-    );
+  if (loading) return <BookingDetailSkeleton />;
   if (!booking) return <div className="p-6">Không tìm thấy booking.</div>;
 
   return <AgencyBookingDetailView booking={booking} />;

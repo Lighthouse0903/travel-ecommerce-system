@@ -30,36 +30,45 @@ const SidebarChatItem: React.FC<Props> = ({
     return `${isMine ? "Bạn: " : ""}${lastMsg.content}`;
   }, [lastMsg, isMine]);
 
+  const initial = partnerName.charAt(0).toUpperCase();
+
   return (
-    <Link href={`${hrefPrefix}/${item.conversation_id}`}>
-      <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+    <Link href={`${hrefPrefix}/${item.conversation_id}`} className="block">
+      <div className="flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-muted/40">
         {/* Avatar */}
         <div className="relative">
-          <div className="w-[45px] h-[45px] rounded-full bg-slate-400 flex items-center justify-center text-white font-semibold text-sm">
-            {partnerName.charAt(0).toUpperCase()}
+          <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+            {initial}
           </div>
         </div>
 
-        {/* infor */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          <span className="font-semibold text-[15px] text-slate-900">
-            {item.partner?.full_name}
-          </span>
-          <span className="text-xs text-slate-400 truncate">{lastPreview}</span>
-        </div>
-
-        {/* time và unread */}
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-[11px] text-slate-500">{timeLabel}</span>
-
-          {unread > 0 && (
-            <span className="bg-blue-500 text-white text-[11px] px-2 py-[2px] rounded-full">
-              {unread}
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate text-[15px] font-semibold text-foreground">
+              {item.partner?.full_name || "Người dùng"}
             </span>
-          )}
+
+            <span className="shrink-0 text-[11px] text-muted-foreground">
+              {timeLabel}
+            </span>
+          </div>
+
+          <div className="mt-0.5 flex items-center justify-between gap-2">
+            <span className="truncate text-xs text-muted-foreground">
+              {lastPreview}
+            </span>
+
+            {unread > 0 ? (
+              <span className="shrink-0 rounded-full bg-primary px-2 py-[2px] text-[11px] text-primary-foreground">
+                {unread}
+              </span>
+            ) : null}
+          </div>
         </div>
       </div>
     </Link>
   );
 };
+
 export default SidebarChatItem;

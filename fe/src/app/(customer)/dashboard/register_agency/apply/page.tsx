@@ -25,7 +25,7 @@ import StepBank from "@/components/customer/register_agency/apply/StepBank";
 import StepDocs from "@/components/customer/register_agency/apply/StepDocs";
 import StepReview from "@/components/customer/register_agency/apply/StepReview";
 import { RegisterAgencyFormValues } from "@/types/agency";
-import { schemasByStep } from "./formSchema";
+import { schemasByStep } from "../../../../../schemas/register_agency";
 import { useAgencyAction } from "@/hooks/useAgencyAction";
 
 const STEPS = [

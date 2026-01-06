@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { useBookingAnalyticsService } from "@/services/bookingAnalyticsService";
@@ -86,7 +86,7 @@ const RevenuePage: React.FC = () => {
   const [to, setTo] = useState<string>(presetRange.to);
 
   // sync from/to when preset changes (trừ custom)
-  React.useEffect(() => {
+  useEffect(() => {
     if (preset !== "custom") {
       setFrom(presetRange.from);
       setTo(presetRange.to);
@@ -173,58 +173,42 @@ const RevenuePage: React.FC = () => {
   }, [totalRevenue, totalPaidOrders]);
 
   // auto load lần đầu
-  React.useEffect(() => {
+  useEffect(() => {
     onApply();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <MotionFlow>
-      <div className="space-y-4 bg-white">
-        {/* header */}
-        <MotionItem>
-          <RevenueHeader />
-        </MotionItem>
+    <div className="space-y-4 bg-white p-4 border border-border rounded-xl">
+      {/* header */}
+      <RevenueHeader />
+      <RevenueFilterBar
+        preset={preset}
+        onChangePreset={setPreset}
+        groupBy={groupBy}
+        onChangeGroupBy={setGroupBy}
+        from={from}
+        to={to}
+        onChangeFrom={setFrom}
+        onChangeTo={setTo}
+        onApply={onApply}
+        loading={loading}
+      />
 
-        <MotionItem>
-          <RevenueFilterBar
-            preset={preset}
-            onChangePreset={setPreset}
-            groupBy={groupBy}
-            onChangeGroupBy={setGroupBy}
-            from={from}
-            to={to}
-            onChangeFrom={setFrom}
-            onChangeTo={setTo}
-            onApply={onApply}
-            loading={loading}
-          />
-        </MotionItem>
-
-        <MotionItem>
-          <RevenueKpiGrid
-            loading={loading}
-            totalRevenueFormatted={totalRevenueFormatted}
-            totalPaidOrders={totalPaidOrders}
-            aovFormatted={aovFormatted}
-          />
-        </MotionItem>
-        <MotionItem>
-          <RevenueTrendChart loading={loading} points={trend} />
-        </MotionItem>
-
-        <MotionItem>
-          <RevenueBreakdownGrid
-            loading={loading}
-            providerItems={provider}
-            destinationItems={destination}
-          />
-        </MotionItem>
-        <MotionItem>
-          <RevenueTopTours loading={loading} items={topTours} />
-        </MotionItem>
-      </div>
-    </MotionFlow>
+      <RevenueKpiGrid
+        loading={loading}
+        totalRevenueFormatted={totalRevenueFormatted}
+        totalPaidOrders={totalPaidOrders}
+        aovFormatted={aovFormatted}
+      />
+      <RevenueTrendChart loading={loading} points={trend} />
+      <RevenueBreakdownGrid
+        loading={loading}
+        providerItems={provider}
+        destinationItems={destination}
+      />
+      <RevenueTopTours loading={loading} items={topTours} />
+    </div>
   );
 };
 

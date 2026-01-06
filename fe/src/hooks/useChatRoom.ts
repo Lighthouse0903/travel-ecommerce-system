@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatService } from "@/services/chatService";
-import type { MessageSummary, WsMessageEvent } from "@/types/chat";
+import { MessageSummary, WsMessageEvent } from "@/types/chat";
 
 type UseChatRoomReturn = {
   messages: MessageSummary[];

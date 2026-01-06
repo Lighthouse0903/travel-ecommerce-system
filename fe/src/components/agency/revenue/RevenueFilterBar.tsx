@@ -38,7 +38,7 @@ const RevenueFilterBar: React.FC<Props> = ({
   loading,
 }) => {
   return (
-    <Card className="p-4 bg-slate-50 shadow-md">
+    <Card className="p-4 bg-card shadow-md">
       <div className="space-y-4">
         {/* Row 1: Presets */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

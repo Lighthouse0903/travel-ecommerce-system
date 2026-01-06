@@ -25,7 +25,7 @@ const KpiCard: React.FC<{
   item: KpiItem;
 }> = ({ loading, item }) => {
   return (
-    <Card className="p-4 bg-slate-50 shadow-md">
+    <Card className="p-4 bg-card shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm text-muted-foreground">{item.title}</div>

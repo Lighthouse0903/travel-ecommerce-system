@@ -27,14 +27,12 @@ const DocTile: React.FC<Props> = ({ title, url, className }) => {
   return (
     <div
       className={cn(
-        // fixed height look + no weird wrapping
-        "rounded-xl border bg-background p-3 min-w-0",
+        "rounded-2xl border border-slate-200 bg-card p-3 min-w-0",
         "flex flex-col gap-3",
         className
       )}
     >
-      {/* Preview luôn có (mobile cũng đẹp) */}
-      <div className="relative w-full overflow-hidden rounded-lg border bg-muted">
+      <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
         <div className="relative aspect-[16/9] w-full">
           {has ? (
             <Image
@@ -45,32 +43,38 @@ const DocTile: React.FC<Props> = ({ title, url, className }) => {
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+            <div className="absolute inset-0 flex items-center justify-center text-slate-500">
               <ImageIcon className="h-5 w-5" />
             </div>
           )}
         </div>
       </div>
 
-      {/* Text + action */}
       <div className="flex items-start justify-between gap-3 min-w-0">
         <div className="min-w-0">
-          {/* clamp title để không bị dài quá */}
-          <p className="text-sm font-semibold leading-snug line-clamp-2">
+          <p className="text-sm font-semibold leading-snug line-clamp-2 text-slate-900">
             {title}
           </p>
 
-          {/*  ẩn url trên mobile cho sạch */}
-          <p className="mt-1 text-xs text-muted-foreground hidden sm:block truncate">
+          <p className="mt-1 text-xs text-slate-500 hidden sm:block truncate">
             {has ? url : "Chưa có tài liệu"}
           </p>
 
-          {/* mobile: show trạng thái ngắn gọn */}
           <div className="mt-2 sm:hidden">
             {has ? (
-              <Badge variant="secondary">Đã có</Badge>
+              <Badge
+                variant="outline"
+                className="rounded-full border-emerald-200 bg-emerald-50 text-emerald-700"
+              >
+                Đã có
+              </Badge>
             ) : (
-              <Badge variant="secondary">Thiếu</Badge>
+              <Badge
+                variant="outline"
+                className="rounded-full border-slate-200 bg-slate-50 text-slate-700"
+              >
+                Thiếu
+              </Badge>
             )}
           </div>
         </div>
@@ -81,7 +85,7 @@ const DocTile: React.FC<Props> = ({ title, url, className }) => {
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 gap-2 h-9"
+                className="shrink-0 gap-2 h-9 rounded-xl border-slate-200 bg-card text-slate-700 hover:bg-slate-50"
               >
                 <Eye className="h-4 w-4" />
                 Xem
@@ -93,8 +97,7 @@ const DocTile: React.FC<Props> = ({ title, url, className }) => {
                 <DialogTitle className="pr-8">{title}</DialogTitle>
               </DialogHeader>
 
-              <div className="relative w-full overflow-hidden rounded-lg border bg-muted">
-                {/* ảnh lớn, giữ tỉ lệ */}
+              <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                 <div className="relative aspect-[16/9] w-full">
                   <Image
                     src={url!}
@@ -108,7 +111,10 @@ const DocTile: React.FC<Props> = ({ title, url, className }) => {
             </DialogContent>
           </Dialog>
         ) : (
-          <Badge variant="secondary" className="shrink-0">
+          <Badge
+            variant="outline"
+            className="shrink-0 rounded-full border-slate-200 bg-slate-50 text-slate-700"
+          >
             Thiếu
           </Badge>
         )}

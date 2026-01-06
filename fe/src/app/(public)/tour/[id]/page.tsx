@@ -10,9 +10,6 @@ import ServiceView from "@/components/common/tours/ServiceView";
 import PolicyView from "@/components/common/tours/PolicyView";
 import DesciptionView from "@/components/common/tours/DesciptionView";
 import ReviewList from "@/components/common/review/ReviewList";
-import TourDetailMotion, {
-  MotionItem,
-} from "@/components/common/tours/TourDetailMotion";
 
 import {
   Breadcrumb,
@@ -22,8 +19,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+
 import BookingCardView from "@/components/customer/booking/BookingCard";
 import TourDetailChatWidget from "@/components/common/tours/TourDetailChatWidget";
+import { formatDuration } from "@/utils/formatDuration";
+import { getRegionLabel } from "@/utils/formatRegion";
 
 type GalleryItem = {
   img_id?: string | number;
@@ -56,19 +56,9 @@ const normalizeActivityToString = (a: unknown) => {
   return text || "";
 };
 
-const formatDuration = (days: number) => {
-  const d = Number(days ?? 0);
-  if (!Number.isFinite(d) || d <= 0) return "";
-  if (d === 1) return "1 ngày";
-  return `${d} ngày ${d - 1} đêm`;
-};
-
-const regionLabel = (region: unknown) => {
-  const r = Number(region ?? 0);
-  if (r === 1) return "Miền Bắc";
-  if (r === 2) return "Miền Trung";
-  if (r === 3) return "Miền Nam";
-  return "Tour";
+const toNumberSafe = (v: unknown) => {
+  const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : 0;
+  return Number.isFinite(n) ? n : 0;
 };
 
 export default async function TourDetailPage({ params }: PageProps) {
@@ -102,8 +92,8 @@ export default async function TourDetailPage({ params }: PageProps) {
         accommodation: acc
           ? {
               hotel_name: acc.hotel_name ?? "",
-              stars: Number(acc.stars ?? 0),
-              nights: Number(acc.nights ?? 0),
+              stars: toNumberSafe(acc.stars),
+              nights: toNumberSafe(acc.nights),
               address: acc.address ?? "",
             }
           : null,
@@ -115,156 +105,157 @@ export default async function TourDetailPage({ params }: PageProps) {
   const servicesExcluded = tour.services_excluded ?? [];
   const policy = tour.policy ?? null;
   const description = tour.description ?? "";
-
   const durationText = formatDuration(tour.duration_days);
-  const ratingValue = Number(tour.rating ?? 0);
-  const reviewsCount = Number(tour.reviews_count ?? 0);
+  const ratingValue = toNumberSafe(tour.rating);
+  const reviewsCount = toNumberSafe(tour.reviews_count);
 
-  const regionText = regionLabel(tour.region);
+  const regionText = getRegionLabel(tour.region);
 
   const fromText = (tour.departure_location ?? "").trim();
   const toText = (tour.destination ?? "").trim();
   const routeText = [fromText, toText].filter(Boolean).join(" → ");
-  const hasDiscount = Number(tour.discount);
-  const finalPrice = ((100 - hasDiscount) * Number(tour.adult_price)) / 100;
-  const finalChildPrice =
-    ((100 - hasDiscount) * Number(tour.children_price)) / 100;
+
+  // Giá cả
+  const adultPrice = toNumberSafe(tour.adult_price);
+  const childPrice = toNumberSafe(tour.children_price);
+
+  const discountPercent = toNumberSafe(tour.discount);
+  const hasDiscount = discountPercent > 0;
+
+  const finalPrice = hasDiscount
+    ? (adultPrice * (100 - discountPercent)) / 100
+    : adultPrice;
+  const finalChildPrice = hasDiscount
+    ? (childPrice * (100 - discountPercent)) / 100
+    : childPrice;
 
   return (
     <div className="mx-auto w-[95%] md:w-[90%] px-3 md:px-6 py-6">
-      <TourDetailMotion>
-        <MotionItem className="space-y-2">
-          <header className="space-y-2">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
-                </BreadcrumbItem>
+      {/* Header */}
+      <header className="space-y-2">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
+            </BreadcrumbItem>
 
-                <BreadcrumbSeparator />
+            <BreadcrumbSeparator />
 
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/tour">Danh mục Tour</BreadcrumbLink>
-                </BreadcrumbItem>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/tours">Danh mục tour</BreadcrumbLink>
+            </BreadcrumbItem>
 
-                <BreadcrumbSeparator />
+            <BreadcrumbSeparator />
 
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{regionText}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+            <BreadcrumbItem>
+              <BreadcrumbPage>{regionText}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-gray-900">
-                  {tour.name}
-                </h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-slate-900">
+              {tour.name}
+            </h1>
 
-                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                  {(fromText || toText) && (
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {routeText}
-                    </span>
-                  )}
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              {(fromText || toText) && (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="w-4 h-4 text-slate-500" />
+                  <span className="text-slate-700">{routeText}</span>
+                </span>
+              )}
 
-                  {durationText && <span>| {durationText}</span>}
+              {durationText && <span className="text-slate-400">|</span>}
+              {durationText && <span>{durationText}</span>}
 
-                  <span className="inline-flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-500" />
-                    <span className="font-medium text-gray-900">
-                      {ratingValue.toFixed(1)}
-                    </span>
-                    <span className="text-gray-500">
-                      ({reviewsCount} đánh giá)
-                    </span>
+              <span className="text-slate-400">|</span>
+
+              <span className="inline-flex items-center gap-1">
+                <Star className="w-4 h-4 text-amber-500" />
+                <span className="font-semibold text-slate-900">
+                  {ratingValue.toFixed(1)}
+                </span>
+                <span className="text-slate-500">
+                  ({reviewsCount} đánh giá)
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Body */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left */}
+        <div className="lg:col-span-2 space-y-6">
+          <GalleryView thumbnail={thumbnail} images={images} />
+
+          <DesciptionView description={description} />
+
+          <ItineraryView itinerary={itineraryForView} />
+
+          <ServiceView
+            included={servicesIncluded}
+            excluded={servicesExcluded}
+          />
+
+          <PolicyView
+            policy={policy}
+            agency={{
+              name: tour.agency_name,
+              phone: tour.hotline,
+              email: tour.email_agency,
+            }}
+          />
+
+          {/* Review */}
+          <section className="space-y-4 border border-slate-200 bg-card p-4 rounded-2xl shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg md:text-xl font-semibold text-slate-900">
+                Đánh giá của khách hàng
+              </h3>
+
+              <div className="text-sm text-slate-600">
+                <span className="inline-flex items-center gap-1">
+                  <Star className="w-4 h-4 text-amber-500" />
+                  <span className="font-semibold text-slate-900">
+                    {ratingValue.toFixed(1)}
                   </span>
-                </div>
+                  <span className="text-slate-500">
+                    ({reviewsCount} đánh giá)
+                  </span>
+                </span>
               </div>
             </div>
-          </header>
-        </MotionItem>
 
-        {/* Cột trái */}
-        <MotionItem className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <MotionItem>
-                <GalleryView thumbnail={thumbnail} images={images} />
-              </MotionItem>
+            <ReviewList tourId={tour.tour_id} />
+          </section>
+        </div>
 
-              <MotionItem>
-                <DesciptionView description={description} />
-              </MotionItem>
-
-              <MotionItem>
-                <ItineraryView itinerary={itineraryForView} />
-              </MotionItem>
-
-              <MotionItem>
-                <ServiceView
-                  included={servicesIncluded}
-                  excluded={servicesExcluded}
-                />
-              </MotionItem>
-
-              <MotionItem>
-                <PolicyView
-                  policy={policy}
-                  agency={{
-                    name: tour.agency_name,
-                    phone: tour.hotline,
-                    email: tour.email_agency,
-                  }}
-                />
-              </MotionItem>
-              <MotionItem>
-                <div className="space-y-4 boder bg-slate-50 p-4 rounded-xl shadow-md">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Đánh giá của khách hàng
-                    </h3>
-                    <div className="text-sm text-gray-600">
-                      <span className="inline-flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-500" />
-                        <span className="font-medium text-gray-900">
-                          {ratingValue.toFixed(1)}
-                        </span>
-                        <span className="text-gray-500">
-                          ({reviewsCount} đánh giá)
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* List review */}
-                  <ReviewList tourId={tour.tour_id} />
-                </div>
-              </MotionItem>
-            </div>
-            {/* Cột phải */}
-            <MotionItem className="lg:col-span-1">
-              <div className="lg:col-span-1">
-                <BookingCardView
-                  tourId={tour.tour_id}
-                  departure_location={tour.departure_location}
-                  price={Number(tour.adult_price)}
-                  childPrice={Number(tour.children_price)}
-                  finalPrice={finalPrice}
-                  finalChildPrice={finalChildPrice}
-                  hasDiscount={Number(tour.discount ?? 0) === 0 ? false : true}
-                />
-              </div>
-            </MotionItem>
-            <TourDetailChatWidget
-              agencyUserId={tour.agency_user_id}
-              agencyName={tour.agency_name || "Đại lý"}
-              agencyAvatarUrl={tour.agency_avatar_url}
+        {/* Right */}
+        <div className="lg:col-span-1">
+          <div className="lg:sticky lg:top-24">
+            <BookingCardView
+              tourId={tour.tour_id}
+              departure_location={tour.departure_location}
+              price={adultPrice}
+              childPrice={childPrice}
+              finalPrice={finalPrice}
+              finalChildPrice={finalChildPrice}
+              hasDiscount={hasDiscount}
             />
           </div>
-        </MotionItem>
-      </TourDetailMotion>
+        </div>
+
+        {/* Chat widget */}
+        <TourDetailChatWidget
+          agencyUserId={tour.agency_user_id}
+          agencyName={tour.agency_name || "Đại lý"}
+          agencyAvatarUrl={tour.agency_avatar_url}
+        />
+      </div>
     </div>
   );
 }

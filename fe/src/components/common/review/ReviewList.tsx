@@ -10,11 +10,11 @@ import ReviewSummary from "./ReviewSummary";
 import { useReviewService } from "@/services/reviewService";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface Props {
+interface ReviewListProps {
   tourId: string;
 }
 
-const ReviewList: React.FC<Props> = ({ tourId }) => {
+const ReviewList = ({ tourId }: ReviewListProps) => {
   const { user } = useAuth();
   const { getListReviewTour, updateReview, deleteReview } = useReviewService();
 

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -26,21 +27,7 @@ import PolicySection from "@/components/agency/edit_tour/PolicySection";
 import MediaSection from "@/components/agency/edit_tour/MediaSection";
 import EditTourSkeleton from "./EditTourSkeleton";
 import EditActionsPanel from "@/components/agency/edit_tour/EditActionPanel";
-import TourDetailMotion from "@/components/common/tours/TourDetailMotion";
-import { MotionItem } from "@/components/common/motion/MotionFlow";
 import { buildTourFormDataForEdit } from "@/lib/tours/formData";
-
-const Card = ({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <div className={`bg-white rounded-2xl border shadow-sm ${className}`}>
-    {children}
-  </div>
-);
 
 const EditTourPage = () => {
   const params = useParams();
@@ -153,6 +140,7 @@ const EditTourPage = () => {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourId]);
 
   const onSubmit = async (values: EditTourFormValues) => {
@@ -165,6 +153,7 @@ const EditTourPage = () => {
       toast.error(res.message ?? "Cập nhật tour thất bại.");
       return;
     }
+
     toast.success(res.message ?? "Cập nhật tour thành công.");
     router.refresh();
     router.push(`/agency/dashboard/tours/${tourId}`);
@@ -172,7 +161,7 @@ const EditTourPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="min-h-[60vh] bg-background p-4 md:p-6">
         <EditTourSkeleton />
       </div>
     );
@@ -180,84 +169,63 @@ const EditTourPage = () => {
 
   if (!tourId) {
     return (
-      <div className="p-6">
-        <Card className="p-6 text-center text-gray-600">
+      <div className="min-h-[60vh] bg-background p-4 md:p-6">
+        <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground">
           Không tìm thấy id tour.
-        </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-3 md:px-6 py-6">
-      <TourDetailMotion>
-        {/* Header */}
-        <MotionItem className="mb-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold">
-                Chỉnh sửa:{" "}
-                <span className="text-primary">
-                  {form.watch("name") || tourPreview?.name || "Tour"}
-                </span>
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Cập nhật thông tin và trạng thái tour.
-              </p>
+    <div className="px-3 py-5 md:px-6 bg-card rounded-xl border border-border">
+      {/* Header */}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="space-y-0.5">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
+            Chỉnh sửa:{" "}
+            <span className="text-primary">
+              {form.watch("name") || tourPreview?.name || "Tour"}
+            </span>
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Cập nhật thông tin và trạng thái tour.
+          </p>
+        </div>
+
+        <Button type="button" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Quay lại
+        </Button>
+      </div>
+
+      <Form {...form}>
+        <form id="edit-tour-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+            {/* cột trái */}
+            <div className="space-y-5 lg:col-span-8">
+              <BasicSection />
+              <ItinerarySection />
+              <ServicesPriceSection />
+              <PolicySection />
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              className="shrink-0"
-            >
-              ← Quay lại
-            </Button>
+            {/* cột phải */}
+            <div className="space-y-5 lg:col-span-4">
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <EditActionsPanel
+                  formId="edit-tour-form"
+                  isSubmitting={form.formState.isSubmitting}
+                  onCancel={() => router.back()}
+                  onSubmit={onSubmit}
+                />
+              </div>
+
+              <MediaSection tourPreview={tourPreview} />
+            </div>
           </div>
-        </MotionItem>
-
-        <Form {...form}>
-          <form id="edit-tour-form">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* LEFT */}
-              <div className="lg:col-span-8 space-y-6">
-                <MotionItem>
-                  <BasicSection />
-                </MotionItem>
-
-                <MotionItem>
-                  <ItinerarySection />
-                </MotionItem>
-
-                <MotionItem>
-                  <ServicesPriceSection />
-                </MotionItem>
-
-                <MotionItem>
-                  <PolicySection />
-                </MotionItem>
-              </div>
-
-              {/* RIGHT */}
-              <div className="lg:col-span-4 space-y-6">
-                <MotionItem>
-                  <EditActionsPanel
-                    formId="edit-tour-form"
-                    isSubmitting={form.formState.isSubmitting}
-                    onCancel={() => router.back()}
-                    onSubmit={onSubmit}
-                  />
-                </MotionItem>
-
-                <MotionItem>
-                  <MediaSection tourPreview={tourPreview} />
-                </MotionItem>
-              </div>
-            </div>
-          </form>
-        </Form>
-      </TourDetailMotion>
+        </form>
+      </Form>
     </div>
   );
 };

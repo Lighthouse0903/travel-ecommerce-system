@@ -22,7 +22,7 @@ const AboutFormCard: React.FC<Props> = ({ isSubmitting }) => {
   const { control } = useFormContext<EditAgencyFormValues>();
 
   return (
-    <Card className="rounded-xl bg-slate-50 shadow-md">
+    <Card className="rounded-xl bg-white shadow-md">
       <CardHeader>
         <CardTitle>Giới thiệu</CardTitle>
       </CardHeader>

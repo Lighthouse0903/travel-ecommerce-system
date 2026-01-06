@@ -21,6 +21,8 @@ import { formatDate } from "@/utils/formatDate";
 import { PaginationMeta } from "@/types/pagination";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationCustom from "@/components/common/pagination/Pagination";
+import { formatMoney } from "@/utils/formatPrice";
+import AgencyBookingListSkeleton from "./AgencyBookingListSkeleton";
 
 type AgencyBookingListItem = {
   booking_id: string;
@@ -69,18 +71,12 @@ const getStatusConfig = (status?: string) => {
 
 const shortCode = (id: string) => id?.slice(0, 8).toUpperCase();
 
-const formatMoneyVND = (amount: string) => {
-  const n = Number(amount);
-  if (Number.isNaN(n)) return amount;
-  return n.toLocaleString("vi-VN") + " đ";
-};
-
 const AgencyBookingListPage = () => {
   const [bookings, setBookings] = useState<AgencyBookingListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const { page, pageSize, setPage } = usePagination({
-    defaultPageSize: 5,
+    defaultPageSize: 9,
     maxPageSize: 50,
   });
   const { getListBookingAgency } = useBookingService();
@@ -169,16 +165,7 @@ const AgencyBookingListPage = () => {
             </TableHeader>
 
             <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-24 text-center text-sm text-slate-500"
-                  >
-                    Đang tải danh sách booking...
-                  </TableCell>
-                </TableRow>
-              )}
+              {loading && <AgencyBookingListSkeleton />}
 
               {!loading && bookings.length === 0 && (
                 <TableRow>
@@ -234,7 +221,7 @@ const AgencyBookingListPage = () => {
                       </TableCell>
 
                       <TableCell className="text-right font-semibold text-blue-600">
-                        {formatMoneyVND(item.total_price)}
+                        {formatMoney(item.total_price)}
                       </TableCell>
 
                       <TableCell className="text-right">

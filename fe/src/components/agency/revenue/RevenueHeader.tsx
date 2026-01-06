@@ -11,7 +11,7 @@ const RevenueHeader: React.FC<Props> = ({
   subtitle = "Xem xu hướng doanh thu và thống kê theo khoảng thời gian.",
 }) => {
   return (
-    <Card className="p-4 sm:p-5 bg-slate-50 shadow-md">
+    <Card className="p-4 sm:p-5 bg-card shadow-md">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
         <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>

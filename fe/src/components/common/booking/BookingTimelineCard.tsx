@@ -17,6 +17,7 @@ interface Props {
 }
 
 const BookingTimelineCard = ({ booking }: Props) => {
+  // Danh sách hành động
   const items: Item[] = [];
 
   items.push({

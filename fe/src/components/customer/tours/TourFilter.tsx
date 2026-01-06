@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import {
+  SlidersHorizontal,
+  RotateCcw,
+  MapPin,
+  PlaneTakeoff,
+  Wallet,
+} from "lucide-react";
 
 interface FilterData {
   destination: string;
@@ -20,43 +27,57 @@ const TourFilter = () => {
   const searchParams = useSearchParams();
 
   // Options
-  const BUDGET_OPTIONS = [
-    { label: "Tất cả", value: "", min_price: undefined, max_price: undefined },
-    {
-      label: "Dưới 5 triệu/người",
-      value: "under_5",
-      min_price: 0,
-      max_price: 5,
-    },
-    { label: "5-10 triệu/người", value: "5_10", min_price: 5, max_price: 10 },
-    {
-      label: "10-20 triệu/người",
-      value: "10_20",
-      min_price: 10,
-      max_price: 20,
-    },
-    {
-      label: "Trên 20 triệu/người",
-      value: "over_20",
-      min_price: 20,
-      max_price: undefined,
-    },
-  ];
+  const BUDGET_OPTIONS = useMemo(
+    () => [
+      {
+        label: "Tất cả mức giá",
+        value: "",
+        min_price: undefined,
+        max_price: undefined,
+      },
+      {
+        label: "Dưới 5 triệu/người",
+        value: "under_5",
+        min_price: 0,
+        max_price: 5,
+      },
+      { label: "5-10 triệu/người", value: "5_10", min_price: 5, max_price: 10 },
+      {
+        label: "10-20 triệu/người",
+        value: "10_20",
+        min_price: 10,
+        max_price: 20,
+      },
+      {
+        label: "Trên 20 triệu/người",
+        value: "over_20",
+        min_price: 20,
+        max_price: undefined,
+      },
+    ],
+    []
+  );
 
-  const CATEGORIES = [
-    { value: "sea", label: "Biển" },
-    { value: "mountain", label: "Núi" },
-    { value: "resort", label: "Nghỉ dưỡng" },
-    { value: "adventure", label: "Khám phá" },
-    { value: "cultural", label: "Văn hoá" },
-    { value: "history", label: "Lịch sử" },
-  ];
+  const CATEGORIES = useMemo(
+    () => [
+      { value: "sea", label: "Du lịch Biển" },
+      { value: "mountain", label: "Núi rừng & Leo núi" },
+      { value: "resort", label: "Nghỉ dưỡng" },
+      { value: "adventure", label: "Khám phá & Mạo hiểm" },
+      { value: "cultural", label: "Văn hoá" },
+      { value: "history", label: "Lịch sử" },
+    ],
+    []
+  );
 
-  const REGIONS = [
-    { label: "Miền Bắc", value: 1 },
-    { label: "Miền Trung", value: 2 },
-    { label: "Miền Nam", value: 3 },
-  ];
+  const REGIONS = useMemo(
+    () => [
+      { label: "Miền Bắc", value: 1 },
+      { label: "Miền Trung", value: 2 },
+      { label: "Miền Nam", value: 3 },
+    ],
+    []
+  );
 
   // Init from URL
   const initialCategories =
@@ -134,115 +155,161 @@ const TourFilter = () => {
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-200">
-      <h2 className="text-lg sm:text-xl font-bold mb-4 text-slate-800">
-        Bộ lọc tìm kiếm
-      </h2>
+    <div className="w-full rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-700">
+            <SlidersHorizontal className="h-5 w-5" />
+          </div>
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+            Bộ lọc tìm kiếm
+          </h2>
+        </div>
 
-      {/* Địa điểm */}
-      <div className="bg-slate-50 p-4 rounded-xl border mb-4">
-        <h3 className="text-sm font-semibold mb-3 text-slate-700">Địa điểm</h3>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Đặt lại
+        </button>
+      </div>
 
-        <input
-          placeholder="Điểm đến..."
-          value={data.destination}
-          onChange={(e) => updateData("destination", e.target.value)}
-          className="w-full mb-3 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none"
-        />
+      {/* Điểm đến */}
+      <div className="space-y-2 mb-4">
+        <div className="text-sm font-semibold text-slate-900">Điểm đến</div>
+        <div className="relative">
+          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <input
+            placeholder="Bạn muốn đi đâu?"
+            value={data.destination}
+            onChange={(e) => updateData("destination", e.target.value)}
+            className="w-full rounded-2xl bg-sky-100/60 px-11 py-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none ring-1 ring-transparent focus:ring-blue-300"
+          />
+        </div>
+      </div>
 
-        <input
-          placeholder="Điểm khởi hành..."
-          value={data.departure_location}
-          onChange={(e) => updateData("departure_location", e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none"
-        />
+      {/* Điểm khởi hành */}
+      <div className="space-y-2 mb-4">
+        <div className="text-sm font-semibold text-slate-900">
+          Điểm khởi hành
+        </div>
+        <div className="relative">
+          <PlaneTakeoff className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <input
+            placeholder="Ví dụ: Hà Nội"
+            value={data.departure_location}
+            onChange={(e) => updateData("departure_location", e.target.value)}
+            className="w-full rounded-2xl bg-sky-100/60 px-11 py-3 text-sm text-slate-900 placeholder:text-slate-500 outline-none ring-1 ring-transparent focus:ring-blue-300"
+          />
+        </div>
       </div>
 
       {/* Ngân sách */}
-      <div className="bg-slate-50 mb-4 p-3 rounded-xl border">
-        <h3 className="text-sm font-semibold mb-3 text-slate-700">
-          Ngân sách / người
-        </h3>
-
-        <select
-          value={selectedBudget}
-          onChange={(e) => {
-            const opt = BUDGET_OPTIONS.find((o) => o.value === e.target.value);
-            setSelectedBudget(e.target.value);
-            updateData("min_price", opt?.min_price);
-            updateData("max_price", opt?.max_price);
-          }}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        >
-          {BUDGET_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        {/* Categories */}
-        <div className="bg-slate-50 p-3 rounded-xl border">
-          <h3 className="text-sm font-semibold mb-3 text-slate-700">
-            Loại tour
-          </h3>
-
-          {CATEGORIES.map((cat) => (
-            <label key={cat.value} className="flex items-center gap-2">
-              <Checkbox
-                checked={data.categories.includes(cat.value)}
-                onCheckedChange={(checked) => {
-                  const updated = checked
-                    ? [...data.categories, cat.value]
-                    : data.categories.filter((c) => c !== cat.value);
-                  updateData("categories", updated);
-                }}
-                className="data-[state=checked]:bg-blue-500"
-              />
-              <span>{cat.label}</span>
-            </label>
-          ))}
+      <div className="space-y-2 mb-4">
+        <div className="text-sm font-semibold text-slate-900">Ngân sách</div>
+        <div className="relative">
+          <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <select
+            value={selectedBudget}
+            onChange={(e) => {
+              const opt = BUDGET_OPTIONS.find(
+                (o) => o.value === e.target.value
+              );
+              setSelectedBudget(e.target.value);
+              updateData("min_price", opt?.min_price);
+              updateData("max_price", opt?.max_price);
+            }}
+            className="w-full appearance-none rounded-2xl bg-sky-100/60 px-11 py-3 text-sm text-slate-900 outline-none ring-1 ring-transparent focus:ring-blue-300"
+          >
+            {BUDGET_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Region */}
-        <div className="bg-slate-50 p-3 rounded-xl border">
-          <h3 className="text-sm font-semibold mb-3 text-slate-700">
-            Vùng miền
-          </h3>
+        <p className="text-xs text-slate-500">
+          *Đơn vị ngân sách theo triệu VND.
+        </p>
+      </div>
 
-          {REGIONS.map((r) => (
-            <label key={r.value} className="flex items-center gap-2">
-              <Checkbox
-                checked={data.region === r.value}
-                onCheckedChange={(checked) =>
-                  updateData("region", checked ? r.value : undefined)
-                }
-                className="data-[state=checked]:bg-blue-500"
-              />
-              <span>{r.label}</span>
-            </label>
-          ))}
+      {/* Loại hình trải nghiệm (checkbox đơn giản như bro muốn) */}
+      <div className="mb-4">
+        <div className="mb-2 text-sm font-semibold text-slate-900">
+          Loại hình trải nghiệm
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-2">
+          <div className="space-y-1">
+            {CATEGORIES.map((cat) => {
+              const checked = data.categories.includes(cat.value);
+
+              return (
+                <label
+                  key={cat.value}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-slate-50"
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) => {
+                      const isChecked = v === true;
+                      const updated = isChecked
+                        ? Array.from(new Set([...data.categories, cat.value]))
+                        : data.categories.filter((c) => c !== cat.value);
+                      updateData("categories", updated);
+                    }}
+                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  />
+                  <span className="text-sm text-slate-800">{cat.label}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <Button
-          className="w-full mt-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold"
-          onClick={handleSubmit}
-        >
-          Áp dụng
-        </Button>
+      {/* Vùng miền (giữ lại theo code cũ, style cho đồng bộ) */}
+      <div className="mb-4">
+        <div className="mb-2 text-sm font-semibold text-slate-900">
+          Vùng miền
+        </div>
 
-        <Button
-          className="w-full mt-1 rounded-lg font-semibold"
-          variant="outline"
-          onClick={handleReset}
-        >
-          Xoá lọc
-        </Button>
+        <div className="rounded-2xl border border-slate-200 bg-white p-2">
+          <div className="space-y-1">
+            {REGIONS.map((r) => {
+              const checked = data.region === r.value;
+
+              return (
+                <label
+                  key={r.value}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-slate-50"
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) =>
+                      updateData("region", v === true ? r.value : undefined)
+                    }
+                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  />
+                  <span className="text-sm text-slate-800">{r.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
+      {/* Apply */}
+      <Button
+        onClick={handleSubmit}
+        className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+      >
+        Áp dụng
+      </Button>
     </div>
   );
 };

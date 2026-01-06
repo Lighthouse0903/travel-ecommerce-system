@@ -11,14 +11,16 @@ const DesciptionView: React.FC<DescriptionProps> = ({ description }) => {
   const text = (description ?? "").trim();
 
   return (
-    <section className="p-5 rounded-xl shadow-md bg-slate-50 border">
-      <div className="flex items-center gap-2 mb-4">
-        <FileText className="w-5 h-5 text-slate-700" />
-        <h2 className="text-lg font-semibold text-gray-900">Giới thiệu Tour</h2>
+    <section className="rounded-2xl border border-slate-200 bg-card p-5 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <FileText className="h-5 w-5 text-slate-700" />
+        <h2 className="text-lg font-semibold text-slate-900">
+          Giới thiệu Tour
+        </h2>
       </div>
 
       {text ? (
-        <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+        <div className="whitespace-pre-line leading-relaxed text-slate-700">
           {text}
         </div>
       ) : (

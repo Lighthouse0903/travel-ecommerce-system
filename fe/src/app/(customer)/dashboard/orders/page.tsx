@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
+import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
 import {
   Table,
   TableBody,
@@ -14,135 +14,82 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Link from "next/link";
-import { BookingListItem, BookingStatus } from "@/types/booking";
-import { useBookingService } from "@/services/bookingService";
-import { toast } from "sonner";
+
 import { formatDate } from "@/utils/formatDate";
-import { PaginationMeta } from "@/types/pagination";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationCustom from "@/components/common/pagination/Pagination";
-
-const STATUS_CONFIG: Record<
-  BookingStatus,
-  {
-    label: string;
-    className: string;
-  }
-> = {
-  pending: {
-    label: "Chờ đại lý xác nhận",
-    className: "bg-amber-100 text-amber-800 border border-amber-300",
-  },
-  paid_waiting: {
-    label: "Chờ thanh toán",
-    className: "bg-sky-100 text-sky-800 border border-sky-300",
-  },
-  paid: {
-    label: "Đã thanh toán",
-    className: "bg-emerald-100 text-emerald-800 border border-emerald-300",
-  },
-  rejected: {
-    label: "Bị từ chối",
-    className: "bg-rose-100 text-rose-800 border border-rose-300",
-  },
-};
+import { BOOKING_STATUS_CONFIG } from "@/lib/config/booking";
+import BookingTableSkeleton from "./BookingTableSkeleton";
+import { useCustomerBookings } from "@/hooks/useBookingAction";
 
 const CustomerBookingListPage = () => {
-  const [bookings, setBookings] = useState<BookingListItem[]>([]);
-  const { getListBookingCustomer } = useBookingService();
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
-
   const { page, pageSize, setPage } = usePagination({
-    defaultPageSize: 5,
+    defaultPageSize: 9,
     maxPageSize: 50,
   });
-  const fadeUp = {
-    initial: { opacity: 0, y: 30 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.4 },
-  };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getListBookingCustomer({ page, page_size: pageSize });
-        if (res.success) {
-          setBookings(res.data ?? []);
-          setMeta((res.meta as PaginationMeta) ?? null);
-        } else {
-          setBookings([]);
-          setMeta(null);
-          toast.error(
-            typeof res.message === "string"
-              ? res.message
-              : "Lấy danh sách đơn thất bại"
-          );
-        }
-      } catch (e) {
-        toast.error("Lỗi hệ thống, vui lòng thử lại sau.");
-      }
-    };
-    fetchData();
-  }, [getListBookingCustomer, page, pageSize]);
+  const { bookings, meta, loading } = useCustomerBookings({
+    page,
+    pageSize,
+  });
 
   return (
-    <div className="w-full flex justify-center p-4">
-      <motion.div {...fadeUp} className="space-y-4 w-full">
-        <div>
-          <h1 className="text-2xl font-semibold">Đơn đặt tour của bạn</h1>
-          <p className="text-slate-500 text-sm">
-            Theo dõi trạng thái thanh toán, xác nhận và chi tiết các đơn bạn đã
-            đặt.
-          </p>
-        </div>
+    <div className="w-full p-4 space-y-4">
+      <div>
+        <h1 className="text-lg md:text-xl font-semibold text-slate-900">
+          Đơn đặt tour của bạn
+        </h1>
+        <p className="text-sm text-slate-600">
+          Theo dõi trạng thái thanh toán, xác nhận và chi tiết các đơn bạn đã
+          đặt.
+        </p>
+      </div>
 
-        <Card className="shadow-sm border">
-          <Table>
-            <TableHeader>
+      <Card className="bg-card border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50">
+            <TableRow>
+              <TableHead className="w-[120px]">Mã đơn</TableHead>
+              <TableHead className="w-[140px]">Ngày khởi hành</TableHead>
+              <TableHead>Tên tour</TableHead>
+              <TableHead className="w-[200px]">Trạng thái đơn</TableHead>
+              <TableHead className="text-right w-[140px]">Tổng tiền</TableHead>
+              <TableHead className="text-right w-[120px]">Hành động</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {loading && <BookingTableSkeleton rows={5} />}
+
+            {!loading && bookings.length === 0 && (
               <TableRow>
-                <TableHead className="w-[120px]">Mã đơn</TableHead>
-                <TableHead className="w-[140px]">Ngày khởi hành</TableHead>
-                <TableHead>Tên tour</TableHead>
-                <TableHead className="w-[200px]">Trạng thái đơn</TableHead>
-                <TableHead className="text-right w-[140px]">
-                  Tổng tiền
-                </TableHead>
-                <TableHead className="text-right w-[120px]">
-                  Hành động
-                </TableHead>
+                <TableCell
+                  colSpan={6}
+                  className="h-24 text-center text-sm text-slate-500"
+                >
+                  Bạn chưa có đơn đặt tour nào.
+                </TableCell>
               </TableRow>
-            </TableHeader>
+            )}
 
-            <TableBody>
-              {bookings.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center text-sm text-slate-500"
-                  >
-                    Bạn chưa có đơn đặt tour nào.
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {bookings.map((item) => {
-                const config = STATUS_CONFIG[item.status];
+            {!loading &&
+              bookings.map((item) => {
+                const config = BOOKING_STATUS_CONFIG[item.status];
 
                 return (
                   <TableRow
                     key={item.booking_id}
                     className="hover:bg-slate-50 transition-colors"
                   >
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-slate-900">
                       {item.booking_id.slice(0, 8).toUpperCase()}
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="text-slate-700">
                       {item.travel_date ? formatDate(item.travel_date) : "-"}
                     </TableCell>
 
-                    <TableCell className="line-clamp-2 max-w-[280px]">
+                    <TableCell className="text-slate-700 line-clamp-2 max-w-[280px]">
                       {item.tour_name}
                     </TableCell>
 
@@ -154,16 +101,13 @@ const CustomerBookingListPage = () => {
                       </Badge>
                     </TableCell>
 
-                    <TableCell className="text-right font-semibold text-blue-600">
+                    <TableCell className="text-right font-semibold text-primary">
                       {Number(item.total_price).toLocaleString("vi-VN")} đ
                     </TableCell>
 
                     <TableCell className="text-right">
                       <Link href={`/dashboard/orders/${item.booking_id}`}>
-                        <Button
-                          size="sm"
-                          className="text-xs px-3 bg-[#2A5FAE] hover:bg-[#4B5FAA] text-white rounded-xl ring-2"
-                        >
+                        <Button size="sm" className="rounded-xl">
                           Xem chi tiết
                         </Button>
                       </Link>
@@ -171,19 +115,19 @@ const CustomerBookingListPage = () => {
                   </TableRow>
                 );
               })}
-            </TableBody>
-          </Table>
-        </Card>
-        {meta?.total_pages && meta.total_pages > 1 && (
-          <div className="w-full mt-6 flex justify-center">
-            <PaginationCustom
-              page={page}
-              totalPages={meta.total_pages}
-              onPageChange={setPage}
-            />
-          </div>
-        )}
-      </motion.div>
+          </TableBody>
+        </Table>
+      </Card>
+
+      {meta?.total_pages && meta.total_pages > 1 && (
+        <div className="w-full pt-2 flex justify-center">
+          <PaginationCustom
+            page={page}
+            totalPages={meta.total_pages}
+            onPageChange={setPage}
+          />
+        </div>
+      )}
     </div>
   );
 };

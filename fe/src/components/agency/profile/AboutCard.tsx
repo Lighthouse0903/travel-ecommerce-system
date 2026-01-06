@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
@@ -11,12 +10,12 @@ const AboutCard: React.FC<Props> = ({ description }) => {
   const hasContent = description?.trim();
 
   return (
-    <Card className="rounded-xl bg-slate-50 shadow-md">
+    <Card className="rounded-2xl border border-slate-200 bg-card shadow-sm">
       <CardHeader>
-        <CardTitle>Giới thiệu</CardTitle>
+        <CardTitle className="text-slate-900">Giới thiệu</CardTitle>
       </CardHeader>
 
-      <CardContent className="text-sm text-muted-foreground leading-relaxed">
+      <CardContent className="text-sm text-slate-600 leading-relaxed">
         {hasContent ? description : "Bạn chưa cập nhật thông tin này."}
       </CardContent>
     </Card>

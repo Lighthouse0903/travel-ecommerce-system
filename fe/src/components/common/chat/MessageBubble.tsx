@@ -15,7 +15,7 @@ const MessageBubble: React.FC<Props> = ({ message, isMine }) => {
       <div className="max-w-[70%]">
         <div
           className={`rounded-2xl px-3 py-2 text-sm break-words ${
-            isMine ? "bg-blue-600 text-white" : "bg-white border text-slate-900"
+            isMine ? "bg-sky-500 text-white" : "bg-white border text-slate-900"
           }`}
         >
           {message.content}

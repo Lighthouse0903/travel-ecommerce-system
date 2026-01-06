@@ -18,7 +18,7 @@ const TourDisplay: React.FC<TourDisplayProps> = ({ tours }) => {
   const hasTours = tours && tours.length > 0;
 
   return (
-    <div className="bg-slate-100">
+    <div className="bg-transparent">
       <div className="py-6">
         <Carousel className="w-full">
           {/* padding-bottom để shadow không bị cắt */}
@@ -29,7 +29,7 @@ const TourDisplay: React.FC<TourDisplayProps> = ({ tours }) => {
                     key={i}
                     className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                   >
-                    <div className="bg-white rounded-xl h-[360px] animate-pulse" />
+                    <div className="bg-card border border-border rounded-xl h-[360px] animate-pulse" />
                   </CarouselItem>
                 ))
               : tours.map((tour, idx) => (
@@ -37,14 +37,13 @@ const TourDisplay: React.FC<TourDisplayProps> = ({ tours }) => {
                     key={tour.tour_id ?? idx}
                     className="pl-1 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                   >
-                    {/*  không bọc translate nữa */}
                     <TourCard tour={tour} />
                   </CarouselItem>
                 ))}
           </CarouselContent>
 
-          <CarouselPrevious />
-          <CarouselNext />
+          <CarouselPrevious className="bg-card border-border text-foreground opacity-80 hover:opacity-100 transition" />
+          <CarouselNext className="bg-card border-border text-foreground opacity-80 hover:opacity-100 transition" />
         </Carousel>
       </div>
     </div>

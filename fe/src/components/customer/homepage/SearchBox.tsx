@@ -43,7 +43,6 @@ export default function SearchBox() {
       >
         <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xl border border-white/60 rounded-full shadow-xl px-4 py-2 sm:px-6 sm:py-3">
           <SlLocationPin className="text-gray-600 text-lg shrink-0" />
-
           <input
             type="text"
             placeholder="Bạn muốn đi đâu?"

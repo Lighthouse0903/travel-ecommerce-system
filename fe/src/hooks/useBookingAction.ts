@@ -1,9 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
 import { useBookingService } from "@/services/bookingService";
-import { CreateBookingRequest } from "@/types/booking";
+import type { BookingListItem, CreateBookingRequest } from "@/types/booking";
+import type { PaginationMeta } from "@/types/pagination";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useLoginModal } from "@/contexts/LoginModalContext";
 
@@ -25,6 +29,10 @@ const getPendingBookingId = (userId: string) => {
 const setPendingBookingId = (userId: string, bookingId: string) => {
   localStorage.setItem(PENDING_BOOKING_KEY(userId), bookingId);
 };
+
+/* =========================
+   Hook: create booking action
+========================= */
 
 export const useBookingAction = () => {
   const router = useRouter();
@@ -48,13 +56,13 @@ export const useBookingAction = () => {
       return { ok: false as const, redirected: true as const };
     }
 
-    // Lưu draft trước khi gọi API
     saveDraftBooking(userId, payload);
 
     const res = await createBooking(payload);
 
     if (res.success) {
       const bookingId = res.data?.booking_id;
+
       if (!bookingId) {
         toast.error("Có lỗi xảy ra, thiếu mã booking");
         return { ok: false as const };
@@ -83,4 +91,67 @@ export const useBookingAction = () => {
   };
 
   return { submitCreateBooking };
+};
+
+// custom hook cho khách hàng xem đơn đặt tour
+
+interface UseCustomerBookingsParams {
+  page: number;
+  pageSize: number;
+}
+
+export const useCustomerBookings = ({
+  page,
+  pageSize,
+}: UseCustomerBookingsParams) => {
+  const { getListBookingCustomer } = useBookingService();
+
+  const [bookings, setBookings] = useState<BookingListItem[]>([]);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+
+    const fetchBookings = async () => {
+      setLoading(true);
+      try {
+        const res = await getListBookingCustomer({
+          page,
+          page_size: pageSize,
+        });
+
+        if (!alive) return;
+
+        if (res.success) {
+          setBookings(res.data ?? []);
+          setMeta((res.meta as PaginationMeta) ?? null);
+        } else {
+          setBookings([]);
+          setMeta(null);
+          toast.error(
+            typeof res.message === "string"
+              ? res.message
+              : "Lấy danh sách đơn thất bại"
+          );
+        }
+      } catch {
+        if (!alive) return;
+        toast.error("Lỗi hệ thống, vui lòng thử lại sau.");
+        setBookings([]);
+        setMeta(null);
+      } finally {
+        if (!alive) return;
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+
+    return () => {
+      alive = false;
+    };
+  }, [getListBookingCustomer, page, pageSize]);
+
+  return { bookings, meta, loading };
 };

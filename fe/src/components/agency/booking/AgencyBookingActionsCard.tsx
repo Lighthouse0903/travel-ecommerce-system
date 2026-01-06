@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatMoneyVND } from "@/utils/formatPrice";
+import { formatMoney } from "@/utils/formatPrice";
 
 interface Props {
   booking: BookingDetail;
@@ -29,10 +29,8 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
   const [localStatus, setLocalStatus] = useState<BookingStatus>(booking.status);
   const [loading, setLoading] = useState(false);
 
-  // confirm approve
   const [approveOpen, setApproveOpen] = useState(false);
 
-  // reject
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
@@ -41,14 +39,13 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
   }, [booking.status]);
 
   const money = useMemo(
-    () => formatMoneyVND(booking.total_price),
+    () => formatMoney(booking.total_price),
     [booking.total_price]
   );
 
   const canApprove = localStatus === "pending";
   const canReject = localStatus === "pending";
 
-  // chấp nhận
   const confirmApprove = async () => {
     if (!canApprove) return;
 
@@ -65,7 +62,7 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
         return;
       }
 
-      toast.success("Đã xác nhận đơn, chuyển sang chờ thanh toán.");
+      // toast.success("Đã xác nhận đơn, chuyển sang chờ thanh toán.");
       setLocalStatus("paid_waiting");
       setApproveOpen(false);
 
@@ -78,7 +75,6 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
     }
   };
 
-  // Từ chối đơn hàng
   const confirmReject = async () => {
     if (!canReject) return;
 
@@ -121,17 +117,17 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
   return (
     <>
       <Card className="p-5 space-y-4">
-        <div className="font-semibold">Xử lý đơn hàng</div>
+        <div className="font-semibold text-slate-900">Xử lý đơn hàng</div>
 
         <div className="flex items-end justify-between">
-          <div className="text-sm text-muted-foreground">Tổng tiền</div>
-          <div className="text-2xl font-semibold">{money}</div>
+          <div className="text-sm text-slate-500">Tổng tiền</div>
+          <div className="text-2xl font-semibold text-slate-900">{money}</div>
         </div>
 
         {localStatus === "pending" && (
           <div className="space-y-2">
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex gap-2">
-              <Clock className="h-4 w-4 mt-0.5" />
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-slate-700 flex gap-2">
+              <Clock className="h-4 w-4 mt-0.5 text-amber-600" />
               <div>
                 Đơn hàng đang <b>chờ xác nhận</b>. Bạn có thể duyệt hoặc từ chối
                 đơn này.
@@ -139,7 +135,7 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
             </div>
 
             <Button
-              className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 text-white"
+              className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => setApproveOpen(true)}
               disabled={loading}
             >
@@ -163,11 +159,11 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
         )}
 
         {localStatus === "paid_waiting" && (
-          <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800 flex gap-2">
-            <Clock className="h-4 w-4 mt-0.5" />
+          <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-slate-700 flex gap-2">
+            <Clock className="h-4 w-4 mt-0.5 text-sky-600" />
             <div>
               Đơn đã được <b>xác nhận</b> và đang <b>chờ khách thanh toán</b>.
-              <div className="text-xs mt-1 opacity-80">
+              <div className="text-xs mt-1 text-slate-500">
                 (Không thể từ chối ở trạng thái này.)
               </div>
             </div>
@@ -175,30 +171,29 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
         )}
 
         {localStatus === "paid" && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 flex gap-2">
-            <CheckCircle2 className="h-4 w-4 mt-0.5" />
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-slate-700 flex gap-2">
+            <CheckCircle2 className="h-4 w-4 mt-0.5 text-emerald-600" />
             <div>Đơn hàng đã được thanh toán.</div>
           </div>
         )}
 
         {localStatus === "rejected" && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 space-y-2">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-slate-700 space-y-2">
             <div className="flex gap-2">
-              <XCircle className="h-4 w-4 mt-0.5" />
+              <XCircle className="h-4 w-4 mt-0.5 text-rose-600" />
               <div>
                 Bạn đã <b>từ chối</b> đơn hàng này.
               </div>
             </div>
 
-            <div className="text-sm text-rose-800/90">
-              <span className="font-medium">Lý do:</span>{" "}
+            <div className="text-sm text-slate-700">
+              <span className="font-medium text-slate-900">Lý do:</span>{" "}
               {booking.rejected_reason?.trim() || "—"}
             </div>
           </div>
         )}
       </Card>
 
-      {/* Diaglog Approved */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent>
           <DialogHeader>
@@ -217,7 +212,7 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
               Hủy
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={confirmApprove}
               disabled={loading}
             >
@@ -228,7 +223,6 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
         </DialogContent>
       </Dialog>
 
-      {/* Diaglog reject*/}
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent>
           <DialogHeader>
@@ -266,4 +260,5 @@ const AgencyBookingActionsCard = ({ booking }: Props) => {
     </>
   );
 };
+
 export default AgencyBookingActionsCard;

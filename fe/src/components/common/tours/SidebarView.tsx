@@ -3,15 +3,10 @@
 import React from "react";
 import type { TourResponse } from "@/types/tour";
 import { Star, BusFront, TicketPercent } from "lucide-react";
+import { formatMoney } from "@/utils/formatPrice";
 
 type Props = {
   tour: TourResponse;
-};
-
-const formatVND = (v: unknown) => {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "0 ₫";
-  return n.toLocaleString("vi-VN") + " ₫";
 };
 
 const calcFinal = (price: unknown, discount: unknown) => {
@@ -56,14 +51,16 @@ const TourMetaPanel: React.FC<Props> = ({ tour }) => {
               {hasDiscount ? (
                 <div className="space-y-1">
                   <div className="text-lg font-bold">
-                    {formatVND(finalAdult)}
+                    {formatMoney(finalAdult)}
                   </div>
                   <div className="text-xs text-muted-foreground line-through">
-                    {formatVND(adultPrice)}
+                    {formatMoney(adultPrice)}
                   </div>
                 </div>
               ) : (
-                <div className="text-lg font-bold">{formatVND(adultPrice)}</div>
+                <div className="text-lg font-bold">
+                  {formatMoney(adultPrice)}
+                </div>
               )}
             </div>
           </div>
@@ -75,14 +72,16 @@ const TourMetaPanel: React.FC<Props> = ({ tour }) => {
               {hasDiscount ? (
                 <div className="space-y-1">
                   <div className="text-lg font-bold">
-                    {formatVND(finalChild)}
+                    {formatMoney(finalChild)}
                   </div>
                   <div className="text-xs text-muted-foreground line-through">
-                    {formatVND(childPrice)}
+                    {formatMoney(childPrice)}
                   </div>
                 </div>
               ) : (
-                <div className="text-lg font-bold">{formatVND(childPrice)}</div>
+                <div className="text-lg font-bold">
+                  {formatMoney(childPrice)}
+                </div>
               )}
             </div>
           </div>

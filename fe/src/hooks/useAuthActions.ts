@@ -5,21 +5,7 @@ import { toast } from "sonner";
 import { useAuthService } from "@/services/authService";
 import { ApiFieldErrors } from "@/types/common";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserResponse } from "@/types/user";
-
-// interface của LoginForm và registerForm
-export interface LoginFormValues {
-  usernameOrEmail: string;
-  password: string;
-}
-
-export interface RegisterFormValues {
-  full_name: string;
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
+import { LoginFormValues, RegisterFormValues } from "@/schemas/auth";
 
 export const useAuthActions = () => {
   const { login, register, getProfile } = useAuthService();

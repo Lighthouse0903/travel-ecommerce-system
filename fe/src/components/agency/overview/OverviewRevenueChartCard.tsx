@@ -35,7 +35,7 @@ const OverviewRevenueChartCard: React.FC<OverviewRevenueChartCardProps> = ({
 }) => {
   console.log("Dữ liệu báo cáo doanh thu: ", points);
   return (
-    <Card className="p-5 bg-slate-50 shadow-md">
+    <Card className="p-5 bg-card shadow-md">
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">

@@ -39,31 +39,33 @@ const ChatRoom: React.FC<Props> = ({ convId }) => {
   }, [messages, currentUserId]);
 
   return (
-    <div className="h-[calc(95vh-120px)] flex flex-col rounded-tr-xl bg-white border overflow-hidden">
-      {/* header */}
-      <div className="px-4 py-3 border-b flex items-center gap-3 bg-white">
-        <div className="w-10 h-10 rounded-full bg-slate-400 flex items-center justify-center text-white font-semibold">
+    <div className="flex h-[calc(95vh-120px)] flex-col overflow-hidden rounded-tr-xl border border-border bg-card">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-primary/20 bg-primary px-4 py-3 text-primary-foreground">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground/20 text-sm font-semibold uppercase">
           {partnerInitial}
         </div>
 
         <div className="flex flex-col leading-tight">
-          <span className="font-semibold text-slate-900">{partnerName}</span>
-          {partnerIdShort && (
-            <span className="text-xs text-slate-400">@{partnerIdShort}</span>
-          )}
+          <span className="font-semibold">{partnerName}</span>
+          {partnerIdShort ? (
+            <span className="text-xs opacity-80">@{partnerIdShort}</span>
+          ) : null}
         </div>
       </div>
 
-      {/* MEssages */}
+      {/* Messages */}
       <div
         ref={listRef}
-        className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50"
+        className="flex-1 space-y-2 overflow-y-auto bg-muted/30 p-4"
         onMouseEnter={sendRead}
       >
         {isLoading ? (
-          <div className="text-sm text-slate-500">Đang tải tin nhắn…</div>
+          <div className="text-sm text-muted-foreground">
+            Đang tải tin nhắn…
+          </div>
         ) : messages.length === 0 ? (
-          <div className="text-sm text-slate-500">Chưa có tin nhắn.</div>
+          <div className="text-sm text-muted-foreground">Chưa có tin nhắn.</div>
         ) : (
           messages.map((m) => (
             <MessageBubble
@@ -75,13 +77,15 @@ const ChatRoom: React.FC<Props> = ({ convId }) => {
         )}
       </div>
 
-      {/* Button */}
-      <ChatInput
-        value={text}
-        onChange={setText}
-        onSend={sendMessage}
-        onFocus={sendRead}
-      />
+      {/* Input */}
+      <div className="border-t border-border bg-card">
+        <ChatInput
+          value={text}
+          onChange={setText}
+          onSend={sendMessage}
+          onFocus={sendRead}
+        />
+      </div>
     </div>
   );
 };

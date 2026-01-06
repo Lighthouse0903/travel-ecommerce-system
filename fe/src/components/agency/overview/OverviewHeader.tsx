@@ -21,7 +21,7 @@ const OverviewHeader: React.FC<OverviewHeaderProps> = ({
   subtitle = "Chào mừng quay trở lại, đây là tình hình kinh doanh gần đây.",
 }) => {
   return (
-    <Card className="p-4 sm:p-5 bg-slate-50 shadow-md">
+    <Card className="p-4 sm:p-5 bg-card shadow-md">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{title}</h1>

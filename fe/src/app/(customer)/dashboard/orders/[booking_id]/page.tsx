@@ -6,8 +6,8 @@ import { toast } from "sonner";
 
 import { useBookingService } from "@/services/bookingService";
 import type { BookingDetail } from "@/types/booking";
+
 import { BOOKING_VIEW_BY_STATUS } from ".";
-import MotionFlow, { MotionItem } from "@/components/common/motion/MotionFlow";
 import BookingDetailSkeleton from "./BookingDetailSkeleton";
 
 export default function CustomerBookingDetailPage() {
@@ -27,7 +27,11 @@ export default function CustomerBookingDetailPage() {
     let mounted = true;
 
     const fetchData = async () => {
-      if (!bookingId) return;
+      if (!bookingId) {
+        setBooking(null);
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
       try {
@@ -47,6 +51,7 @@ export default function CustomerBookingDetailPage() {
 
         setBooking(res.data ?? null);
       } catch {
+        if (!mounted) return;
         toast.error("Lỗi hệ thống, vui lòng thử lại sau.");
         setBooking(null);
       } finally {
@@ -55,6 +60,7 @@ export default function CustomerBookingDetailPage() {
     };
 
     fetchData();
+
     return () => {
       mounted = false;
     };
@@ -66,8 +72,10 @@ export default function CustomerBookingDetailPage() {
 
   if (!booking) {
     return (
-      <div className="w-full flex justify-center p-6 text-slate-500">
-        Không tìm thấy booking.
+      <div className="w-full p-4">
+        <div className="rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground">
+          Không tìm thấy booking.
+        </div>
       </div>
     );
   }
@@ -76,19 +84,19 @@ export default function CustomerBookingDetailPage() {
 
   if (!BookingView) {
     return (
-      <div className="w-full flex justify-center p-6 text-slate-500">
-        Trạng thái booking chưa được hỗ trợ.
+      <div className="w-full p-4">
+        <div className="rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground">
+          Trạng thái booking chưa được hỗ trợ.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full flex justify-center p-4">
-      <MotionFlow>
-        <MotionItem className="w-full max-w-5xl">
-          <BookingView booking={booking} />
-        </MotionItem>
-      </MotionFlow>
+    <div className="w-full p-4">
+      <div className="w-full max-w-5xl">
+        <BookingView booking={booking} />
+      </div>
     </div>
   );
 }

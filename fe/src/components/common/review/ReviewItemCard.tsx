@@ -2,9 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { MoreVertical, Pencil, Star, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,16 +23,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { useReviewService } from "@/services/reviewService";
-
-interface Props {
+interface ReviewItemCardProps {
   review: ReviewResponse;
   currentUserId?: string | null;
+
+  // callbacks từ ReviewList
+  onEdit: (
+    review_id: string,
+    comment: string
+  ) => Promise<{ success: boolean; message?: string }>;
+  onDelete: (
+    review_id: string
+  ) => Promise<{ success: boolean; message?: string }>;
 }
 
-const ReviewItemCard: React.FC<Props> = ({ review, currentUserId }) => {
-  const router = useRouter();
-
+const ReviewItemCard = ({
+  review,
+  currentUserId,
+  onEdit,
+  onDelete,
+}: ReviewItemCardProps) => {
   const isOwner = useMemo(() => {
     if (!currentUserId) return false;
     return review.user_id === currentUserId;
@@ -43,8 +51,6 @@ const ReviewItemCard: React.FC<Props> = ({ review, currentUserId }) => {
   const firstChar = (
     review.customer_name?.trim()?.charAt(0) || "?"
   ).toUpperCase();
-
-  const { updateReview, deleteReview } = useReviewService();
 
   const [openEdit, setOpenEdit] = useState(false);
   const [editingComment, setEditingComment] = useState(review.comment ?? "");
@@ -61,7 +67,7 @@ const ReviewItemCard: React.FC<Props> = ({ review, currentUserId }) => {
     if (!trimmed) return;
 
     setSaving(true);
-    const res = await updateReview(review.review_id, { comment: trimmed });
+    const res = await onEdit(review.review_id, trimmed);
     setSaving(false);
 
     if (!res.success) {
@@ -69,16 +75,13 @@ const ReviewItemCard: React.FC<Props> = ({ review, currentUserId }) => {
       return;
     }
 
-    toast.success(res.message || "Đã cập nhật đánh giá");
+    toast.success(res.message || "Đã cập nhật");
     setOpenEdit(false);
-
-    //  refresh để list lấy data mới (đơn giản, chắc ăn)
-    router.refresh();
   };
 
   const handleDelete = async () => {
     setDeleting(true);
-    const res = await deleteReview(review.review_id);
+    const res = await onDelete(review.review_id);
     setDeleting(false);
 
     if (!res.success) {
@@ -86,10 +89,7 @@ const ReviewItemCard: React.FC<Props> = ({ review, currentUserId }) => {
       return;
     }
 
-    toast.success(res.message || "Đã xóa đánh giá");
-
-    // ✅ refresh để list biến mất
-    router.refresh();
+    toast.success(res.message || "Đã xóa");
   };
 
   return (

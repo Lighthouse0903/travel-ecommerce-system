@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { MenuIcon } from "lucide-react";
 import { FaRegBell } from "react-icons/fa";
 
@@ -18,24 +18,29 @@ import { useAuth } from "@/contexts/AuthContext";
 
 import AccountSection from "./AccountSection";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import Image from "next/image";
 
 const Header2 = () => {
   const { access, user } = useAuth();
   console.log("Access_token:", access);
   console.log("User_login:", user);
   return (
-    <div className="h-[12vh] w-full flex items-center justify-between bg-transparent px-2 sm:px-5">
+    <div className="h-[12vh] w-full flex items-center justify-between bg-card border-b border-border px-2 sm:px-5">
       <Link href={"/"}>
         {/* Logo */}
         <div className="flex justify-start items-center gap-x-2">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden">
-            <img
-              src={"/images/logo.jpg"}
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-border bg-background">
+            <Image
+              src="/images/logo.jpg"
               alt="ảnh logo"
+              width={64}
+              height={64}
               className="w-full h-full object-contain"
             />
           </div>
-          <span className="font-serif text-2xl text-slate-600">VietTravel</span>
+          <span className="font-serif text-2xl text-foreground/80">
+            VietTravel
+          </span>
         </div>
       </Link>
 
@@ -45,8 +50,10 @@ const Header2 = () => {
       </div>
       <div className="flex items-center justify-between gap-x-3">
         <div className="flex items-center justify-between">
-          <FaRegBell size={23} className="text-gray-700 shrink-0" />
-          {/* <span className="hidden sm:inline">Yêu thích</span> */}
+          {/* <FaRegBell
+            size={23}
+            className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+          /> */}
         </div>
 
         {/* Xử lý sự kiện đăng kí đăng nhập */}
@@ -57,9 +64,12 @@ const Header2 = () => {
         <div className="lg:hidden">
           <Sheet>
             <SheetTrigger>
-              <MenuIcon size={23} />
+              <MenuIcon
+                size={23}
+                className="text-muted-foreground hover:text-primary transition-colors"
+              />
             </SheetTrigger>
-            <SheetContent className="z-[9990] w-[60vw]">
+            <SheetContent className="z-[9990] w-[60vw] bg-card text-card-foreground border-border">
               <SheetHeader>
                 <VisuallyHidden>
                   <SheetTitle>Menu Navigation</SheetTitle>

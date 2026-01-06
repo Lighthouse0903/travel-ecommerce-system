@@ -21,7 +21,7 @@ const RevenueTopTours: React.FC<Props> = ({
   items,
 }) => {
   return (
-    <Card className="p-5 bg-slate-50 shadow-md">
+    <Card className="p-5 bg-card shadow-md">
       <h2 className="text-lg font-semibold mb-4">{title}</h2>
 
       {loading ? (

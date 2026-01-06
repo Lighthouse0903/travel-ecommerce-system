@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 import { useFormContext } from "react-hook-form";
 import Section from "./Section";
 
@@ -31,8 +31,12 @@ const regionOptions = [
   { value: 3, label: "Miền Nam" },
 ];
 
+const inputClass =
+  "bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0";
+
 const BasicSection: React.FC = () => {
   const { control, watch, setValue } = useFormContext<EditTourFormValues>();
+  const uid = useId();
 
   const selectedCategories = watch("categories") ?? [];
 
@@ -49,16 +53,21 @@ const BasicSection: React.FC = () => {
       title="Thông tin cơ bản"
       description="Cập nhật các thông tin chính của tour."
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Tên tour */}
         <FormField
           control={control}
           name="name"
           render={({ field }) => (
             <FormItem className="space-y-2 md:col-span-2">
-              <FormLabel>Tên tour</FormLabel>
+              <FormLabel className="text-sm font-medium">Tên tour</FormLabel>
               <FormControl>
-                <Input placeholder="VD: Hà Nội - Ninh Bình 2N1Đ" {...field} />
+                <Input
+                  className={inputClass}
+                  placeholder="VD: Hà Nội - Ninh Bình 2N1Đ"
+                  {...field}
+                  value={field.value ?? ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -71,9 +80,16 @@ const BasicSection: React.FC = () => {
           name="departure_location"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel>Nơi khởi hành</FormLabel>
+              <FormLabel className="text-sm font-medium">
+                Nơi khởi hành
+              </FormLabel>
               <FormControl>
-                <Input placeholder="VD: Hà Nội" {...field} />
+                <Input
+                  className={inputClass}
+                  placeholder="VD: Hà Nội"
+                  {...field}
+                  value={field.value ?? ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -86,9 +102,14 @@ const BasicSection: React.FC = () => {
           name="destination"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel>Điểm đến</FormLabel>
+              <FormLabel className="text-sm font-medium">Điểm đến</FormLabel>
               <FormControl>
-                <Input placeholder="VD: Ninh Bình" {...field} />
+                <Input
+                  className={inputClass}
+                  placeholder="VD: Ninh Bình"
+                  {...field}
+                  value={field.value ?? ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -101,9 +122,10 @@ const BasicSection: React.FC = () => {
           name="duration_days"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel>Số ngày</FormLabel>
+              <FormLabel className="text-sm font-medium">Số ngày</FormLabel>
               <FormControl>
                 <Input
+                  className={inputClass}
                   type="number"
                   min={1}
                   value={field.value ?? 1}
@@ -121,13 +143,13 @@ const BasicSection: React.FC = () => {
           name="region"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel>Vùng miền</FormLabel>
+              <FormLabel className="text-sm font-medium">Vùng miền</FormLabel>
               <FormControl>
                 <Select
                   value={String(field.value ?? 1)}
                   onValueChange={(v) => field.onChange(Number(v))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={inputClass}>
                     <SelectValue placeholder="Chọn vùng miền" />
                   </SelectTrigger>
                   <SelectContent>
@@ -150,25 +172,51 @@ const BasicSection: React.FC = () => {
           name="categories"
           render={() => (
             <FormItem className="space-y-2 md:col-span-2">
-              <FormLabel>Danh mục</FormLabel>
+              <FormLabel className="text-sm font-medium">Danh mục</FormLabel>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                 {CATEGORY_CHOICES.map((c) => {
                   const checked = selectedCategories.includes(c.value);
+                  const checkboxId = `${uid}-${c.value}`;
+
                   return (
-                    <label
-                      key={c.value}
-                      className="flex items-center gap-2 border rounded-md px-3 py-2 cursor-pointer"
-                    >
-                      <Checkbox
+                    <div key={c.value} className="relative">
+                      <input
+                        id={checkboxId}
+                        type="checkbox"
+                        className="peer sr-only"
                         checked={checked}
-                        onCheckedChange={() => toggleCategory(c.value)}
+                        onChange={() => toggleCategory(c.value)}
                       />
-                      <span className="text-sm">{c.label}</span>
-                    </label>
+
+                      <label
+                        htmlFor={checkboxId}
+                        className={[
+                          "flex items-center gap-2 rounded-lg border px-3 py-2 transition",
+                          "bg-background border-border cursor-pointer",
+                          "hover:bg-muted/40",
+                          "peer-focus-visible:ring-2 peer-focus-visible:ring-primary/20 peer-focus-visible:ring-offset-0",
+                          checked
+                            ? "border-primary/40 bg-primary/5"
+                            : "text-foreground",
+                        ].join(" ")}
+                      >
+                        {/* vẫn dùng Checkbox của shadcn để đồng bộ UI */}
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleCategory(c.value)}
+                          className="data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                        />
+                        <span className="text-sm">{c.label}</span>
+                      </label>
+                    </div>
                   );
                 })}
               </div>
+
+              <p className="text-xs text-muted-foreground">
+                Chọn một hoặc nhiều danh mục phù hợp để tour dễ được tìm thấy.
+              </p>
 
               <FormMessage />
             </FormItem>
@@ -181,9 +229,10 @@ const BasicSection: React.FC = () => {
           name="description"
           render={({ field }) => (
             <FormItem className="space-y-2 md:col-span-2">
-              <FormLabel>Mô tả</FormLabel>
+              <FormLabel className="text-sm font-medium">Mô tả</FormLabel>
               <FormControl>
                 <Textarea
+                  className={[inputClass, "min-h-[120px]"].join(" ")}
                   rows={5}
                   placeholder="Mô tả ngắn về tour..."
                   {...field}
