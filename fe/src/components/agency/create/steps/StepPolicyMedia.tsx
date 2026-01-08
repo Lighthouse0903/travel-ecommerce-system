@@ -18,6 +18,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import FileUpload from "@/components/common/Upload/FileUpload";
+import { Textarea } from "@/components/ui/textarea";
+const inputClass =
+  "bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0";
 
 const fileKey = (f: File) => `${f.name}-${f.size}-${f.lastModified}`;
 
@@ -100,6 +103,7 @@ const GalleryUpload: React.FC<GalleryUploadProps> = ({ value, onChange }) => {
         <input
           ref={inputRef}
           type="file"
+          className={inputClass}
           accept="image/*"
           multiple
           hidden
@@ -150,7 +154,7 @@ const StepPolicyMedia: React.FC = () => {
   const images = (watch("images") || []) as File[];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <Card className="shadow-sm border">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Chính sách</CardTitle>
@@ -165,12 +169,23 @@ const StepPolicyMedia: React.FC = () => {
                 <FormLabel>Đặt cọc (%)</FormLabel>
                 <FormControl>
                   <Input
+                    className={inputClass}
                     type="number"
                     min={0}
                     max={100}
-                    value={field.value ?? 0}
+                    inputMode="numeric"
+                    placeholder="Ví dụ: 30"
+                    value={field.value ?? ""}
                     onChange={(e) => {
-                      field.onChange(Number(e.target.value || 0));
+                      const v = e.target.value;
+
+                      if (v === "") {
+                        field.onChange("");
+                      } else {
+                        const n = Math.min(100, Math.max(0, Number(v)));
+                        field.onChange(n);
+                      }
+
                       clearErrors("policy.deposit_percent");
                     }}
                   />
@@ -185,17 +200,20 @@ const StepPolicyMedia: React.FC = () => {
             name="policy.cancellation_fee"
             render={({ field }) => (
               <FormItem className="md:col-span-2">
-                <FormLabel>Phí huỷ</FormLabel>
+                <FormLabel>Điều khoản huỷ tour</FormLabel>
+
                 <FormControl>
                   <Input
-                    {...field}
+                    className={inputClass}
                     value={field.value ?? ""}
+                    placeholder="Ví dụ: Huỷ trước 7 ngày: hoàn 70%. Huỷ trước 3 ngày: không hoàn tiền."
                     onChange={(e) => {
-                      field.onChange(e);
+                      field.onChange(e.target.value);
                       clearErrors("policy.cancellation_fee");
                     }}
                   />
                 </FormControl>
+
                 <FormMessage />
               </FormItem>
             )}
@@ -207,16 +225,20 @@ const StepPolicyMedia: React.FC = () => {
             render={({ field }) => (
               <FormItem className="md:col-span-3">
                 <FormLabel>Chính sách hoàn tiền</FormLabel>
+
                 <FormControl>
-                  <Input
-                    {...field}
+                  <Textarea
+                    className={inputClass}
+                    rows={3}
                     value={field.value ?? ""}
+                    placeholder="Ví dụ: Hoàn 100% nếu huỷ trước 7 ngày. Hoàn 50% nếu huỷ trước 3 ngày. Không hoàn tiền nếu huỷ trong vòng 24h."
                     onChange={(e) => {
-                      field.onChange(e);
+                      field.onChange(e.target.value);
                       clearErrors("policy.refund_policy");
                     }}
                   />
                 </FormControl>
+
                 <FormMessage />
               </FormItem>
             )}

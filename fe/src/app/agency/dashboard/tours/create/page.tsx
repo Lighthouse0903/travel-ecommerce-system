@@ -212,7 +212,7 @@ const TourCreateWizard: React.FC = () => {
   };
 
   return (
-    <div className="w-full px-4 py-8 space-y-6">
+    <div className="w-full px-8 py-8 space-y-5">
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -234,10 +234,10 @@ const TourCreateWizard: React.FC = () => {
           <p className="text-sm text-muted-foreground">{currentStep.desc}</p>
         </CardHeader>
 
-        <CardContent className="space-y-6 mt-3">
+        <CardContent className="space-y-6 mt-3 px-4">
           <Form {...form}>
             <form className="space-y-6">
-              <fieldset disabled={isSubmitting} className="space-y-6">
+              <fieldset disabled={isSubmitting} className="space-y-4">
                 {step === 0 && <BasicInfor />}
                 {step === 1 && <Itinerary />}
                 {step === 2 && <ServicesAndPrice />}

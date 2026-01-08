@@ -3,8 +3,6 @@
 import { useEffect, useMemo } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { TourRequest, Itinerary as ItineraryType } from "@/types/tour";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import DayItem from "./DayItem";
 
@@ -79,32 +77,26 @@ const StepItinerary: React.FC = () => {
   };
 
   return (
-    <Card className="shadow-sm border">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">Lịch trình</CardTitle>
-      </CardHeader>
+    <div className="space-y-3 p-2">
+      {fields.map((f, idx) => (
+        <DayItem
+          key={f.id}
+          index={idx}
+          onRemove={() => removeDay(idx)}
+          disableRemove={fields.length <= 1}
+        />
+      ))}
 
-      <CardContent className="space-y-4">
-        {fields.map((f, idx) => (
-          <DayItem
-            key={f.id}
-            index={idx}
-            onRemove={() => removeDay(idx)}
-            disableRemove={fields.length <= 1}
-          />
-        ))}
+      <div className="flex justify-between items-center mt-3">
+        <Button type="button" variant="outline" onClick={addDay}>
+          + Thêm ngày
+        </Button>
 
-        <div className="flex justify-between items-center">
-          <Button type="button" variant="outline" onClick={addDay}>
-            + Thêm ngày
-          </Button>
-
-          <p className="text-sm text-muted-foreground">
-            {fields.length}/{safeDuration || fields.length} ngày
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        <p className="text-sm text-muted-foreground">
+          {fields.length}/{safeDuration || fields.length} ngày
+        </p>
+      </div>
+    </div>
   );
 };
 

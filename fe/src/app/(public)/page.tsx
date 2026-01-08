@@ -5,6 +5,7 @@ import TourDisplay from "@/components/customer/homepage/TourDisplay";
 import AiAssistantWidget from "@/components/common/AI/AiAssistantWidget";
 import HeroCarousel from "@/components/customer/homepage/HeroCarousel";
 import { getListPublicTourService } from "@/services/serverTourService";
+import WhyChooseUs from "@/components/customer/homepage/WhyChooseUs";
 
 const Home = async () => {
   const { data } = await getListPublicTourService();
@@ -35,50 +36,16 @@ const Home = async () => {
       </section>
 
       {/* Danh mục tour nổi bật */}
-      <section className="relative bg-background flex items-center justify-center">
-        <div className="w-[95%] md:w-[90%]">
-          <div className="flex flex-col items-center p-2">
-            <h1 className="text-center text-xl sm:text-2xl font-semibold text-foreground mt-8 mb-2">
-              Danh mục tour nổi bật
-            </h1>
-            <p className="text-center text-sm sm:text-base text-muted-foreground mb-3">
-              Khám phá những hành trình được yêu thích nhất cùng Vietravel!
-            </p>
-          </div>
-          <Category />
-        </div>
-      </section>
+      <Category />
 
       {/* Tour ưu đãi */}
-      <section className="relative bg-background flex items-center justify-center">
-        <div className="w-[90%] md:w-[85%]">
-          <div className="flex flex-col items-center p-2">
-            <h1 className="text-center text-xl sm:text-2xl font-semibold text-foreground mt-8 mb-2">
-              Tour ưu đãi giá hấp dẫn
-            </h1>
-            <p className="text-center text-sm sm:text-base text-muted-foreground mb-3">
-              Cơ hội tuyệt vời để vi vu khắp Việt Nam!
-            </p>
-          </div>
-          <TourDisplay tours={tours} />
-        </div>
-      </section>
+      <TourDisplay tours={tours} />
 
       {/* Điểm đến yêu thích */}
-      <section className="relative bg-background flex items-center justify-center">
-        <div className="w-[95%] md:w-[90%]">
-          <div className="flex flex-col items-center p-2">
-            <h1 className="text-center text-xl sm:text-2xl font-semibold text-foreground mt-8 mb-2">
-              Điểm đến yêu thích
-            </h1>
-            <p className="text-center text-sm sm:text-base text-muted-foreground mb-3">
-              Khám phá các điểm đến được yêu thích nhất!
-            </p>
-          </div>
+      <FavouriteDestination />
 
-          <FavouriteDestination />
-        </div>
-      </section>
+      {/* Tại sao lại chọn chúng tôi */}
+      <WhyChooseUs />
 
       <AiAssistantWidget avatarUrl="/images/logo.jpg" />
     </div>

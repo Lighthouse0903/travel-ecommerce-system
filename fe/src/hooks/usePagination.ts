@@ -3,8 +3,8 @@
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-type Primitive = string | number | boolean;
-type QueryValue = Primitive | undefined | null;
+// type Primitive = string | number | boolean;
+// type QueryValue = Primitive | undefined | null;
 
 type Options = {
   defaultPage?: number;

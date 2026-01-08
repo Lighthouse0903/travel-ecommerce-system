@@ -20,6 +20,9 @@ import {
 
 import TimeActivityEditor from "./TimeActivityEditor";
 
+const inputClass =
+  "bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0";
+
 type Props = {
   index: number;
   onRemove: () => void;
@@ -81,6 +84,7 @@ const DayItem: React.FC<Props> = ({ index, onRemove, disableRemove }) => {
             <FormLabel>Tiêu đề</FormLabel>
             <FormControl>
               <Input
+                className={inputClass}
                 placeholder="VD: Hà Nội - Hạ Long"
                 {...field}
                 onChange={(e) => {
@@ -110,6 +114,7 @@ const DayItem: React.FC<Props> = ({ index, onRemove, disableRemove }) => {
           <div className="space-y-2">
             <Label>Tên khách sạn</Label>
             <Input
+              className={inputClass}
               {...register(
                 `itinerary.${index}.accommodation.hotel_name` as const
               )}
@@ -119,6 +124,7 @@ const DayItem: React.FC<Props> = ({ index, onRemove, disableRemove }) => {
           <div className="space-y-2">
             <Label>Địa chỉ</Label>
             <Input
+              className={inputClass}
               {...register(`itinerary.${index}.accommodation.address` as const)}
             />
           </div>
@@ -126,6 +132,7 @@ const DayItem: React.FC<Props> = ({ index, onRemove, disableRemove }) => {
           <div className="space-y-2">
             <Label>Số sao</Label>
             <Input
+              className={inputClass}
               type="number"
               min={0}
               {...register(`itinerary.${index}.accommodation.stars` as const, {
@@ -137,6 +144,7 @@ const DayItem: React.FC<Props> = ({ index, onRemove, disableRemove }) => {
           <div className="space-y-2">
             <Label>Số đêm</Label>
             <Input
+              className={inputClass}
               type="number"
               min={0}
               {...register(`itinerary.${index}.accommodation.nights` as const, {

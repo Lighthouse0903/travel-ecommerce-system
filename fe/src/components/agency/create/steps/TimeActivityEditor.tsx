@@ -14,6 +14,8 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+const inputClass =
+  "bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0";
 
 type Props = {
   dayIndex: number;
@@ -71,6 +73,7 @@ const TimeActivityEditor: React.FC<Props> = ({ dayIndex }) => {
                       step={60}
                       value={field.value ?? ""}
                       onChange={(e) => field.onChange(e.target.value)}
+                      className={inputClass}
                     />
                   </FormControl>
                   <FormMessage />
@@ -84,6 +87,7 @@ const TimeActivityEditor: React.FC<Props> = ({ dayIndex }) => {
               render={({ field }) => (
                 <FormItem>
                   <Input
+                    className={inputClass}
                     placeholder='Ví dụ: "Đón khách tại điểm hẹn"'
                     {...field}
                     value={field.value ?? ""}

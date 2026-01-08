@@ -18,6 +18,8 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+const inputClass =
+  "bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0";
 
 type ListEditorProps = {
   label: string;
@@ -40,6 +42,7 @@ const ListEditor: React.FC<ListEditorProps> = ({
 
       <div className="flex gap-2">
         <Input
+          className={inputClass}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={`Nhập ${label.toLowerCase()}...`}
@@ -150,11 +153,14 @@ const StepServices: React.FC = () => {
                 <FormLabel>Giá người lớn</FormLabel>
                 <FormControl>
                   <Input
+                    className={inputClass}
                     type="number"
                     min={0}
-                    value={field.value ?? 0}
+                    inputMode="numeric"
+                    value={field.value ?? ""}
                     onChange={(e) => {
-                      field.onChange(Number(e.target.value || 0));
+                      const v = e.target.value;
+                      field.onChange(v === "" ? "" : Math.max(0, Number(v)));
                       clearErrors("adult_price");
                     }}
                   />
@@ -172,11 +178,14 @@ const StepServices: React.FC = () => {
                 <FormLabel>Giá trẻ em</FormLabel>
                 <FormControl>
                   <Input
+                    className={inputClass}
                     type="number"
                     min={0}
-                    value={field.value ?? 0}
+                    inputMode="numeric"
+                    value={field.value ?? ""}
                     onChange={(e) => {
-                      field.onChange(Number(e.target.value || 0));
+                      const v = e.target.value;
+                      field.onChange(v === "" ? "" : Math.max(0, Number(v)));
                       clearErrors("children_price");
                     }}
                   />
@@ -194,10 +203,11 @@ const StepServices: React.FC = () => {
                 <FormLabel>Giảm giá (%)</FormLabel>
                 <FormControl>
                   <Input
+                    className={inputClass}
                     type="number"
                     min={0}
                     max={100}
-                    value={field.value ?? 0}
+                    value={field.value}
                     onChange={(e) => {
                       field.onChange(Number(e.target.value || 0));
                       clearErrors("discount");
