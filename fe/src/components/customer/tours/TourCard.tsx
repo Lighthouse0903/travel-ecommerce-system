@@ -61,7 +61,7 @@ const TourCard: React.FC<Props> = ({ tour }) => {
         {/* Duration */}
         <div className="absolute bottom-3 left-3 z-10">
           <div className="rounded-md bg-foreground/60 text-white text-xs px-2.5 py-1 backdrop-blur">
-            {days} ngày {nights} đêm
+            {days} ngày{nights > 0 && ` ${nights} đêm`}
           </div>
         </div>
       </div>

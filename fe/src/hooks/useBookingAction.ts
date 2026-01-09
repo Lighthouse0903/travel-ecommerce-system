@@ -30,13 +30,15 @@ const setPendingBookingId = (userId: string, bookingId: string) => {
   localStorage.setItem(PENDING_BOOKING_KEY(userId), bookingId);
 };
 
-/* =========================
-   Hook: create booking action
-========================= */
+const clearPendingBookingId = (userId: string) => {
+  localStorage.removeItem(PENDING_BOOKING_KEY(userId));
+};
+
+// Custom hook tạo booking cho kahchs hàng
 
 export const useBookingAction = () => {
   const router = useRouter();
-  const { createBooking } = useBookingService();
+  const { createBooking, getDetailBookingCustomer } = useBookingService();
   const { user } = useAuth();
   const { openLoginModal } = useLoginModal();
 
@@ -50,10 +52,26 @@ export const useBookingAction = () => {
     }
 
     const pendingId = getPendingBookingId(userId);
+    console.log("PendingID: ", pendingId);
+
     if (pendingId) {
-      toast("Bạn đang có đơn chưa hoàn tất. Chuyển đến trang thanh toán");
-      router.push(`/dashboard/orders/${pendingId}`);
-      return { ok: false as const, redirected: true as const };
+      const check = await getDetailBookingCustomer(pendingId);
+      console.log("check: ", check);
+      const status = check.data?.status;
+      if (status === "pending") {
+        toast(
+          "Bạn đang có đơn chưa hoàn tất. Chuyển đến trang trạng thái đơn hàng"
+        );
+        router.push(`/dashboard/orders/${pendingId}`);
+        return { ok: false as const, redirected: true as const };
+      }
+      if (status === "paid_waiting") {
+        toast("Bạn đang có đơn chưa hoàn tất. Chuyển đến trang thanh toán");
+        router.push(`/dashboard/orders/${pendingId}`);
+        return { ok: false as const, redirected: true as const };
+      }
+      // paid / rejected / hoặc không lấy được status -> clear để tạo đơn mới
+      clearPendingBookingId(userId);
     }
 
     saveDraftBooking(userId, payload);
